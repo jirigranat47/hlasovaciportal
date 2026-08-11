@@ -1,0 +1,4 @@
+parameters:
+	skautis:
+		appId: 'vložte-vaše-skautis-app-id'
+		isTest: true

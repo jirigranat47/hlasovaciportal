@@ -1,0 +1,29 @@
+# Apache configuration file for Nette Framework
+# http://nette.org
+
+# disable directory listing
+AddDefaultCharset utf-8
+<IfModule mod_autoindex.c>
+	Options -Indexes
+</IfModule>
+
+# enable cool URL
+<IfModule mod_rewrite.c>
+	RewriteEngine On
+	# RewriteBase /
+
+	# prevents files starting with dot to be viewed by browser
+	RewriteRule (^\/|\/)\.(?!well-known\/) - [F]
+
+	# front controller
+	RewriteCond %{REQUEST_FILENAME} !-f
+	RewriteCond %{REQUEST_FILENAME} !-d
+	RewriteRule !^\/assets\/ index.php [L]
+</IfModule>
+
+# enable gzip compression
+<IfModule mod_deflate.c>
+	<IfModule mod_filter.c>
+		AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/x-javascript application/javascript application/ecmascript application/rss+xml application/json
+	</IfModule>
+</IfModule>

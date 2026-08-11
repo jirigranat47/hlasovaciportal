@@ -1,0 +1,19 @@
+parameters:
+	skautis:
+		appId: 'a3d42171-84fb-4f27-8ad6-d98c92a95c47' # Zadejte vaše přidělené AppID
+		isTest: true # Pro vývoj na test-is.skaut.cz nechte true
+
+application:
+	errorPresenter: Error
+
+session:
+	expiration: 14 days
+	autoStart: true
+
+database:
+	dsn: 'mysql:host=db;dbname=hlasovaciportal;charset=utf8mb4'
+	user: 'hlasovani'
+	password: 'hlasovani_pass'
+
+includes:
+	- services.neon

@@ -1,0 +1,11 @@
+/vendor/
+/temp/*
+!/temp/.gitignore
+/log/*
+!/log/.gitignore
+/config/local.neon
+.env
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

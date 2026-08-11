@@ -1,0 +1,5 @@
+services:
+	router: App\Core\RouterFactory::createRouter
+	skautis: App\Model\SkautisFactory::create(%skautis.appId%, %skautis.isTest%)
+	skautisAuthManager: App\Model\SkautisAuthManager(appId: %skautis.appId%, isTest: %skautis.isTest%)
+	- App\Model\VotingRepository

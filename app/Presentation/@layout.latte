@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>{ifset title}{include title} | {/ifset}Skautské Online Hlasování</title>
+	<link rel="stylesheet" href="{$basePath}/css/style.css">
+</head>
+<body>
+
+	<header>
+		<div class="header-container">
+			<a n:href="Home:default" class="logo-group">
+				<span class="logo-badge">⚜ SKAUT</span>
+				<span class="logo-title">Hlasovací Portál</span>
+			</a>
+
+			<nav class="user-nav">
+				{if $isLoggedIn}
+					<div class="user-info">
+						👤 <strong>{$userData['personName']}</strong>
+					</div>
+					<a n:href="Sign:out" class="btn btn-secondary">Odhlásit se</a>
+				{else}
+					<a n:href="Sign:in" class="btn btn-primary">Přihlásit se přes SkautIS</a>
+				{/if}
+			</nav>
+		</div>
+	</header>
+
+	<main>
+		<div class="flash-messages" n:if="$flashes">
+			<div n:foreach="$flashes as $flash" class="flash flash-{$flash->type}">
+				{$flash->message}
+			</div>
+		</div>
+
+		{include content}
+	</main>
+
+	<footer>
+		<div class="container">
+			<p>&copy; {date('Y')} Skautský Hlasovací Portál | Poháněno systémem <strong>SkautIS</strong> & <strong>Nette Framework</strong></p>
+		</div>
+	</footer>
+
+</body>
+</html>

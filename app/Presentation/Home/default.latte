@@ -1,0 +1,54 @@
+{block title}Přehled hlasování{/block}
+
+{block content}
+
+<div class="hero-banner">
+	<h1>Vítejte v Portálu pro Skautské Hlasování</h1>
+	<p>Tento portál umožňuje skautům bezpečně a anonymně odevzdat svůj hlas v klubovních, střediskových či sněmovních hlasováních. Přihlášení probíhá přes oficiální skautIS.</p>
+</div>
+
+<h2 style="color: var(--skaut-blue); margin-bottom: 1rem;">Aktuální probíhající hlasování</h2>
+
+{if empty($elections)}
+	<div class="election-card">
+		<p style="color: var(--skaut-muted);">V tuto chvíli nejsou vypsána žádná aktivní hlasování.</p>
+	</div>
+{else}
+	<div n:foreach="$elections as $item" class="election-card">
+		<div class="election-header">
+			<div>
+				<h3 class="election-title">{$item['entity']->title}</h3>
+				<p style="color: var(--skaut-muted); margin-top: 4px;">{$item['entity']->description}</p>
+			</div>
+
+			<div>
+				{if $item['hasVoted']}
+					<span class="election-status status-voted">✓ Již jste hlasoval(a)</span>
+				{else}
+					<span class="election-status status-active">● Aktivní</span>
+				{/if}
+			</div>
+		</div>
+
+		<div class="options-list">
+			<div n:foreach="$item['options'] as $option" class="option-item">
+				<div>
+					<span class="option-title">{$option->title}</span>
+					<span class="option-count">({$option->votes_count} hlasů)</span>
+				</div>
+
+				<div>
+					{if !$isLoggedIn}
+						<a n:href="Sign:in" class="btn btn-disabled" title="Pro hlasování se nejprve přihlaste">Hlasovat</a>
+					{elseif $item['hasVoted']}
+						<button class="btn btn-disabled" disabled>Odevzdáno</button>
+					{else}
+						<a n:href="vote! electionId: $item['entity']->id, optionId: $option->id" class="btn btn-vote">Hlasovat pro tuto možnost</a>
+					{/if}
+				</div>
+			</div>
+		</div>
+	</div>
+{/if}
+
+{/block}
