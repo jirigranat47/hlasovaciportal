@@ -1,0 +1,61 @@
+{block title}Nastavení SMTP{/block}
+
+{block content}
+
+<div style="margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+	<a n:href="Home:default" style="color: var(--skaut-muted); text-decoration: none;">&larr; Zpět na přehled</a>
+	<h1 style="color: var(--skaut-blue); margin-top: 0.5rem;">Konfigurace SMTP odesílání</h1>
+	<p style="color: var(--skaut-muted);">
+		Nastavte přístup k e-mailové schránce vaší jednotky (např. střediskový e-mail @skaut.cz). 
+		Přes toto SMTP budou odcházet notifikace o spuštění hlasování a výsledky všem členům rady.
+	</p>
+</div>
+
+<div class="election-card" style="max-width: 600px; margin: 0 auto 3rem auto; padding: 2rem;">
+	<form n:name="smtpForm" style="display: flex; flex-direction: column; gap: 1.2rem;">
+		
+		<div style="display: flex; gap: 1rem;">
+			<div style="flex: 2; display: flex; flex-direction: column; gap: 5px;">
+				<label n:name="host" style="font-weight: bold;">SMTP Server / Host:</label>
+				<input n:name="host" class="form-control" placeholder="např. smtp.skaut.cz" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px;">
+			</div>
+			<div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
+				<label n:name="port" style="font-weight: bold;">Port:</label>
+				<input n:name="port" class="form-control" placeholder="např. 587" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px;">
+			</div>
+		</div>
+
+		<div style="display: flex; gap: 1rem;">
+			<div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
+				<label n:name="username" style="font-weight: bold;">Uživatelské jméno:</label>
+				<input n:name="username" class="form-control" placeholder="např. stredisko@skaut.cz" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px;">
+			</div>
+			<div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
+				<label n:name="password" style="font-weight: bold;">Heslo:</label>
+				<input n:name="password" class="form-control" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px;">
+			</div>
+		</div>
+
+		<div style="display: flex; flex-direction: column; gap: 5px;">
+			<label n:name="secure" style="font-weight: bold;">Zabezpečení připojení:</label>
+			<select n:name="secure" class="form-control" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px;"></select>
+		</div>
+
+		<hr style="border: 0; border-top: 1px solid #eee; margin: 0.5rem 0;">
+
+		<div style="display: flex; gap: 1rem;">
+			<div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
+				<label n:name="from_email" style="font-weight: bold;">E-mail odesílatele:</label>
+				<input n:name="from_email" class="form-control" placeholder="např. stredisko@skaut.cz" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px;">
+			</div>
+			<div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
+				<label n:name="from_name" style="font-weight: bold;">Jméno odesílatele:</label>
+				<input n:name="from_name" class="form-control" placeholder="např. Rada střediska" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px;">
+			</div>
+		</div>
+
+		<button n:name="submit" class="btn" style="background: var(--skaut-yellow); color: #000; font-weight: bold; padding: 0.8rem; border: none; border-radius: 4px; cursor: pointer; font-size: 1.1rem; margin-top: 1rem;">Uložit konfiguraci</button>
+	</form>
+</div>
+
+{/block}

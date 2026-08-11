@@ -1,0 +1,57 @@
+{block title}Správa Rady jednotky{/block}
+
+{block content}
+
+<div style="margin-bottom: 2rem;">
+	<a n:href="Home:default" style="color: var(--skaut-muted); text-decoration: none;">&larr; Zpět na přehled</a>
+	<h1 style="color: var(--skaut-blue); margin-top: 0.5rem;">Správa Členů Rady jednotky</h1>
+	<p style="color: var(--skaut-muted);">Zde spravujete seznam osob, které tvoří radu vaší jednotky. Pouze tito členové budou mít oprávnění hlasovat a uvidí aktivní hlasování.</p>
+</div>
+
+<div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+	{* FORMULÁŘ PRO PŘIDÁNÍ ČLENA *}
+	<div class="election-card" style="flex: 1; min-width: 300px;">
+		<h2 style="color: var(--skaut-blue); margin-top: 0; margin-bottom: 1.5rem; font-size: 1.3rem;">Přidat člena do Rady</h2>
+		
+		<form n:name="addMemberForm" style="display: flex; flex-direction: column; gap: 1rem;">
+			<div style="display: flex; flex-direction: column; gap: 5px;">
+				<label n:name="personId" style="font-weight: bold;"></label>
+				<select n:name="personId" class="form-control" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; width: 100%;"></select>
+			</div>
+			
+			<button n:name="submit" class="btn" style="background: var(--skaut-yellow); color: #000; font-weight: bold; width: 100%; border: none; padding: 0.7rem; border-radius: 4px; cursor: pointer;">Přidat člena</button>
+		</form>
+	</div>
+
+	{* SEZNAM AKTUÁLNÍCH ČLENŮ *}
+	<div class="election-card" style="flex: 2; min-width: 450px;">
+		<h2 style="color: var(--skaut-blue); margin-top: 0; margin-bottom: 1.5rem; font-size: 1.3rem;">Aktuální složení Rady</h2>
+
+		{if empty($members)}
+			<p style="color: var(--skaut-muted); margin: 0;">V radě jednotky nejsou aktuálně zapsáni žádní členové.</p>
+		{else}
+			<table style="width: 100%; border-collapse: collapse; text-align: left;">
+				<thead>
+					<tr style="border-bottom: 2px solid #ddd; color: #555;">
+						<th style="padding: 8px;">Jméno</th>
+						<th style="padding: 8px;">Person ID</th>
+						<th style="padding: 8px;">E-mail</th>
+						<th style="padding: 8px;">Akce</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr n:foreach="$members as $m" style="border-bottom: 1px solid #eee;">
+						<td style="padding: 8px; font-weight: bold;">{$m->full_name}</td>
+						<td style="padding: 8px; color: #555;">{$m->person_id}</td>
+						<td style="padding: 8px;">{$m->email ?? 'Není nastaven'}</td>
+						<td style="padding: 8px;">
+							<a n:href="delete, $m->person_id" style="color: #dc3545; text-decoration: none; font-size: 0.9rem; font-weight: bold;" onclick="return confirm('Opravdu chcete tohoto člena odebrat z rady? Uživatel ztratí přístup k hlasováním.')">Odebrat</a>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		{/if}
+	</div>
+</div>
+
+{/block}

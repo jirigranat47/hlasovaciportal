@@ -1,0 +1,173 @@
+{block title}{$election->title}{/block}
+
+{block content}
+
+<div style="margin-bottom: 2rem;">
+	<a n:href="Home:default" style="color: var(--skaut-muted); text-decoration: none;">&larr; Zpět na přehled</a>
+	<h1 style="color: var(--skaut-blue); margin-top: 0.5rem; margin-bottom: 0.5rem;">{$election->title}</h1>
+	
+	<div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+		{if $election->status === 'draft'}
+			<span class="election-status" style="background: #e9ecef; color: #495057;">● Rozpracovaný návrh (Draft)</span>
+		{elseif $isClosed}
+			<span class="election-status" style="background: #f8d7da; color: #721c24;">● Ukončeno</span>
+		{else}
+			<span class="election-status status-active">● Probíhá</span>
+		{/if}
+
+		{if $election->proposal_received_date}
+			<span style="color: var(--skaut-muted); font-size: 0.9rem;">| Návrh obdržen: <strong>{$election->proposal_received_date|date:'d. m. Y'}</strong></span>
+		{/if}
+		<span style="color: var(--skaut-muted); font-size: 0.9rem;">| Konec hlasování: <strong>{$election->end_date|date:'d. m. Y H:i'}</strong></span>
+	</div>
+</div>
+
+<div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+	{* LEVÝ PANEL - DETAILY A HLASOVÁNÍ *}
+	<div style="flex: 2; min-width: 300px; display: flex; flex-direction: column; gap: 1.5rem;">
+		
+		{* POPIS HLASOVÁNÍ *}
+		<div class="election-card">
+			<h2 style="color: var(--skaut-blue); margin-top: 0; font-size: 1.2rem;">Zadání a podklady</h2>
+			<div style="white-space: pre-wrap; line-height: 1.6; color: #333;">{$election->description ?? 'K tomuto hlasování nebyl vložen žádný popis.'}</div>
+		</div>
+
+		{* HLASOVACÍ DLAŽDICE / ODEVZDÁNÍ HLASU *}
+		{if !$isClosed && $election->status === 'published'}
+			<div class="election-card" style="border-left: 5px solid var(--skaut-yellow);">
+				<h2 style="color: var(--skaut-blue); margin-top: 0; font-size: 1.2rem;">Odevzdání Vašeho Hlasu</h2>
+
+				{if !$isCouncilMember}
+					<p style="color: #721c24; background: #f8d7da; padding: 0.8rem; border-radius: 4px; margin: 0; font-weight: bold;">
+						Nemáte oprávnění hlasovat. Nejste zapsán(a) na seznamu Rady této jednotky.
+					</p>
+				{elseif $hasVoted}
+					<p style="color: #155724; background: #d4edda; padding: 0.8rem; border-radius: 4px; margin: 0; font-weight: bold;">
+						✓ Váš hlas byl úspěšně zaznamenán. V tomto hlasování jste již hlasoval(a).
+					</p>
+				{else}
+					<p style="margin-top: 0; color: #555;">Vyberte jednu z možností pro odevzdání vašeho hlasu. Hlasování je jmenovité.</p>
+					
+					<div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem;">
+						{foreach $options as $opt}
+							{var $btnColor = '#555'}
+							{if $opt->title === 'Pro'}{$btnColor = '#28a745'}{/if}
+							{if $opt->title === 'Proti'}{$btnColor = '#dc3545'}{/if}
+							{if $opt->title === 'Zdržel se'}{$btnColor = '#ffc107'}{/if}
+
+							<a n:href="vote! electionId: $election->id, optionId: $opt->id" 
+							   class="btn" 
+							   style="background: {$btnColor|noescape}; color: {if $opt->title === 'Zdržel se'}#000{else}#fff{/if}; font-weight: bold; padding: 1rem 2rem; font-size: 1.2rem; border-radius: 4px; text-decoration: none; text-align: center; flex: 1; min-width: 120px;"
+							   onclick="return confirm('Opravdu chcete hlasovat pro možnost &quot;{$opt->title}&quot;?')">
+								{$opt->title}
+							</a>
+						{/foreach}
+					</div>
+				{/if}
+			</div>
+		{/if}
+
+		{* VYHODNOCENÍ - Zobrazí se pokud je hlasování ukončeno *}
+		{if $isClosed}
+			<div class="election-card" style="padding: 0; overflow: hidden; border: 2px solid {if $isAdopted}#28a745{else}#dc3545{/if};">
+				<div style="background: {if $isAdopted}#28a745{else}#dc3545{/if}; color: white; padding: 1rem 1.5rem; font-weight: bold; font-size: 1.3rem; display: flex; align-items: center; gap: 10px;">
+					{if $isAdopted}
+						<span>✓</span> Usnesení bylo PŘIJATO
+					{else}
+						<span>✗</span> Usnesení NEBYLO PŘIJATO
+					{/if}
+				</div>
+				<div style="padding: 1.5rem;">
+					<p style="margin-top: 0; line-height: 1.5;">
+						Rozhodovací pravidlo: Usnesení je schváleno, pokud pro něj hlasuje nadpoloviční většina všech členů rady (více než 50 %).
+						V době vyhodnocení měla rada <strong>{$totalMembers}</strong> členů, k přijetí bylo tedy potřeba alespoň <strong>{floor($totalMembers/2) + 1}</strong> hlasů „Pro“.
+					</p>
+					<div style="font-size: 1.1rem;">
+						Hlasovalo <strong>Pro</strong>: <strong style="color: #28a745; font-size: 1.3rem;">{$votesCount['Pro']}</strong> ({round(($votesCount['Pro'] / max($totalMembers, 1)) * 100)} % z celkového počtu členů).
+					</div>
+				</div>
+			</div>
+		{/if}
+	</div>
+
+	{* PRAVÝ PANEL - STATISTIKY A VÝSLEDKY *}
+	<div style="flex: 1; min-width: 280px; display: flex; flex-direction: column; gap: 1.5rem;">
+		
+		{* AGREGAVANÉ VÝSLEDKY / STATISTIKA *}
+		<div class="election-card">
+			<h2 style="color: var(--skaut-blue); margin-top: 0; font-size: 1.2rem; margin-bottom: 1rem;">Průběžný stav hlasování</h2>
+			
+			<div style="display: flex; flex-direction: column; gap: 0.8rem;">
+				<div>
+					<div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 3px;">
+						<span>Pro</span>
+						<span style="color: #28a745;">{$votesCount['Pro']} hlasů</span>
+					</div>
+					<div style="background: #eee; height: 10px; border-radius: 5px; overflow: hidden;">
+						<div style="background: #28a745; height: 100%; width: {round(($votesCount['Pro'] / max($totalMembers, 1)) * 100)}%;"></div>
+					</div>
+				</div>
+
+				<div>
+					<div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 3px;">
+						<span>Proti</span>
+						<span style="color: #dc3545;">{$votesCount['Proti']} hlasů</span>
+					</div>
+					<div style="background: #eee; height: 10px; border-radius: 5px; overflow: hidden;">
+						<div style="background: #dc3545; height: 100%; width: {round(($votesCount['Proti'] / max($totalMembers, 1)) * 100)}%;"></div>
+					</div>
+				</div>
+
+				<div>
+					<div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 3px;">
+						<span>Zdržel se</span>
+						<span style="color: #ffc107;">{$votesCount['Zdržel se']} hlasů</span>
+					</div>
+					<div style="background: #eee; height: 10px; border-radius: 5px; overflow: hidden;">
+						<div style="background: #ffc107; height: 100%; width: {round(($votesCount['Zdržel se'] / max($totalMembers, 1)) * 100)}%;"></div>
+					</div>
+				</div>
+
+				{var $totalVotes = array_sum($votesCount)}
+				<hr style="border: 0; border-top: 1px solid #eee; margin: 5px 0;">
+				<div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #555;">
+					<span>Celkem hlasovalo:</span>
+					<strong>{$totalVotes} z {$totalMembers}</strong>
+				</div>
+				<div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #555;">
+					<span>Účast:</span>
+					<strong>{round(($totalVotes / max($totalMembers, 1)) * 100)} %</strong>
+				</div>
+			</div>
+		</div>
+
+		{* JMENNÝ SEZNAM HLASUJÍCÍCH (Jen pro Členy rady a Zakladatele) *}
+		{if $showVoterList}
+			<div class="election-card">
+				<h2 style="color: var(--skaut-blue); margin-top: 0; font-size: 1.2rem; margin-bottom: 1rem;">Hlasy členů rady</h2>
+
+				<div style="display: flex; flex-direction: column; gap: 0.6rem;">
+					<div n:foreach="$voterList as $v" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f8f9fa; padding-bottom: 5px;">
+						<span style="font-weight: 500; font-size: 0.95rem;">{$v['name']}</span>
+						<span>
+							{if $v['voted']}
+								{var $badgeBg = '#e2f0d9'}{var $badgeColor = '#385723'}
+								{if $v['choice'] === 'Proti'}{var $badgeBg = '#fce4d6'}{var $badgeColor = '#c65911'}{/if}
+								{if $v['choice'] === 'Zdržel se'}{var $badgeBg = '#fff2cc'}{var $badgeColor = '#7f6000'}{/if}
+								<span style="padding: 2px 8px; font-size: 0.8rem; background: {$badgeBg|noescape}; color: {$badgeColor|noescape}; border-radius: 4px; font-weight: bold;">
+									{$v['choice']}
+								</span>
+							{else}
+								<span style="padding: 2px 8px; font-size: 0.8rem; background: #e9ecef; color: #6c757d; border-radius: 4px;">
+									nehlasoval(a)
+								</span>
+							{/if}
+						</span>
+					</div>
+				</div>
+			</div>
+		{/if}
+	</div>
+</div>
+
+{/block}

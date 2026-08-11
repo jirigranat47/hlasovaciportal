@@ -50,4 +50,14 @@ final class SignPresenter extends Presenter
 		$this->flashMessage('Byli jste úspěšně odhlášeni.', 'info');
 		$this->redirect('Home:default');
 	}
+
+	/**
+	 * Vývojový login pro simulaci uživatele
+	 */
+	public function actionDevLogin(int $unitId, int $personId, string $personName, string $roleKey = 'clened', string $roleName = 'Člen'): void
+	{
+		$this->skautisAuthManager->simulateLogin($unitId, $personId, $personName, $roleKey, $roleName);
+		$this->flashMessage("Simulované přihlášení jako $personName (Unit: $unitId, Person: $personId, Role: $roleKey)", 'success');
+		$this->redirect('Home:default');
+	}
 }

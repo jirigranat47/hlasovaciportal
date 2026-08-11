@@ -2,6 +2,9 @@ parameters:
 	skautis:
 		appId: 'a3d42171-84fb-4f27-8ad6-d98c92a95c47' # Zadejte vaše přidělené AppID
 		isTest: true # Pro vývoj na test-is.skaut.cz nechte true
+	baseUrl: 'http://localhost:8000'
+	cron:
+		token: 'zmente_v_local_neon'
 
 application:
 	errorPresenter: Error

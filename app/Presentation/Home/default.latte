@@ -1,53 +1,118 @@
-{block title}Přehled hlasování{/block}
+{block title}Domů{/block}
 
 {block content}
 
-<div class="hero-banner">
-	<h1>Vítejte v Portálu pro Skautské Hlasování</h1>
-	<p>Tento portál umožňuje skautům bezpečně a anonymně odevzdat svůj hlas v klubovních, střediskových či sněmovních hlasováních. Přihlášení probíhá přes oficiální skautIS.</p>
-</div>
-
-<h2 style="color: var(--skaut-blue); margin-bottom: 1rem;">Aktuální probíhající hlasování</h2>
-
-{if empty($elections)}
-	<div class="election-card">
-		<p style="color: var(--skaut-muted);">V tuto chvíli nejsou vypsána žádná aktivní hlasování.</p>
+{if !$isLoggedIn}
+	<div class="hero-banner text-center" style="padding: 4rem 2rem;">
+		<h1 style="font-size: 2.5rem; margin-bottom: 1rem;">Vnitřní Hlasovací Portál Jednotek</h1>
+		<p style="font-size: 1.1rem; max-width: 800px; margin: 0 auto 2rem auto; color: var(--skaut-muted);">
+			Tento portál slouží k internímu, jmenovitému hlasování rad skautských jednotek (střediskových, okresních a krajských). 
+			Přihlaste se prosím prostřednictvím skautISu pro zobrazení hlasování vaší jednotky.
+		</p>
+		<a n:href="Sign:in" class="btn" style="font-size: 1.2rem; padding: 0.8rem 2rem; background: var(--skaut-yellow); color: #000; font-weight: bold; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+			Přihlásit se přes skautIS
+		</a>
 	</div>
 {else}
-	<div n:foreach="$elections as $item" class="election-card">
-		<div class="election-header">
-			<div>
-				<h3 class="election-title">{$item['entity']->title}</h3>
-				<p style="color: var(--skaut-muted); margin-top: 4px;">{$item['entity']->description}</p>
-			</div>
-
-			<div>
-				{if $item['hasVoted']}
-					<span class="election-status status-voted">✓ Již jste hlasoval(a)</span>
+	<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-bottom: 2px solid #eee; padding-bottom: 1.5rem;">
+		<div>
+			<h1 style="color: var(--skaut-blue); margin: 0;">{$userData['personName']}</h1>
+			<p style="color: var(--skaut-muted); margin: 5px 0 0 0;">
+				Aktivní role: <strong>{$userData['roleName']}</strong> | Jednotka ID: <strong>{$userData['unitId']}</strong>
+				{if $isCouncilMember}
+					<span style="display: inline-block; margin-left: 10px; padding: 2px 8px; font-size: 0.8rem; background: #e2f0d9; color: #385723; border-radius: 10px; font-weight: bold;">Člen rady</span>
 				{else}
-					<span class="election-status status-active">● Aktivní</span>
+					<span style="display: inline-block; margin-left: 10px; padding: 2px 8px; font-size: 0.8rem; background: #fff2cc; color: #7f6000; border-radius: 10px; font-weight: bold;">Host (nečlen rady)</span>
 				{/if}
-			</div>
+			</p>
 		</div>
 
-		<div class="options-list">
-			<div n:foreach="$item['options'] as $option" class="option-item">
-				<div>
-					<span class="option-title">{$option->title}</span>
-					<span class="option-count">({$option->votes_count} hlasů)</span>
-				</div>
+		{if $isAdmin}
+			<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+				<a n:href="Election:create" class="btn btn-vote" style="background: var(--skaut-blue);">+ Nové hlasování</a>
+				<a n:href="Council:default" class="btn" style="background: #555; color: white;">Správa Rady</a>
+				<a n:href="Council:smtp" class="btn" style="background: #777; color: white;">Nastavení SMTP</a>
+			</div>
+		{/if}
+	</div>
 
-				<div>
-					{if !$isLoggedIn}
-						<a n:href="Sign:in" class="btn btn-disabled" title="Pro hlasování se nejprve přihlaste">Hlasovat</a>
-					{elseif $item['hasVoted']}
-						<button class="btn btn-disabled" disabled>Odevzdáno</button>
-					{else}
-						<a n:href="vote! electionId: $item['entity']->id, optionId: $option->id" class="btn btn-vote">Hlasovat pro tuto možnost</a>
-					{/if}
+	{* AKTIVNÍ HLASOVÁNÍ *}
+	<div style="margin-bottom: 3rem;">
+		<h2 style="color: var(--skaut-blue); margin-bottom: 1rem; border-left: 4px solid var(--skaut-yellow); padding-left: 10px;">Probíhající hlasování</h2>
+		{if empty($activeElections)}
+			<div class="election-card">
+				<p style="color: var(--skaut-muted); margin: 0;">V tuto chvíli neprobíhá žádné aktivní hlasování.</p>
+			</div>
+		{else}
+			<div n:foreach="$activeElections as $el" class="election-card" style="margin-bottom: 1rem;">
+				<div class="election-header" style="display: flex; justify-content: space-between; align-items: center;">
+					<div>
+						<h3 style="margin: 0; font-size: 1.2rem;"><a n:href="Election:show, $el->id" style="color: var(--skaut-blue); text-decoration: none; font-weight: bold;">{$el->title}</a></h3>
+						<p style="color: var(--skaut-muted); margin: 5px 0 0 0; font-size: 0.9rem;">
+							Termín ukončení: <strong>{$el->end_date|date:'d. m. Y H:i'}</strong>
+							{if $el->proposal_received_date}
+								| Návrh obdržen: <strong>{$el->proposal_received_date|date:'d. m. Y'}</strong>
+							{/if}
+						</p>
+					</div>
+					<div>
+						<a n:href="Election:show, $el->id" class="btn btn-vote">Otevřít detail</a>
+					</div>
 				</div>
 			</div>
+		{/if}
+	</div>
+
+	{* NÁVRHY (DRAFTY) - Pouze pro adminy *}
+	{if $isAdmin}
+		<div style="margin-bottom: 3rem;">
+			<h2 style="color: #666; margin-bottom: 1rem; border-left: 4px solid #aaa; padding-left: 10px;">Rozpracované návrhy (Drafty)</h2>
+			{if empty($draftElections)}
+				<div class="election-card">
+					<p style="color: var(--skaut-muted); margin: 0;">Žádná hlasování nejsou v režimu návrhu.</p>
+				</div>
+			{else}
+				<div n:foreach="$draftElections as $el" class="election-card" style="margin-bottom: 1rem; border-color: #ddd; background: #fafafa;">
+					<div class="election-header" style="display: flex; justify-content: space-between; align-items: center;">
+						<div>
+							<h3 style="margin: 0; font-size: 1.2rem; color: #555;">{$el->title}</h3>
+							<p style="color: var(--skaut-muted); margin: 5px 0 0 0; font-size: 0.9rem;">
+								Nastavený termín konce: <strong>{$el->end_date|date:'d. m. Y H:i'}</strong>
+							</p>
+						</div>
+						<div style="display: flex; gap: 0.5rem;">
+							<a n:href="Election:publish, $el->id" class="btn btn-vote" style="background: #28a745; font-size: 0.85rem;" onclick="return confirm('Opravdu chcete toto hlasování publikovat? Všem členům rady bude odeslána notifikace a hlasování již nepůjde upravovat ani smazat.')">Publikovat</a>
+							<a n:href="Election:edit, $el->id" class="btn btn-vote" style="background: var(--skaut-blue); font-size: 0.85rem;">Upravit</a>
+							<a n:href="Election:delete, $el->id" class="btn btn-vote" style="background: #dc3545; font-size: 0.85rem;" onclick="return confirm('Opravdu chcete tento návrh smazat?')">Smazat</a>
+						</div>
+					</div>
+				</div>
+			{/if}
 		</div>
+	{/if}
+
+	{* UZAVŘENÁ HLASOVÁNÍ *}
+	<div style="margin-bottom: 3rem;">
+		<h2 style="color: var(--skaut-blue); margin-bottom: 1rem; border-left: 4px solid var(--skaut-blue); padding-left: 10px;">Uzavřená hlasování</h2>
+		{if empty($closedElections)}
+			<div class="election-card">
+				<p style="color: var(--skaut-muted); margin: 0;">Žádná uzavřená hlasování k zobrazení.</p>
+			</div>
+		{else}
+			<div n:foreach="$closedElections as $el" class="election-card" style="margin-bottom: 1rem; opacity: 0.85;">
+				<div class="election-header" style="display: flex; justify-content: space-between; align-items: center;">
+					<div>
+						<h3 style="margin: 0; font-size: 1.2rem;"><a n:href="Election:show, $el->id" style="color: #333; text-decoration: none; font-weight: bold;">{$el->title}</a></h3>
+						<p style="color: var(--skaut-muted); margin: 5px 0 0 0; font-size: 0.9rem;">
+							Ukončeno: <strong>{$el->end_date|date:'d. m. Y H:i'}</strong>
+						</p>
+					</div>
+					<div>
+						<a n:href="Election:show, $el->id" class="btn" style="background: #777; color: white;">Výsledky</a>
+					</div>
+				</div>
+			</div>
+		{/if}
 	</div>
 {/if}
 

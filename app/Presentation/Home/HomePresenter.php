@@ -21,46 +21,37 @@ final class HomePresenter extends Presenter
 	{
 		$isLoggedIn = $this->skautisAuthManager->isLoggedIn();
 		$this->template->isLoggedIn = $isLoggedIn;
-		$this->template->userData = $isLoggedIn ? $this->skautisAuthManager->getUserData() : null;
+		
+		$userData = $isLoggedIn ? $this->skautisAuthManager->getUserData() : null;
+		$this->template->userData = $userData;
 
-		$elections = $this->votingRepository->getActiveElections();
-		$electionsData = [];
+		$isAdmin = $isLoggedIn ? $this->skautisAuthManager->isAdmin() : false;
+		$this->template->isAdmin = $isAdmin;
 
-		foreach ($elections as $election) {
-			$options = $this->votingRepository->getOptions($election->id);
-			$voted = false;
+		$isCouncilMember = false;
+		if ($isLoggedIn && $userData) {
+			$isCouncilMember = $this->votingRepository->isCouncilMember((int)$userData['unitId'], (int)$userData['personId']);
+		}
+		$this->template->isCouncilMember = $isCouncilMember;
 
-			if ($isLoggedIn) {
-				$voterHash = $this->skautisAuthManager->getVoterHash($election->id);
-				$voted = $this->votingRepository->hasVoted($election->id, $voterHash);
-			}
+		$active = [];
+		$drafts = [];
+		$closed = [];
 
-			$electionsData[] = [
-				'entity' => $election,
-				'options' => $options,
-				'hasVoted' => $voted,
-			];
+		if ($isLoggedIn && $userData) {
+			$elections = $this->votingRepository->getElectionsForUser(
+				(int)$userData['unitId'],
+				(int)$userData['personId'],
+				$isAdmin,
+				$isCouncilMember
+			);
+			$active = $elections['active'];
+			$drafts = $elections['drafts'];
+			$closed = $elections['closed'];
 		}
 
-		$this->template->elections = $electionsData;
-	}
-
-	public function handleVote(int $electionId, int $optionId): void
-	{
-		if (!$this->skautisAuthManager->isLoggedIn()) {
-			$this->flashMessage('Pro hlasování se musíte nejprve přihlásit přes SkautIS.', 'warning');
-			$this->redirect('Sign:in');
-		}
-
-		$voterHash = $this->skautisAuthManager->getVoterHash($electionId);
-		$success = $this->votingRepository->vote($electionId, $optionId, $voterHash);
-
-		if ($success) {
-			$this->flashMessage('Váš hlas byl úspěšně a anonymně zaznamenán! Děkujeme.', 'success');
-		} else {
-			$this->flashMessage('V tomto hlasování jste již hlasovali nebo došlo k chybě.', 'danger');
-		}
-
-		$this->redirect('this');
+		$this->template->activeElections = $active;
+		$this->template->draftElections = $drafts;
+		$this->template->closedElections = $closed;
 	}
 }

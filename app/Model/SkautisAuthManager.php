@@ -39,13 +39,7 @@ class SkautisAuthManager
 			$roleId = isset($params['skautIS_IDRole']) ? (int)$params['skautIS_IDRole'] : null;
 			$unitId = isset($params['skautIS_IDUnit']) ? (int)$params['skautIS_IDUnit'] : null;
 
-			$this->skautis->setToken($token);
-			if ($roleId !== null) {
-				$this->skautis->setRoleId($roleId);
-			}
-			if ($unitId !== null) {
-				$this->skautis->setUnitId($unitId);
-			}
+			$this->skautis->getUser()->updateLoginData($token, $roleId, $unitId);
 
 			// Uložíme do Nette Session
 			$this->session->token = $token;
@@ -58,6 +52,21 @@ class SkautisAuthManager
 				$this->session->personId = $userDetail->ID_Person ?? null;
 				$this->session->userName = $userDetail->UserName ?? 'Skaut';
 				$this->session->personName = ($userDetail->PersonGivenName ?? '') . ' ' . ($userDetail->PersonFamilyName ?? '');
+
+				// Získáme detaily o aktivní roli pro kontrolu administrátorských práv
+				$this->session->roleName = '';
+				$this->session->roleKey = '';
+				if ($roleId !== null) {
+					$roles = $this->skautis->userManagement->UserRoleAll();
+					foreach ($roles as $role) {
+						if ((int)$role->ID === $roleId) {
+							$this->session->roleName = $role->RoleName ?? '';
+							$this->session->roleKey = $role->RoleKey ?? '';
+							break;
+						}
+					}
+				}
+
 				return true;
 			} catch (\Throwable $e) {
 				// Pokud selže načtení UserDetail (např. vypršel token)
@@ -75,10 +84,11 @@ class SkautisAuthManager
 	public function isLoggedIn(): bool
 	{
 		if (!empty($this->session->token)) {
-			$this->skautis->setToken($this->session->token);
-			if (!empty($this->session->roleId)) {
-				$this->skautis->setRoleId($this->session->roleId);
-			}
+			$this->skautis->getUser()->updateLoginData(
+				$this->session->token,
+				$this->session->roleId ?? null,
+				$this->session->unitId ?? null
+			);
 			return true;
 		}
 		return false;
@@ -95,17 +105,70 @@ class SkautisAuthManager
 			'personName' => $this->session->personName ?? 'Neznámý skaut',
 			'roleId' => $this->session->roleId ?? 0,
 			'unitId' => $this->session->unitId ?? 0,
+			'roleName' => $this->session->roleName ?? '',
+			'roleKey' => $this->session->roleKey ?? '',
 		];
 	}
 
 	/**
-	 * Generuje unikátní anonymní hash pro hlasování (SHA256 z ID osoby + tajného saltu)
+	 * Ověří, zda je aktuálně přihlášený uživatel administrátorem (činovníkem) jednotky
 	 */
-	public function getVoterHash(int $electionId): string
+	public function isAdmin(): bool
 	{
-		$personId = $this->session->personId ?? 0;
-		$salt = 'skautis_voting_portal_secret_salt_2026';
-		return hash('sha256', $electionId . '_' . $personId . '_' . $salt);
+		if (!$this->isLoggedIn()) {
+			return false;
+		}
+
+		$adminKeys = ['administrator', 'vedouci', 'hospodar', 'tajemnik', 'mistopredseda'];
+		$roleKey = strtolower($this->session->roleKey ?? '');
+
+		foreach ($adminKeys as $key) {
+			if (str_contains($roleKey, $key)) {
+				return true;
+			}
+		}
+
+		$roleName = mb_strtolower($this->session->roleName ?? '', 'utf-8');
+		$adminWords = ['administrátor', 'vedoucí', 'hospodář', 'tajemník', 'místopředseda', 'předseda'];
+		foreach ($adminWords as $word) {
+			if (str_contains($roleName, $word)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Získá seznam osob v aktivní jednotce ze skautISu pro naplnění Rady jednotky
+	 */
+	public function getUnitMembers(): array
+	{
+		if (!$this->isLoggedIn() || empty($this->session->unitId)) {
+			return [];
+		}
+
+		$members = [];
+		try {
+			$list = $this->skautis->organizationManagement->PersonAll([
+				'ID_Unit' => $this->session->unitId,
+			]);
+
+			foreach ($list as $p) {
+				$members[] = [
+					'personId' => (int)$p->ID,
+					'fullName' => ($p->FirstName ?? '') . ' ' . ($p->LastName ?? ''),
+					'email' => $p->Email ?? ($p->EmailDefault ?? null),
+				];
+			}
+		} catch (\Throwable $e) {
+			// Vrátíme prázdné pole, pokud se nepodaří načíst (např. chybí práva na PersonAll ve Skautisu)
+		}
+
+		// Setřídíme abecedně podle jména
+		usort($members, fn($a, $b) => strcmp($a['fullName'], $b['fullName']));
+
+		return $members;
 	}
 
 	/**
@@ -114,6 +177,21 @@ class SkautisAuthManager
 	public function getLogoutUrl(string $backUrl): string
 	{
 		return $this->skautis->getLogoutUrl($backUrl);
+	}
+
+	/**
+	 * Simuluje přihlášení pro vývoj a testování
+	 */
+	public function simulateLogin(int $unitId, int $personId, string $personName, string $roleKey, string $roleName): void
+	{
+		$this->session->token = 'mock_token';
+		$this->session->roleId = 12345;
+		$this->session->unitId = $unitId;
+		$this->session->personId = $personId;
+		$this->session->userName = 'mock_user';
+		$this->session->personName = $personName;
+		$this->session->roleKey = $roleKey;
+		$this->session->roleName = $roleName;
 	}
 
 	/**
