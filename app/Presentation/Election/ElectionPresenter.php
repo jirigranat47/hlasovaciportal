@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Presentation\Election;
 
-use Nette\Application\UI\Presenter;
+use App\Presentation\BasePresenter;
 use Nette\Application\UI\Form;
 use App\Model\SkautisAuthManager;
 use App\Model\VotingRepository;
 
-final class ElectionPresenter extends Presenter
+final class ElectionPresenter extends BasePresenter
 {
 	public function __construct(
 		private SkautisAuthManager $skautisAuthManager,
@@ -21,6 +21,7 @@ final class ElectionPresenter extends Presenter
 	protected function startup(): void
 	{
 		parent::startup();
+		file_put_contents('/var/www/html/log/debug.log', "DEBUG: startup - action=" . $this->getAction() . ", signal=" . json_encode($this->getSignal()) . ", params=" . json_encode($this->getParameters()) . "\n", FILE_APPEND);
 		if (!$this->skautisAuthManager->isLoggedIn()) {
 			$this->flashMessage('Pro přístup k hlasováním se musíte nejprve přihlásit přes SkautIS.', 'warning');
 			$this->redirect('Sign:in');
@@ -45,8 +46,8 @@ final class ElectionPresenter extends Presenter
 		$now = new \DateTime();
 		$isClosed = $election->end_date <= $now;
 
-		// Kontrola přístupových práv k tomuto hlasování
-		if (!$isAdmin && !$isCouncilMember) {
+		// Kontrola přístupových práv k tomuto hlasování (admin, člen rady, nebo zakladatel mají přístup)
+		if (!$isAdmin && !$isCouncilMember && !$isCreator) {
 			// Nečlen rady vidí pouze uzavřená hlasování, kterých se sám zúčastnil
 			$hasVoted = $this->votingRepository->hasVoted($id, $personId);
 			if (!$isClosed || !$hasVoted) {
@@ -57,6 +58,7 @@ final class ElectionPresenter extends Presenter
 
 		$options = $this->votingRepository->getOptions($id);
 		$hasVoted = $this->votingRepository->hasVoted($id, $personId);
+		$canVote = $isCouncilMember || $isCreator;
 
 		$this->template->election = $election;
 		$this->template->options = $options;
@@ -65,6 +67,7 @@ final class ElectionPresenter extends Presenter
 		$this->template->isCouncilMember = $isCouncilMember;
 		$this->template->isAdmin = $isAdmin;
 		$this->template->isCreator = $isCreator;
+		$this->template->canVote = $canVote;
 
 		// Pouze zakladatel a členové rady vidí jmenný seznam hlasů
 		$showVoterList = $isCreator || $isCouncilMember;
@@ -72,6 +75,27 @@ final class ElectionPresenter extends Presenter
 
 		if ($showVoterList) {
 			$councilMembers = $this->votingRepository->getCouncilMembers($unitId);
+
+			// Pokud zakladatel není členem rady, přidáme ho do seznamu hlasujících
+			$isCreatorCouncilMember = false;
+			foreach ($councilMembers as $m) {
+				if ((int)$m->person_id === (int)$election->created_by_person_id) {
+					$isCreatorCouncilMember = true;
+					break;
+				}
+			}
+
+			if (!$isCreatorCouncilMember) {
+				$creatorUser = $this->votingRepository->getUserByPersonId((int)$election->created_by_person_id);
+				$creatorName = $creatorUser ? $creatorUser->full_name : 'Zakladatel';
+
+				$pseudoMember = (object)[
+					'person_id' => (int)$election->created_by_person_id,
+					'full_name' => $creatorName . ' (Zakladatel)',
+				];
+				$councilMembers[] = $pseudoMember;
+			}
+
 			$results = $this->votingRepository->getElectionResults($id);
 
 			$voterList = [];
@@ -114,7 +138,20 @@ final class ElectionPresenter extends Presenter
 			$this->template->votesCount = $votesCount;
 			
 			// Pro nečlena počítáme přijetí podle počtu členů rady (který musíme stejně načíst z DB)
-			$councilMembersCount = count($this->votingRepository->getCouncilMembers($unitId));
+			$councilMembers = $this->votingRepository->getCouncilMembers($unitId);
+			$isCreatorCouncilMember = false;
+			foreach ($councilMembers as $m) {
+				if ((int)$m->person_id === (int)$election->created_by_person_id) {
+					$isCreatorCouncilMember = true;
+					break;
+				}
+			}
+
+			$councilMembersCount = count($councilMembers);
+			if (!$isCreatorCouncilMember) {
+				$councilMembersCount += 1;
+			}
+
 			$proCount = $votesCount['Pro'] ?? 0;
 			$this->template->totalMembers = $councilMembersCount;
 			$this->template->isAdopted = $proCount > ($councilMembersCount / 2);
@@ -123,6 +160,7 @@ final class ElectionPresenter extends Presenter
 
 	public function handleVote(int $electionId, int $optionId): void
 	{
+		file_put_contents('/var/www/html/log/debug.log', "DEBUG: handleVote entered - electionId=$electionId, optionId=$optionId\n", FILE_APPEND);
 		$election = $this->votingRepository->getElection($electionId);
 		if (!$election || $election->status !== 'published') {
 			$this->flashMessage('Hlasování nebylo nalezeno nebo není aktivní.', 'danger');
@@ -134,8 +172,10 @@ final class ElectionPresenter extends Presenter
 		$personId = (int)$userData['personId'];
 
 		$isCouncilMember = $this->votingRepository->isCouncilMember($unitId, $personId);
-		if (!$isCouncilMember) {
-			$this->flashMessage('Hlasovat mohou pouze registrovaní členové rady.', 'danger');
+		$isCreator = ((int)$election->created_by_person_id === $personId);
+
+		if (!$isCouncilMember && !$isCreator) {
+			$this->flashMessage('Hlasovat mohou pouze registrovaní členové rady nebo zakladatel hlasování.', 'danger');
 			$this->redirect('show', $electionId);
 		}
 
@@ -179,6 +219,7 @@ final class ElectionPresenter extends Presenter
 			'proposal_received_date' => $election->proposal_received_date ? $election->proposal_received_date->format('Y-m-d') : null,
 			'end_date' => $election->end_date->format('Y-m-d\TH:i'),
 		]);
+		$this->template->id = $id;
 	}
 
 	public function actionPublish(int $id): void

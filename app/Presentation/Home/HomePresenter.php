@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Presentation\Home;
 
-use Nette\Application\UI\Presenter;
+use App\Presentation\BasePresenter;
 use App\Model\SkautisAuthManager;
 use App\Model\VotingRepository;
 
-final class HomePresenter extends Presenter
+final class HomePresenter extends BasePresenter
 {
 	public function __construct(
 		private SkautisAuthManager $skautisAuthManager,
@@ -20,10 +20,7 @@ final class HomePresenter extends Presenter
 	public function renderDefault(): void
 	{
 		$isLoggedIn = $this->skautisAuthManager->isLoggedIn();
-		$this->template->isLoggedIn = $isLoggedIn;
-		
 		$userData = $isLoggedIn ? $this->skautisAuthManager->getUserData() : null;
-		$this->template->userData = $userData;
 
 		$isAdmin = $isLoggedIn ? $this->skautisAuthManager->isAdmin() : false;
 		$this->template->isAdmin = $isAdmin;

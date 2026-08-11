@@ -314,4 +314,12 @@ class VotingRepository
 			'closed' => $closed,
 		];
 	}
+
+	/**
+	 * Získá uživatele podle jeho SkautIS person ID
+	 */
+	public function getUserByPersonId(int $personId): ?ActiveRow
+	{
+		return $this->database->table('users')->where('skautis_person_id', $personId)->fetch();
+	}
 }

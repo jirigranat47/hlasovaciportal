@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Presentation\Sign;
 
-use Nette\Application\UI\Presenter;
+use App\Presentation\BasePresenter;
 use App\Model\SkautisAuthManager;
 
-final class SignPresenter extends Presenter
+final class SignPresenter extends BasePresenter
 {
 	public function __construct(
 		private SkautisAuthManager $skautisAuthManager

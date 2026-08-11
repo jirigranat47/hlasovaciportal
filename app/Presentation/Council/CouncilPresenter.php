@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Presentation\Council;
 
-use Nette\Application\UI\Presenter;
+use App\Presentation\BasePresenter;
 use Nette\Application\UI\Form;
 use App\Model\SkautisAuthManager;
 use App\Model\VotingRepository;
 
-final class CouncilPresenter extends Presenter
+final class CouncilPresenter extends BasePresenter
 {
 	private array $skautisMembers = [];
 

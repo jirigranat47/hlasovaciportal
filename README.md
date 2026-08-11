@@ -28,3 +28,16 @@ parameters:
 		appId: 'VAŠE-PRIDELENE-APP-ID'
 		isTest: true # Pro vývoj nechte true (směřuje na test-is.skaut.cz)
 ```
+
+## 🛠 Lokální simulace přihlášení (vývoj a testování)
+
+Pro usnadnění lokálního vývoje bez nutnosti přihlašování přes reálný SkautIS můžete simulovat přihlášení různých rolí pomocí následujících URL adres:
+
+* **Zakladatel / Administrátor jednotky** (zakládá hlasování, není v radě):
+  [http://localhost:8000/sign/dev-login?unitId=123&personId=9999&personName=Admin+Zakladatel&roleKey=administrator&roleName=Administrátor](http://localhost:8000/sign/dev-login?unitId=123&personId=9999&personName=Admin+Zakladatel&roleKey=administrator&roleName=Administrátor)
+* **Člen rady č. 1 (Jan Novák)**:
+  [http://localhost:8000/sign/dev-login?unitId=123&personId=1001&personName=Jan+Novak&roleKey=clened&roleName=Člen](http://localhost:8000/sign/dev-login?unitId=123&personId=1001&personName=Jan+Novak&roleKey=clened&roleName=Člen)
+* **Člen rady č. 2 (Petr Svoboda)**:
+  [http://localhost:8000/sign/dev-login?unitId=123&personId=1002&personName=Petr+Svoboda&roleKey=clened&roleName=Člen](http://localhost:8000/sign/dev-login?unitId=123&personId=1002&personName=Petr+Svoboda&roleKey=clened&roleName=Člen)
+* **Host / Běžný člen** (není v radě, nezaložil hlasování):
+  [http://localhost:8000/sign/dev-login?unitId=123&personId=5555&personName=Host+Skaut&roleKey=clened&roleName=Člen](http://localhost:8000/sign/dev-login?unitId=123&personId=5555&personName=Host+Skaut&roleKey=clened&roleName=Člen)

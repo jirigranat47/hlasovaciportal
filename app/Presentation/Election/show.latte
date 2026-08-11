@@ -37,9 +37,9 @@
 			<div class="election-card" style="border-left: 5px solid var(--skaut-yellow);">
 				<h2 style="color: var(--skaut-blue); margin-top: 0; font-size: 1.2rem;">Odevzdání Vašeho Hlasu</h2>
 
-				{if !$isCouncilMember}
+				{if !$canVote}
 					<p style="color: #721c24; background: #f8d7da; padding: 0.8rem; border-radius: 4px; margin: 0; font-weight: bold;">
-						Nemáte oprávnění hlasovat. Nejste zapsán(a) na seznamu Rady této jednotky.
+						Nemáte oprávnění hlasovat. Nejste zapsán(a) na seznamu Rady této jednotky ani zakladatelem tohoto hlasování.
 					</p>
 				{elseif $hasVoted}
 					<p style="color: #155724; background: #d4edda; padding: 0.8rem; border-radius: 4px; margin: 0; font-weight: bold;">
