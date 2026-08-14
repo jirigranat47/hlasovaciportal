@@ -47,3 +47,15 @@ Pro usnadnění lokálního vývoje bez nutnosti přihlašování přes reálný
   [http://localhost:8000/sign/dev-login?unitId=123&personId=1005&personName=Lucie+Černá&roleKey=clened&roleName=Člen](http://localhost:8000/sign/dev-login?unitId=123&personId=1005&personName=Lucie+%C4%8Cern%C3%A1&roleKey=clened&roleName=%C4%8Clen)
 * **Host / Běžný člen** (není v radě, nezaložil hlasování):
   [http://localhost:8000/sign/dev-login?unitId=123&personId=5555&personName=Host+Skaut&roleKey=clened&roleName=Člen](http://localhost:8000/sign/dev-login?unitId=123&personId=5555&personName=Host+Skaut&roleKey=clened&roleName=Člen)
+
+---
+
+## 🔒 Bezpečnost a integrita dat
+
+Podrobná bezpečnostní analýza a argumentace ohledně ochrany proti manipulaci s hlasy, důvěryhodnosti databázových záznamů a izolace jednotek je zpracována v samostatném dokumentu [`ANALYZA-BEZPECNOSTI.md`](ANALYZA-BEZPECNOSTI.md).
+
+---
+
+## ⏰ Nastavení Cronu bez CLI na webhostingu
+
+Možnosti spouštění plánovaných úloh a volání webcronu (Cron-Job.org, Railway Docker, GitHub Actions) jsou popsané v souboru [`CRON.md`](CRON.md).
