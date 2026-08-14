@@ -49,9 +49,10 @@ class CronManager
 			}
 
 			$link = rtrim($this->baseUrl, '/') . '/election/show/' . $el->id;
-			$subject = 'Zahájeno hlasování: ' . $el->title;
+			$subject = 'Zahájeno hlasování č. ' . $el->resolution_number . ': ' . $el->title;
 			
 			$body = "<h2>Zahájeno hlasování rady jednotky</h2>";
+			$body .= "<p><strong>Číslo usnesení:</strong> " . htmlspecialchars($el->resolution_number) . "</p>";
 			$body .= "<p>Bylo zahájeno nové vnitřní hlasování o návrhu: <strong>" . htmlspecialchars($el->title) . "</strong></p>";
 			if ($el->proposal_received_date) {
 				$body .= "<p>Datum přijetí návrhu: " . $el->proposal_received_date->format('d. m. Y') . "</p>";
@@ -107,9 +108,10 @@ class CronManager
 			$proCount = $votesCount['Pro'] ?? 0;
 			$isAdopted = $proCount > ($totalMembers / 2);
 
-			$subject = 'Výsledky hlasování: ' . $el->title;
+			$subject = 'Výsledky hlasování č. ' . $el->resolution_number . ': ' . $el->title;
 
 			$body = "<h2>Výsledky hlasování rady jednotky</h2>";
+			$body .= "<p><strong>Číslo usnesení:</strong> " . htmlspecialchars($el->resolution_number) . "</p>";
 			$body .= "<p>Hlasování o návrhu <strong>" . htmlspecialchars($el->title) . "</strong> bylo ukončeno.</p>";
 			
 			if ($isAdopted) {

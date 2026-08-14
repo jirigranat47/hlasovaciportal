@@ -149,10 +149,12 @@ final class CouncilPresenter extends BasePresenter
 			try {
 				$this->votingRepository->saveSmtpSettings($unitId, $values);
 				$this->flashMessage('SMTP nastavení bylo úspěšně uloženo.', 'success');
-				$this->redirect('Home:default');
 			} catch (\Throwable $e) {
 				$this->flashMessage('Chyba při ukládání: ' . $e->getMessage(), 'danger');
+				return;
 			}
+
+			$this->redirect('Home:default');
 		};
 
 		return $form;

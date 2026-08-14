@@ -112,41 +112,109 @@ class VotingRepository
 
 	/**
 	 * Zkontroluje, zda daná osoba již hlasovala
+	/**
+	 * Vrátí aktuální hlas dané osoby v hlasování
 	 */
-	public function hasVoted(int $electionId, int $personId): bool
+	public function getUserVote(int $electionId, int $personId): ?ActiveRow
 	{
 		return $this->database->table('votes')
 			->where('election_id', $electionId)
 			->where('person_id', $personId)
-			->count() > 0;
+			->fetch();
 	}
 
 	/**
-	 * Odevzdá hlas (jmenovitě s kontrolou duplicity)
+	 * Zkontroluje, zda daná osoba již hlasovala
+	 */
+	public function hasVoted(int $electionId, int $personId): bool
+	{
+		return $this->getUserVote($electionId, $personId) !== null;
+	}
+
+	/**
+	 * Odevzdá nebo změní hlas (s evidencí historie)
 	 */
 	public function vote(int $electionId, int $optionId, int $personId, string $personName): bool
 	{
-		if ($this->hasVoted($electionId, $personId)) {
+		$targetOption = $this->database->table('options')->get($optionId);
+		if (!$targetOption || (int)$targetOption->election_id !== $electionId) {
 			return false;
 		}
 
+		$existingVote = $this->getUserVote($electionId, $personId);
+		$now = new \DateTime();
+
 		$this->database->beginTransaction();
 		try {
-			// Vložíme hlas
-			$this->database->table('votes')->insert([
-				'election_id' => $electionId,
-				'person_id' => $personId,
-				'person_name' => $personName,
-				'option_id' => $optionId,
-				'created_at' => new \DateTime(),
-			]);
+			if ($existingVote) {
+				// Pokud hlasoval pro stejnou možnost, nic neměníme
+				if ((int)$existingVote->option_id === $optionId) {
+					$this->database->commit();
+					return true;
+				}
 
-			// Inkrementujeme počítadlo
-			$this->database->table('options')
-				->where('id', $optionId)
-				->update([
-					'votes_count' => $this->database->literal('votes_count + 1'),
+				$oldOptionId = (int)$existingVote->option_id;
+
+				// Dekrementujeme starou možnost
+				$this->database->table('options')
+					->where('id', $oldOptionId)
+					->update([
+						'votes_count' => $this->database->literal('GREATEST(0, votes_count - 1)'),
+					]);
+
+				// Inkrementujeme novou možnost
+				$this->database->table('options')
+					->where('id', $optionId)
+					->update([
+						'votes_count' => $this->database->literal('votes_count + 1'),
+					]);
+
+				// Aktualizujeme existující hlas
+				$existingVote->update([
+					'option_id' => $optionId,
+					'person_name' => $personName,
+					'created_at' => $now,
 				]);
+
+				// Záznam do historie změny hlasování
+				$this->database->table('vote_history')->insert([
+					'election_id' => $electionId,
+					'person_id' => $personId,
+					'person_name' => $personName,
+					'option_id' => $optionId,
+					'option_title' => $targetOption->title,
+					'action' => 'changed',
+					'created_at' => $now,
+				]);
+
+			} else {
+				// Vložíme nový hlas
+				$this->database->table('votes')->insert([
+					'election_id' => $electionId,
+					'person_id' => $personId,
+					'person_name' => $personName,
+					'option_id' => $optionId,
+					'created_at' => $now,
+				]);
+
+				// Inkrementujeme počítadlo
+				$this->database->table('options')
+					->where('id', $optionId)
+					->update([
+						'votes_count' => $this->database->literal('votes_count + 1'),
+					]);
+
+				// Záznam do historie nového hlasu
+				$this->database->table('vote_history')->insert([
+					'election_id' => $electionId,
+					'person_id' => $personId,
+					'person_name' => $personName,
+					'option_id' => $optionId,
+					'option_title' => $targetOption->title,
+					'action' => 'voted',
+					'created_at' => $now,
+				]);
+			}
 
 			$this->database->commit();
 			return true;
@@ -157,19 +225,39 @@ class VotingRepository
 	}
 
 	/**
+	 * Zkontroluje, zda číslo usnesení v dané jednotce již existuje
+	 */
+	public function isResolutionNumberExists(int $unitId, string $resolutionNumber, ?int $excludeElectionId = null): bool
+	{
+		$query = $this->database->table('elections')
+			->where('unit_id', $unitId)
+			->where('resolution_number', trim($resolutionNumber));
+
+		if ($excludeElectionId !== null) {
+			$query->where('id !=', $excludeElectionId);
+		}
+
+		return $query->count() > 0;
+	}
+
+	/**
 	 * Založí nové hlasování a vytvoří standardní možnosti Pro, Proti, Zdržel se
 	 */
 	public function createElection(array $values, int $unitId, int $createdByPersonId): ActiveRow
 	{
 		$this->database->beginTransaction();
 		try {
+			$endDate = new \DateTime($values['end_date']);
+			$endDate->setTime(23, 59, 59);
+
 			$election = $this->database->table('elections')->insert([
+				'resolution_number' => trim($values['resolution_number']),
 				'title' => $values['title'],
 				'description' => $values['description'] ?? null,
 				'unit_id' => $unitId,
 				'status' => 'draft',
 				'proposal_received_date' => $values['proposal_received_date'] ? new \DateTime($values['proposal_received_date']) : null,
-				'end_date' => new \DateTime($values['end_date']),
+				'end_date' => $endDate,
 				'created_by_person_id' => $createdByPersonId,
 				'created_at' => new \DateTime(),
 			]);
@@ -196,11 +284,15 @@ class VotingRepository
 	{
 		$election = $this->getElection($id);
 		if ($election && $election->status === 'draft') {
+			$endDate = new \DateTime($values['end_date']);
+			$endDate->setTime(23, 59, 59);
+
 			$election->update([
+				'resolution_number' => trim($values['resolution_number']),
 				'title' => $values['title'],
 				'description' => $values['description'] ?? null,
 				'proposal_received_date' => $values['proposal_received_date'] ? new \DateTime($values['proposal_received_date']) : null,
-				'end_date' => new \DateTime($values['end_date']),
+				'end_date' => $endDate,
 			]);
 		}
 	}
@@ -245,6 +337,7 @@ class VotingRepository
 				'person_name' => $vote->person_name,
 				'option_id' => $vote->option_id,
 				'option_title' => $vote->option->title,
+				'created_at' => $vote->created_at,
 			];
 		}
 
@@ -252,6 +345,17 @@ class VotingRepository
 			'options' => $options,
 			'votes' => $votesByPerson,
 		];
+	}
+
+	/**
+	 * Získá kompletní historii a auditní log změny hlasů pro dané hlasování
+	 */
+	public function getVoteHistory(int $electionId): array
+	{
+		return $this->database->table('vote_history')
+			->where('election_id', $electionId)
+			->order('created_at DESC, id DESC')
+			->fetchAll();
 	}
 
 	/**

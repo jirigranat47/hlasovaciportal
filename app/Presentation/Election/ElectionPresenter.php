@@ -21,11 +21,34 @@ final class ElectionPresenter extends BasePresenter
 	protected function startup(): void
 	{
 		parent::startup();
-		file_put_contents('/var/www/html/log/debug.log', "DEBUG: startup - action=" . $this->getAction() . ", signal=" . json_encode($this->getSignal()) . ", params=" . json_encode($this->getParameters()) . "\n", FILE_APPEND);
 		if (!$this->skautisAuthManager->isLoggedIn()) {
 			$this->flashMessage('Pro přístup k hlasováním se musíte nejprve přihlásit přes SkautIS.', 'warning');
 			$this->redirect('Sign:in');
 		}
+	}
+
+	protected function beforeRender(): void
+	{
+		parent::beforeRender();
+		$this->template->addFilter('sanitizeNote', [self::class, 'sanitizeNote']);
+	}
+
+	public static function sanitizeNote(?string $html): string
+	{
+		if ($html === null || trim($html) === '') {
+			return '';
+		}
+
+		$allowedTags = '<b><strong><i><em><u><ul><ol><li><a><p><br>';
+		$clean = strip_tags($html, $allowedTags);
+
+		$clean = preg_replace_callback('/<a\s+[^>]*href=["\']([^"\']*)["\'][^>]*>(.*?)<\/a>/i', function ($matches) {
+			$url = htmlspecialchars($matches[1], ENT_QUOTES, 'UTF-8');
+			$text = $matches[2];
+			return '<a href="' . $url . '" target="_blank" rel="noopener noreferrer" style="color: var(--skaut-blue); text-decoration: underline;">' . $text . '</a>';
+		}, $clean);
+
+		return $clean;
 	}
 
 	public function actionShow(int $id): void
@@ -57,12 +80,15 @@ final class ElectionPresenter extends BasePresenter
 		}
 
 		$options = $this->votingRepository->getOptions($id);
-		$hasVoted = $this->votingRepository->hasVoted($id, $personId);
-		$canVote = $isCouncilMember || $isCreator;
+		$userVote = $this->votingRepository->getUserVote($id, $personId);
+		$hasVoted = ($userVote !== null);
+		$canVote = $isCouncilMember;
 
 		$this->template->election = $election;
 		$this->template->options = $options;
 		$this->template->hasVoted = $hasVoted;
+		$this->template->userVote = $userVote;
+		$this->template->userVoteOptionId = $userVote ? (int)$userVote->option_id : null;
 		$this->template->isClosed = $isClosed;
 		$this->template->isCouncilMember = $isCouncilMember;
 		$this->template->isAdmin = $isAdmin;
@@ -75,28 +101,8 @@ final class ElectionPresenter extends BasePresenter
 
 		if ($showVoterList) {
 			$councilMembers = $this->votingRepository->getCouncilMembers($unitId);
-
-			// Pokud zakladatel není členem rady, přidáme ho do seznamu hlasujících
-			$isCreatorCouncilMember = false;
-			foreach ($councilMembers as $m) {
-				if ((int)$m->person_id === (int)$election->created_by_person_id) {
-					$isCreatorCouncilMember = true;
-					break;
-				}
-			}
-
-			if (!$isCreatorCouncilMember) {
-				$creatorUser = $this->votingRepository->getUserByPersonId((int)$election->created_by_person_id);
-				$creatorName = $creatorUser ? $creatorUser->full_name : 'Zakladatel';
-
-				$pseudoMember = (object)[
-					'person_id' => (int)$election->created_by_person_id,
-					'full_name' => $creatorName . ' (Zakladatel)',
-				];
-				$councilMembers[] = $pseudoMember;
-			}
-
 			$results = $this->votingRepository->getElectionResults($id);
+			$voteHistory = $this->votingRepository->getVoteHistory($id);
 
 			$voterList = [];
 			$votesCount = [
@@ -115,6 +121,7 @@ final class ElectionPresenter extends BasePresenter
 					'name' => $m->full_name,
 					'voted' => $vote !== null,
 					'choice' => $vote ? $vote['option_title'] : null,
+					'votedAt' => $vote ? $vote['created_at'] : null,
 				];
 			}
 
@@ -125,6 +132,7 @@ final class ElectionPresenter extends BasePresenter
 			$this->template->votesCount = $votesCount;
 			$this->template->totalMembers = $totalMembers;
 			$this->template->isAdopted = $proCount > ($totalMembers / 2);
+			$this->template->voteHistory = $voteHistory;
 		} else {
 			// Pro hosty spočítáme pouze anonymní agregované výsledky
 			$votesCount = [
@@ -138,29 +146,16 @@ final class ElectionPresenter extends BasePresenter
 			$this->template->votesCount = $votesCount;
 			
 			// Pro nečlena počítáme přijetí podle počtu členů rady (který musíme stejně načíst z DB)
-			$councilMembers = $this->votingRepository->getCouncilMembers($unitId);
-			$isCreatorCouncilMember = false;
-			foreach ($councilMembers as $m) {
-				if ((int)$m->person_id === (int)$election->created_by_person_id) {
-					$isCreatorCouncilMember = true;
-					break;
-				}
-			}
-
-			$councilMembersCount = count($councilMembers);
-			if (!$isCreatorCouncilMember) {
-				$councilMembersCount += 1;
-			}
-
+			$councilMembersCount = count($this->votingRepository->getCouncilMembers($unitId));
 			$proCount = $votesCount['Pro'] ?? 0;
 			$this->template->totalMembers = $councilMembersCount;
 			$this->template->isAdopted = $proCount > ($councilMembersCount / 2);
+			$this->template->voteHistory = [];
 		}
 	}
 
 	public function handleVote(int $electionId, int $optionId): void
 	{
-		file_put_contents('/var/www/html/log/debug.log', "DEBUG: handleVote entered - electionId=$electionId, optionId=$optionId\n", FILE_APPEND);
 		$election = $this->votingRepository->getElection($electionId);
 		if (!$election || $election->status !== 'published') {
 			$this->flashMessage('Hlasování nebylo nalezeno nebo není aktivní.', 'danger');
@@ -172,10 +167,8 @@ final class ElectionPresenter extends BasePresenter
 		$personId = (int)$userData['personId'];
 
 		$isCouncilMember = $this->votingRepository->isCouncilMember($unitId, $personId);
-		$isCreator = ((int)$election->created_by_person_id === $personId);
-
-		if (!$isCouncilMember && !$isCreator) {
-			$this->flashMessage('Hlasovat mohou pouze registrovaní členové rady nebo zakladatel hlasování.', 'danger');
+		if (!$isCouncilMember) {
+			$this->flashMessage('Hlasovat mohou pouze registrovaní členové rady.', 'danger');
 			$this->redirect('show', $electionId);
 		}
 
@@ -188,9 +181,9 @@ final class ElectionPresenter extends BasePresenter
 		$success = $this->votingRepository->vote($electionId, $optionId, $personId, $userData['personName']);
 
 		if ($success) {
-			$this->flashMessage('Váš hlas byl úspěšně zaznamenán.', 'success');
+			$this->flashMessage('Váš hlas byl úspěšně zaznamenán / změněn.', 'success');
 		} else {
-			$this->flashMessage('V tomto hlasování jste již hlasovali nebo došlo k chybě.', 'danger');
+			$this->flashMessage('Při ukládání hlasu došlo k chybě.', 'danger');
 		}
 
 		$this->redirect('show', $electionId);
@@ -214,10 +207,11 @@ final class ElectionPresenter extends BasePresenter
 		}
 
 		$this['electionForm']->setDefaults([
+			'resolution_number' => $election->resolution_number,
 			'title' => $election->title,
 			'description' => $election->description,
 			'proposal_received_date' => $election->proposal_received_date ? $election->proposal_received_date->format('Y-m-d') : null,
-			'end_date' => $election->end_date->format('Y-m-d\TH:i'),
+			'end_date' => $election->end_date->format('Y-m-d'),
 		]);
 		$this->template->id = $id;
 	}
@@ -252,19 +246,41 @@ final class ElectionPresenter extends BasePresenter
 	{
 		$form = new Form();
 
-		$form->addText('title', 'Název (Téma) hlasování:')
-			->setRequired('Zadejte název hlasování.');
+		$form->addText('resolution_number', 'Číslo usnesení:')
+			->setRequired('Zadejte číslo usnesení.')
+			->addRule(function ($control) use ($form) {
+				$userData = $this->skautisAuthManager->getUserData();
+				$unitId = (int)($userData['unitId'] ?? 0);
+				$id = $this->getParameter('id');
+				$excludeId = $id !== null ? (int)$id : null;
+				return !$this->votingRepository->isResolutionNumberExists($unitId, (string)$control->getValue(), $excludeId);
+			}, 'Číslo usnesení v rámci této jednotky již existuje. Zadejte prosím jiné číslo.');
 
-		$form->addTextArea('description', 'Popis / podklady k hlasování:')
+		$form->addTextArea('title', 'Text usnesení:')
+			->setRequired('Zadejte text usnesení.');
+
+		$form->addTextArea('description', 'Poznámka:')
 			->setNullable();
 
 		$form->addText('proposal_received_date', 'Datum obdržení návrhu:')
 			->setHtmlType('date')
 			->setNullable();
 
-		$form->addText('end_date', 'Termín ukončení hlasování (do kdy):')
-			->setHtmlType('datetime-local')
-			->setRequired('Zadejte datum a čas konce hlasování.');
+		$todayStr = (new \DateTime())->format('Y-m-d');
+
+		$form->addText('end_date', 'Datum konce hlasování (do 23:59):')
+			->setHtmlType('date')
+			->setHtmlAttribute('min', $todayStr)
+			->setRequired('Zadejte datum konce hlasování.')
+			->addRule(function ($control) {
+				$val = $control->getValue();
+				if (!$val) {
+					return true;
+				}
+				$endDate = new \DateTime($val);
+				$endDate->setTime(23, 59, 59);
+				return $endDate > new \DateTime();
+			}, 'Datum konce hlasování musí být v budoucnosti. Nelze zadat datum v minulosti.');
 
 		$form->addSubmit('submit', 'Uložit hlasování');
 
@@ -274,18 +290,24 @@ final class ElectionPresenter extends BasePresenter
 			$personId = (int)$userData['personId'];
 
 			$id = $this->getParameter('id');
+			$redirectTarget = null;
 			try {
 				if ($id !== null) {
 					$this->votingRepository->updateElection((int)$id, (array)$values);
 					$this->flashMessage('Hlasování bylo úspěšně upraveno.', 'success');
-					$this->redirect('show', $id);
+					$redirectTarget = ['show', (int)$id];
 				} else {
 					$election = $this->votingRepository->createElection((array)$values, $unitId, $personId);
 					$this->flashMessage('Návrh hlasování byl úspěšně vytvořen (zatím v režimu Draft).', 'success');
-					$this->redirect('show', $election->id);
+					$redirectTarget = ['show', (int)$election->id];
 				}
 			} catch (\Throwable $e) {
 				$this->flashMessage('Chyba při ukládání: ' . $e->getMessage(), 'danger');
+				return;
+			}
+
+			if ($redirectTarget) {
+				$this->redirect(...$redirectTarget);
 			}
 		};
 

@@ -8,17 +8,34 @@
 	<p style="color: var(--skaut-muted);">Vytvořte nové hlasování pro radu jednotky. Po vytvoření bude hlasování v režimu návrhu (Draft), což vám umožní jej před publikováním ještě upravit nebo smazat.</p>
 </div>
 
-<div class="election-card" style="max-width: 600px; margin: 0 auto 3rem auto; padding: 2rem;">
+<div class="election-card" style="max-width: 650px; margin: 0 auto 3rem auto; padding: 2rem;">
 	<form n:name="electionForm" style="display: flex; flex-direction: column; gap: 1.2rem;">
 		
 		<div style="display: flex; flex-direction: column; gap: 5px;">
-			<label n:name="title" style="font-weight: bold;">Téma / Název hlasování:</label>
-			<input n:name="title" class="form-control" placeholder="např. Schválení rozpočtu na rok 2026" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem;">
+			<label n:name="resolution_number" style="font-weight: bold;">Číslo usnesení (musí být jedinečné v rámci jednotky):</label>
+			<input n:name="resolution_number" class="form-control" placeholder="např. 2026/01 nebo 12/2026-SR" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem;">
 		</div>
 
 		<div style="display: flex; flex-direction: column; gap: 5px;">
-			<label n:name="description" style="font-weight: bold;">Popis / Podrobné zadání / Odkazy na dokumenty:</label>
-			<textarea n:name="description" class="form-control" rows="8" placeholder="Vložte text usnesení, zdůvodnění a odkazy na přílohy..." style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; font-family: inherit; resize: vertical;"></textarea>
+			<label n:name="title" style="font-weight: bold;">Text usnesení:</label>
+			<textarea n:name="title" class="form-control" rows="3" placeholder="Zadejte přesné znění usnesení..." style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; font-family: inherit; resize: vertical;"></textarea>
+		</div>
+
+		<div style="display: flex; flex-direction: column; gap: 5px;">
+			<label n:name="description" style="font-weight: bold;">Poznámka (doplňující informace a podklady):</label>
+			
+			<div class="wysiwyg-wrapper">
+				<div class="rich-toolbar">
+					<button type="button" class="btn-tb" onclick="execCmd('bold')" title="Tučné"><b>B</b></button>
+					<button type="button" class="btn-tb" onclick="execCmd('italic')" title="Kurzíva"><i>I</i></button>
+					<button type="button" class="btn-tb" onclick="execCmd('underline')" title="Podtržené"><u>U</u></button>
+					<button type="button" class="btn-tb" onclick="execCmd('insertUnorderedList')" title="Odrážkový seznam">• Seznam</button>
+					<button type="button" class="btn-tb" onclick="execLink()" title="Vložit odkaz">🔗 Odkaz</button>
+				</div>
+				<div id="wysiwygEditor" contenteditable="true" class="wysiwyg-content" placeholder="Zde můžete přehledně psát doplňující informace s použitím vizuálního formátování (tučné, kurzíva, seznam, odkaz)..."></div>
+			</div>
+
+			<textarea n:name="description" id="noteField" style="display: none;"></textarea>
 		</div>
 
 		<div style="display: flex; gap: 1rem; flex-wrap: wrap;">
@@ -28,7 +45,7 @@
 			</div>
 			
 			<div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 5px;">
-				<label n:name="end_date" style="font-weight: bold;">Termín ukončení hlasování (do kdy):</label>
+				<label n:name="end_date" style="font-weight: bold;">Datum konce hlasování (do 23:59):</label>
 				<input n:name="end_date" class="form-control" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; width: 100%;">
 			</div>
 		</div>
@@ -37,4 +54,44 @@
 	</form>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+	const editor = document.getElementById('wysiwygEditor');
+	const hiddenField = document.getElementById('noteField');
+	if (!editor || !hiddenField) return;
+
+	if (hiddenField.value) {
+		editor.innerHTML = hiddenField.value;
+	}
+
+	editor.addEventListener('input', syncField);
+	editor.addEventListener('blur', syncField);
+
+	const form = editor.closest('form');
+	if (form) {
+		form.addEventListener('submit', syncField);
+	}
+});
+
+function execCmd(command) {
+	document.execCommand(command, false, null);
+	syncField();
+}
+
+function execLink() {
+	const url = prompt('Zadejte URL adresu odkazu:', 'https://');
+	if (url && url.trim() !== '') {
+		document.execCommand('createLink', false, url);
+		syncField();
+	}
+}
+
+function syncField() {
+	const editor = document.getElementById('wysiwygEditor');
+	const hiddenField = document.getElementById('noteField');
+	if (editor && hiddenField) {
+		hiddenField.value = editor.innerHTML;
+	}
+}
+</script>
 {/block}

@@ -45,18 +45,21 @@
 			</div>
 		{else}
 			<div n:foreach="$activeElections as $el" class="election-card" style="margin-bottom: 1rem;">
-				<div class="election-header" style="display: flex; justify-content: space-between; align-items: center;">
-					<div>
-						<h3 style="margin: 0; font-size: 1.2rem;"><a n:href="Election:show, $el->id" style="color: var(--skaut-blue); text-decoration: none; font-weight: bold;">{$el->title}</a></h3>
+				<div class="election-header" style="display: flex; justify-content: space-between; align-items: center; gap: 1.5rem;">
+					<div style="flex: 1; min-width: 0;">
+						<div style="font-size: 0.85rem; font-weight: bold; color: var(--skaut-blue); text-transform: uppercase; margin-bottom: 2px;">
+							Usnesení č. {$el->resolution_number}
+						</div>
+						<h3 style="margin: 0; font-size: 1.15rem; line-height: 1.5;"><a n:href="Election:show, $el->id" style="color: var(--skaut-blue); text-decoration: none; font-weight: bold;">{$el->title}</a></h3>
 						<p style="color: var(--skaut-muted); margin: 5px 0 0 0; font-size: 0.9rem;">
-							Termín ukončení: <strong>{$el->end_date|date:'d. m. Y H:i'}</strong>
+							Termín ukončení: <strong>{$el->end_date|date:'d. m. Y'} (23:59)</strong>
 							{if $el->proposal_received_date}
 								| Návrh obdržen: <strong>{$el->proposal_received_date|date:'d. m. Y'}</strong>
 							{/if}
 						</p>
 					</div>
-					<div>
-						<a n:href="Election:show, $el->id" class="btn btn-vote">Otevřít detail</a>
+					<div style="flex-shrink: 0; white-space: nowrap;">
+						<a n:href="Election:show, $el->id" class="btn btn-vote" style="white-space: nowrap; padding: 0.7rem 1.3rem;">Otevřít detail</a>
 					</div>
 				</div>
 			</div>
@@ -73,17 +76,20 @@
 				</div>
 			{else}
 				<div n:foreach="$draftElections as $el" class="election-card" style="margin-bottom: 1rem; border-color: #ddd; background: #fafafa;">
-					<div class="election-header" style="display: flex; justify-content: space-between; align-items: center;">
-						<div>
-							<h3 style="margin: 0; font-size: 1.2rem; color: #555;">{$el->title}</h3>
+					<div class="election-header" style="display: flex; justify-content: space-between; align-items: center; gap: 1.5rem;">
+						<div style="flex: 1; min-width: 0;">
+							<div style="font-size: 0.85rem; font-weight: bold; color: #666; text-transform: uppercase; margin-bottom: 2px;">
+								Usnesení č. {$el->resolution_number}
+							</div>
+							<h3 style="margin: 0; font-size: 1.15rem; line-height: 1.5; color: #555;">{$el->title}</h3>
 							<p style="color: var(--skaut-muted); margin: 5px 0 0 0; font-size: 0.9rem;">
-								Nastavený termín konce: <strong>{$el->end_date|date:'d. m. Y H:i'}</strong>
+								Nastavený termín konce: <strong>{$el->end_date|date:'d. m. Y'} (23:59)</strong>
 							</p>
 						</div>
-						<div style="display: flex; gap: 0.5rem;">
-							<a n:href="Election:publish, $el->id" class="btn btn-vote" style="background: #28a745; font-size: 0.85rem;" onclick="return confirm('Opravdu chcete toto hlasování publikovat? Všem členům rady bude odeslána notifikace a hlasování již nepůjde upravovat ani smazat.')">Publikovat</a>
-							<a n:href="Election:edit, $el->id" class="btn btn-vote" style="background: var(--skaut-blue); font-size: 0.85rem;">Upravit</a>
-							<a n:href="Election:delete, $el->id" class="btn btn-vote" style="background: #dc3545; font-size: 0.85rem;" onclick="return confirm('Opravdu chcete tento návrh smazat?')">Smazat</a>
+						<div style="display: flex; gap: 0.5rem; flex-shrink: 0; white-space: nowrap;">
+							<a n:href="Election:publish, $el->id" class="btn btn-vote" style="background: #28a745; font-size: 0.85rem; white-space: nowrap;" onclick="return confirm('Opravdu chcete toto hlasování publikovat? Všem členům rady bude odeslána notifikace a hlasování již nepůjde upravovat ani smazat.')">Publikovat</a>
+							<a n:href="Election:edit, $el->id" class="btn btn-vote" style="background: var(--skaut-blue); font-size: 0.85rem; white-space: nowrap;">Upravit</a>
+							<a n:href="Election:delete, $el->id" class="btn btn-vote" style="background: #dc3545; font-size: 0.85rem; white-space: nowrap;" onclick="return confirm('Opravdu chcete tento návrh smazat?')">Smazat</a>
 						</div>
 					</div>
 				</div>
@@ -100,15 +106,18 @@
 			</div>
 		{else}
 			<div n:foreach="$closedElections as $el" class="election-card" style="margin-bottom: 1rem; opacity: 0.85;">
-				<div class="election-header" style="display: flex; justify-content: space-between; align-items: center;">
-					<div>
-						<h3 style="margin: 0; font-size: 1.2rem;"><a n:href="Election:show, $el->id" style="color: #333; text-decoration: none; font-weight: bold;">{$el->title}</a></h3>
+				<div class="election-header" style="display: flex; justify-content: space-between; align-items: center; gap: 1.5rem;">
+					<div style="flex: 1; min-width: 0;">
+						<div style="font-size: 0.85rem; font-weight: bold; color: #555; text-transform: uppercase; margin-bottom: 2px;">
+							Usnesení č. {$el->resolution_number}
+						</div>
+						<h3 style="margin: 0; font-size: 1.15rem; line-height: 1.5;"><a n:href="Election:show, $el->id" style="color: #333; text-decoration: none; font-weight: bold;">{$el->title}</a></h3>
 						<p style="color: var(--skaut-muted); margin: 5px 0 0 0; font-size: 0.9rem;">
-							Ukončeno: <strong>{$el->end_date|date:'d. m. Y H:i'}</strong>
+							Ukončeno: <strong>{$el->end_date|date:'d. m. Y'} (23:59)</strong>
 						</p>
 					</div>
-					<div>
-						<a n:href="Election:show, $el->id" class="btn" style="background: #777; color: white;">Výsledky</a>
+					<div style="flex-shrink: 0; white-space: nowrap;">
+						<a n:href="Election:show, $el->id" class="btn" style="background: #777; color: white; white-space: nowrap; padding: 0.7rem 1.4rem;">Výsledky</a>
 					</div>
 				</div>
 			</div>

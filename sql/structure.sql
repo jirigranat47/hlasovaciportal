@@ -12,8 +12,9 @@ CREATE TABLE IF NOT EXISTS `users` (
 
 CREATE TABLE IF NOT EXISTS `elections` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `title` VARCHAR(255) NOT NULL,
-  `description` TEXT NULL,
+  `resolution_number` VARCHAR(100) NOT NULL COMMENT 'Cislo usneseni',
+  `title` TEXT NOT NULL COMMENT 'Text usneseni',
+  `description` TEXT NULL COMMENT 'Poznamka s podklady',
   `unit_id` INT NOT NULL COMMENT 'ID jednotky pro kterou je hlasovani urceno',
   `status` VARCHAR(20) NOT NULL DEFAULT 'draft' COMMENT 'draft / published',
   `proposal_received_date` DATE NULL COMMENT 'Datum obdrzeni navrhu',
@@ -21,7 +22,8 @@ CREATE TABLE IF NOT EXISTS `elections` (
   `created_by_person_id` INT NOT NULL COMMENT 'ID osoby ktera hlasovani zalozila',
   `notification_sent` TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Zda byl odeslan email o zahajeni',
   `results_sent` TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Zda byl odeslan email s vysledky',
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY `unique_resolution_per_unit` (`unit_id`, `resolution_number`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `options` (
@@ -64,3 +66,17 @@ CREATE TABLE IF NOT EXISTS `smtp_settings` (
   `from_email` VARCHAR(100) NOT NULL,
   `from_name` VARCHAR(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `vote_history` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `election_id` INT NOT NULL,
+  `person_id` INT NOT NULL COMMENT 'SkautIS ID hlasujiciho',
+  `person_name` VARCHAR(150) NOT NULL,
+  `option_id` INT NOT NULL,
+  `option_title` VARCHAR(100) NOT NULL,
+  `action` VARCHAR(20) NOT NULL COMMENT 'voted / changed',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`election_id`) REFERENCES `elections`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`option_id`) REFERENCES `options`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+

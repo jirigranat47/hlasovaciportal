@@ -19,6 +19,7 @@ $queries = array_filter(
 $connection->query('SET FOREIGN_KEY_CHECKS=0');
 try {
 	// Smažeme tabulky v opačném pořadí závislostí
+	$connection->query('DROP TABLE IF EXISTS `vote_history`');
 	$connection->query('DROP TABLE IF EXISTS `votes`');
 	$connection->query('DROP TABLE IF EXISTS `options`');
 	$connection->query('DROP TABLE IF EXISTS `elections`');

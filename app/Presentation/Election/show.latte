@@ -1,35 +1,70 @@
-{block title}{$election->title}{/block}
+{block title}Usnesení č. {$election->resolution_number}{/block}
 
 {block content}
 
-<div style="margin-bottom: 2rem;">
-	<a n:href="Home:default" style="color: var(--skaut-muted); text-decoration: none;">&larr; Zpět na přehled</a>
-	<h1 style="color: var(--skaut-blue); margin-top: 0.5rem; margin-bottom: 0.5rem;">{$election->title}</h1>
-	
-	<div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-		{if $election->status === 'draft'}
-			<span class="election-status" style="background: #e9ecef; color: #495057;">● Rozpracovaný návrh (Draft)</span>
-		{elseif $isClosed}
-			<span class="election-status" style="background: #f8d7da; color: #721c24;">● Ukončeno</span>
-		{else}
-			<span class="election-status status-active">● Probíhá</span>
-		{/if}
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+	<div>
+		<a n:href="Home:default" style="color: var(--skaut-muted); text-decoration: none;">&larr; Zpět na přehled</a>
+		<h1 style="color: var(--skaut-blue); margin-top: 0.5rem; margin-bottom: 0.5rem;">Usnesení č. {$election->resolution_number}</h1>
+		
+		<div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+			{if $election->status === 'draft'}
+				<span class="election-status" style="background: #e9ecef; color: #495057;">● Rozpracovaný návrh (Draft)</span>
+			{elseif $isClosed}
+				<span class="election-status" style="background: #f8d7da; color: #721c24;">● Ukončeno</span>
+			{else}
+				<span class="election-status status-active">● Probíhá</span>
+			{/if}
 
-		{if $election->proposal_received_date}
-			<span style="color: var(--skaut-muted); font-size: 0.9rem;">| Návrh obdržen: <strong>{$election->proposal_received_date|date:'d. m. Y'}</strong></span>
-		{/if}
-		<span style="color: var(--skaut-muted); font-size: 0.9rem;">| Konec hlasování: <strong>{$election->end_date|date:'d. m. Y H:i'}</strong></span>
+			{if $election->proposal_received_date}
+				<span style="color: var(--skaut-muted); font-size: 0.9rem;">| Návrh obdržen: <strong>{$election->proposal_received_date|date:'d. m. Y'}</strong></span>
+			{/if}
+			<span style="color: var(--skaut-muted); font-size: 0.9rem;">| Konec hlasování: <strong>{$election->end_date|date:'d. m. Y'} (23:59)</strong></span>
+			{if !$isClosed}
+				<span style="color: var(--skaut-muted); font-size: 0.9rem;" id="countdownContainer" data-end-date="{$election->end_date|date:'Y-m-d\TH:i:s'}">
+					| Konec hlasování za: <strong style="color: var(--skaut-blue);" id="countdownTimer">...</strong>
+				</span>
+			{/if}
+		</div>
 	</div>
+
+	{if $isAdmin && $election->status === 'draft'}
+		<div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+			<a n:href="delete, $election->id" class="btn btn-vote" style="background: #dc3545; font-size: 0.9rem;" onclick="return confirm('Opravdu chcete tento návrh smazat?')">🗑 Smazat</a>
+		</div>
+	{/if}
 </div>
 
 <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
 	{* LEVÝ PANEL - DETAILY A HLASOVÁNÍ *}
 	<div style="flex: 2; min-width: 300px; display: flex; flex-direction: column; gap: 1.5rem;">
 		
-		{* POPIS HLASOVÁNÍ *}
+		{if $isAdmin && $election->status === 'draft'}
+			<div style="background: #fff8e6; border: 1px solid #ffe58f; padding: 1rem 1.2rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+				<div>
+					<strong style="color: #873800;">ℹ Návrh hlasování (Draft)</strong>
+					<p style="margin: 2px 0 0 0; color: #612500; font-size: 0.9rem;">Toto hlasování zatím nebylo publikováno a je viditelné pouze pro správce.</p>
+				</div>
+				<div style="display: flex; gap: 0.5rem;">
+					<a n:href="edit, $election->id" class="btn btn-vote" style="background: var(--skaut-blue); font-size: 0.85rem;">Upravit návrh</a>
+					<a n:href="publish, $election->id" class="btn btn-vote" style="background: #28a745; font-size: 0.85rem;" onclick="return confirm('Opravdu chcete toto hlasování publikovat?')">✓ Publikovat</a>
+				</div>
+			</div>
+		{/if}
+
+		{* POPIS A TEXT USNESENÍ *}
 		<div class="election-card">
-			<h2 style="color: var(--skaut-blue); margin-top: 0; font-size: 1.2rem;">Zadání a podklady</h2>
-			<div style="white-space: pre-wrap; line-height: 1.6; color: #333;">{$election->description ?? 'K tomuto hlasování nebyl vložen žádný popis.'}</div>
+			<h2 style="color: var(--skaut-blue); margin-top: 0; font-size: 1.2rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.5rem;">Znění usnesení</h2>
+			<div style="font-size: 1.1rem; font-weight: 600; line-height: 1.6; color: #1e293b; margin-bottom: 1.5rem; background: #f8fafc; padding: 1rem; border-left: 4px solid var(--skaut-blue); border-radius: 4px;">
+				{$election->title}
+			</div>
+
+			{if $election->description}
+				<h3 style="color: var(--skaut-blue); margin-top: 1rem; font-size: 1rem;">Poznámka a doplňující informace:</h3>
+				<div style="line-height: 1.6; color: #333;" class="formatted-note">
+					{$election->description|sanitizeNote|noescape}
+				</div>
+			{/if}
 		</div>
 
 		{* HLASOVACÍ DLAŽDICE / ODEVZDÁNÍ HLASU *}
@@ -39,27 +74,29 @@
 
 				{if !$canVote}
 					<p style="color: #721c24; background: #f8d7da; padding: 0.8rem; border-radius: 4px; margin: 0; font-weight: bold;">
-						Nemáte oprávnění hlasovat. Nejste zapsán(a) na seznamu Rady této jednotky ani zakladatelem tohoto hlasování.
-					</p>
-				{elseif $hasVoted}
-					<p style="color: #155724; background: #d4edda; padding: 0.8rem; border-radius: 4px; margin: 0; font-weight: bold;">
-						✓ Váš hlas byl úspěšně zaznamenán. V tomto hlasování jste již hlasoval(a).
+						Nemáte oprávnění hlasovat. Nejste zapsán(a) na seznamu Rady této jednotky.
 					</p>
 				{else}
-					<p style="margin-top: 0; color: #555;">Vyberte jednu z možností pro odevzdání vašeho hlasu. Hlasování je jmenovité.</p>
-					
-					<div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem;">
+					{if $hasVoted}
+						<p style="color: #155724; background: #d4edda; padding: 0.8rem; border-radius: 4px; margin-bottom: 1rem; font-weight: bold;">
+							✓ Váš hlas byl zaznamenán. Sůj hlas můžete až do konce hlasování kdykoliv změnit.
+						</p>
+					{else}
+						<p style="margin-top: 0; color: #555;">Vyberte jednu z možností pro odevzdání vašeho hlasu. Hlasování je jmenovité.</p>
+					{/if}
+
+					<div class="vote-btn-group">
 						{foreach $options as $opt}
-							{var $btnColor = '#555'}
-							{if $opt->title === 'Pro'}{$btnColor = '#28a745'}{/if}
-							{if $opt->title === 'Proti'}{$btnColor = '#dc3545'}{/if}
-							{if $opt->title === 'Zdržel se'}{$btnColor = '#ffc107'}{/if}
+							{var $btnClass = 'btn-vote-choice'}
+							{if $opt->title === 'Pro'}{var $btnClass = $btnClass . ' btn-vote-pro'}{/if}
+							{if $opt->title === 'Proti'}{var $btnClass = $btnClass . ' btn-vote-proti'}{/if}
+							{if $opt->title === 'Zdržel se'}{var $btnClass = $btnClass . ' btn-vote-zdrzel'}{/if}
+							{if $userVoteOptionId === $opt->id}{var $btnClass = $btnClass . ' btn-vote-selected'}{/if}
 
 							<a n:href="vote! electionId: $election->id, optionId: $opt->id" 
-							   class="btn" 
-							   style="background: {$btnColor|noescape}; color: {if $opt->title === 'Zdržel se'}#000{else}#fff{/if}; font-weight: bold; padding: 1rem 2rem; font-size: 1.2rem; border-radius: 4px; text-decoration: none; text-align: center; flex: 1; min-width: 120px;"
-							   onclick="return confirm('Opravdu chcete hlasovat pro možnost &quot;{$opt->title}&quot;?')">
-								{$opt->title}
+							   class="{$btnClass}"
+							   onclick="return confirm({if $userVoteOptionId === $opt->id}'Váš hlas pro tuto možnost je již zaznamenán. Chcete jej potvrdit?'{else}'Opravdu chcete odevzdat/změnit váš hlas na &quot;{$opt->title}&quot;?'{/if})">
+								<span>{$opt->title}</span>
 							</a>
 						{/foreach}
 					</div>
@@ -148,7 +185,12 @@
 
 				<div style="display: flex; flex-direction: column; gap: 0.6rem;">
 					<div n:foreach="$voterList as $v" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f8f9fa; padding-bottom: 5px;">
-						<span style="font-weight: 500; font-size: 0.95rem;">{$v['name']}</span>
+						<div>
+							<span style="font-weight: 500; font-size: 0.95rem;">{$v['name']}</span>
+							{if $v['voted'] && $v['votedAt']}
+								<div style="font-size: 0.75rem; color: #888;">{$v['votedAt']|date:'d. m. Y H:i'}</div>
+							{/if}
+						</div>
 						<span>
 							{if $v['voted']}
 								{var $badgeBg = '#e2f0d9'}{var $badgeColor = '#385723'}
@@ -166,8 +208,83 @@
 					</div>
 				</div>
 			</div>
+
+			{* HISTORIE ZMĚN HLASŮ (Audit Log) *}
+			<div class="election-card" n:if="!empty($voteHistory)">
+				<h2 style="color: var(--skaut-blue); margin-top: 0; font-size: 1.1rem; margin-bottom: 0.8rem;">📜 Historie hlasování (Audit log)</h2>
+				<div style="display: flex; flex-direction: column; gap: 4px; max-height: 250px; overflow-y: auto;">
+					<div n:foreach="$voteHistory as $h" class="history-item">
+						<div>
+							<strong>{$h->person_name}</strong>
+							<span style="color: #666;">
+								{if $h->action === 'voted'}hlasoval(a){else}změnil(a) hlas na{/if}
+							</span>
+							<span style="font-weight: bold;">{$h->option_title}</span>
+						</div>
+						<div style="font-size: 0.78rem; color: #888;">
+							{$h->created_at|date:'d. m. Y H:i:s'}
+						</div>
+					</div>
+				</div>
+			</div>
 		{/if}
 	</div>
 </div>
+
+{if !$isClosed}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+	const container = document.getElementById('countdownContainer');
+	const timerEl = document.getElementById('countdownTimer');
+	if (!container || !timerEl) return;
+
+	const endDateStr = container.getAttribute('data-end-date');
+	const endDate = new Date(endDateStr);
+
+	function updateTimer() {
+		const now = new Date();
+		const diff = endDate - now;
+
+		if (diff <= 0) {
+			timerEl.textContent = 'hlasování ukončeno';
+			return;
+		}
+
+		const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+		const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+		const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+		const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+		let parts = [];
+		if (days > 0) {
+			let dayWord = 'dní';
+			if (days === 1) dayWord = 'den';
+			else if (days >= 2 && days <= 4) dayWord = 'dny';
+			parts.push(days + ' ' + dayWord);
+		}
+		
+		let hourWord = 'hodin';
+		if (hours === 1) hourWord = 'hodina';
+		else if (hours >= 2 && hours <= 4) hourWord = 'hodiny';
+		parts.push(hours + ' ' + hourWord);
+
+		let minWord = 'minut';
+		if (minutes === 1) minWord = 'minuta';
+		else if (minutes >= 2 && minutes <= 4) minWord = 'minuty';
+		parts.push(minutes + ' ' + minWord);
+
+		let secWord = 'sekund';
+		if (seconds === 1) secWord = 'sekunda';
+		else if (seconds >= 2 && seconds <= 4) secWord = 'sekundy';
+		parts.push(seconds + ' ' + secWord);
+
+		timerEl.textContent = parts.join(' ');
+	}
+
+	updateTimer();
+	setInterval(updateTimer, 1000);
+});
+</script>
+{/if}
 
 {/block}

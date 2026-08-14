@@ -93,6 +93,7 @@ header {
   border: none;
   transition: all 0.2s ease;
   font-size: 0.95rem;
+  white-space: nowrap;
 }
 
 .btn-primary {
@@ -191,8 +192,8 @@ main {
 .election-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 1rem;
+  align-items: center;
+  gap: 1.5rem;
 }
 
 .election-title {
@@ -245,3 +246,176 @@ footer {
   font-size: 0.9rem;
   margin-top: auto;
 }
+
+/* Voting Buttons & Audit Log Styles */
+.vote-btn-group {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1.2rem;
+}
+
+.btn-vote-choice {
+  flex: 1;
+  min-width: 130px;
+  padding: 1.1rem 1.5rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  border-radius: 10px;
+  text-decoration: none;
+  text-align: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid transparent;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.btn-vote-pro {
+  background-color: #10b981;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+.btn-vote-pro:hover {
+  background-color: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+}
+
+.btn-vote-proti {
+  background-color: #ef4444;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+}
+.btn-vote-proti:hover {
+  background-color: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
+}
+
+.btn-vote-zdrzel {
+  background-color: #f59e0b;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+}
+.btn-vote-zdrzel:hover {
+  background-color: #d97706;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.35);
+}
+
+.btn-vote-selected {
+  border-color: var(--skaut-blue);
+  transform: scale(1.03);
+  box-shadow: 0 0 0 4px rgba(0, 51, 102, 0.25);
+}
+
+.btn-vote-selected::after {
+  content: '✓ Váš hlas';
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(0, 0, 0, 0.15);
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-top: 4px;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px dashed #e2e8f0;
+  font-size: 0.9rem;
+}
+.history-item:last-child {
+  border-bottom: none;
+}
+
+/* Rich text toolbar styles */
+.rich-toolbar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+  background: #f1f5f9;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  flex-wrap: wrap;
+}
+
+.rich-toolbar .btn-tb {
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--skaut-text);
+  transition: all 0.15s ease;
+}
+
+.rich-toolbar .btn-tb:hover {
+  background: var(--skaut-blue);
+  color: white;
+  border-color: var(--skaut-blue);
+}
+
+/* Visual WYSIWYG Editor */
+.wysiwyg-wrapper {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.wysiwyg-wrapper:focus-within {
+  border-color: var(--skaut-blue);
+  box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.15);
+}
+
+.wysiwyg-wrapper .rich-toolbar {
+  border: none;
+  border-bottom: 1px solid #e2e8f0;
+  border-radius: 0;
+  margin-bottom: 0;
+}
+
+.wysiwyg-content {
+  min-height: 180px;
+  padding: 12px 16px;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--skaut-text);
+  outline: none;
+}
+
+.wysiwyg-content[placeholder]:empty::before {
+  content: attr(placeholder);
+  color: #94a3b8;
+  cursor: text;
+}
+
+.wysiwyg-content ul, .wysiwyg-content ol {
+  padding-left: 24px;
+  margin: 8px 0;
+}
+
+.wysiwyg-content a {
+  color: var(--skaut-blue);
+  text-decoration: underline;
+}
+
+.formatted-note ul, .formatted-note ol {
+  padding-left: 24px;
+  margin: 8px 0;
+}
+
