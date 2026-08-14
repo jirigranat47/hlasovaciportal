@@ -10,6 +10,8 @@
 		<div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
 			{if $election->status === 'draft'}
 				<span class="election-status" style="background: #e9ecef; color: #495057;">● Rozpracovaný návrh (Draft)</span>
+			{elseif $election->status === 'cancelled'}
+				<span class="election-status" style="background: #f8d7da; color: #721c24; font-weight: bold;">● Stornováno</span>
 			{elseif $isClosed}
 				<span class="election-status" style="background: #f8d7da; color: #721c24;">● Ukončeno</span>
 			{else}
@@ -32,6 +34,10 @@
 		<div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
 			<a n:href="delete, $election->id" class="btn btn-vote" style="background: #dc3545; font-size: 0.9rem;" onclick="return confirm('Opravdu chcete tento návrh smazat?')">🗑 Smazat</a>
 		</div>
+	{elseif $isAdmin && $election->status === 'published'}
+		<div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+			<button type="button" class="btn btn-vote" style="background: #dc3545; font-size: 0.9rem;" onclick="document.getElementById('cancelFormBox').style.display='block'">🚫 Stornovat hlasování</button>
+		</div>
 	{/if}
 </div>
 
@@ -39,6 +45,47 @@
 	{* LEVÝ PANEL - DETAILY A HLASOVÁNÍ *}
 	<div style="flex: 2; min-width: 300px; display: flex; flex-direction: column; gap: 1.5rem;">
 		
+		{if $election->status === 'cancelled'}
+			<div style="background: #f8d7da; border: 2px solid #f5c6cb; border-left: 6px solid #dc3545; padding: 1.2rem; border-radius: 8px; margin-bottom: 1.5rem;">
+				<h2 style="color: #721c24; margin-top: 0; font-size: 1.2rem;">🚫 Toto hlasování bylo stornováno správcem</h2>
+				{if $election->cancellation_reason}
+					<p style="margin: 0.5rem 0 0 0; color: #721c24; font-size: 1rem; line-height: 1.5;">
+						<strong>Důvod stornování:</strong><br>
+						{$election->cancellation_reason|breaklines}
+					</p>
+				{/if}
+				{if $election->cancelled_at}
+					<p style="margin: 0.5rem 0 0 0; color: #856404; font-size: 0.85rem;">
+						Stornováno dne: {$election->cancelled_at|date:'d. m. Y H:i'}
+					</p>
+				{/if}
+				{if $isAdmin}
+					<div style="margin-top: 1.2rem;">
+						<a n:href="duplicate, $election->id" class="btn btn-vote" style="background: var(--skaut-blue); text-decoration: none;">➕ Vytvořit opravené hlasování (Kopie)</a>
+					</div>
+				{/if}
+			</div>
+		{/if}
+
+		{if $isAdmin && $election->status === 'published'}
+			<div id="cancelFormBox" style="display: none; background: #fff5f5; border: 2px solid #feb2b2; border-left: 6px solid #dc3545; padding: 1.2rem; border-radius: 8px; margin-bottom: 1.5rem;">
+				<h3 style="color: #c53030; margin-top: 0;">🚫 Stornovat toto hlasování</h3>
+				<p style="color: #742a2a; font-size: 0.9rem; margin-bottom: 1rem;">
+					Stornováním se ukončí probíhající hlasování, dosavadní hlasy budou stornovány a všem členům rady bude odeslána e-mailová notifikace s udaným důvodem.
+				</p>
+				<form n:name="cancelForm">
+					<div style="display: flex; flex-direction: column; gap: 8px;">
+						<label n:name="cancellation_reason" style="font-weight: bold; color: #742a2a;">Důvod stornování (bude odeslán e-mailem členům rady):</label>
+						<textarea n:name="cancellation_reason" rows="3" style="width: 100%; padding: 8px; border: 1px solid #feb2b2; border-radius: 4px; font-size: 0.95rem;"></textarea>
+						<div style="display: flex; gap: 10px; margin-top: 10px;">
+							<button n:name="submit" class="btn" style="background: #dc3545; color: white;">Potvrdit stornování hlasování</button>
+							<button type="button" class="btn" style="background: #e2e8f0; color: #333;" onclick="document.getElementById('cancelFormBox').style.display='none'">Zrušit</button>
+						</div>
+					</div>
+				</form>
+			</div>
+		{/if}
+
 		{if $isAdmin && $election->status === 'draft'}
 			<div style="background: #fff8e6; border: 1px solid #ffe58f; padding: 1rem 1.2rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
 				<div>

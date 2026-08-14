@@ -34,6 +34,7 @@ final class HomePresenter extends BasePresenter
 		$active = [];
 		$drafts = [];
 		$closed = [];
+		$userVotes = [];
 
 		if ($isLoggedIn && $userData) {
 			$elections = $this->votingRepository->getElectionsForUser(
@@ -45,10 +46,13 @@ final class HomePresenter extends BasePresenter
 			$active = $elections['active'];
 			$drafts = $elections['drafts'];
 			$closed = $elections['closed'];
+
+			$userVotes = $this->votingRepository->getUserVotesForPerson((int)$userData['personId']);
 		}
 
 		$this->template->activeElections = $active;
 		$this->template->draftElections = $drafts;
 		$this->template->closedElections = $closed;
+		$this->template->userVotes = $userVotes;
 	}
 }

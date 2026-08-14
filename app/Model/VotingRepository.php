@@ -322,6 +322,22 @@ class VotingRepository
 	}
 
 	/**
+	 * Stornuje publikované hlasování
+	 */
+	public function cancelElection(int $id, string $reason, int $cancelledByPersonId): void
+	{
+		$election = $this->getElection($id);
+		if ($election && $election->status === 'published') {
+			$election->update([
+				'status' => 'cancelled',
+				'cancellation_reason' => trim($reason),
+				'cancelled_at' => new \DateTime(),
+				'cancelled_by_person_id' => $cancelledByPersonId,
+			]);
+		}
+	}
+
+	/**
 	 * Získá výsledky hlasování (agregovaně i jmenovitě)
 	 */
 	public function getElectionResults(int $electionId): array
@@ -376,6 +392,8 @@ class VotingRepository
 			foreach ($all as $el) {
 				if ($el->status === 'draft') {
 					$drafts[] = $el;
+				} elseif ($el->status === 'cancelled') {
+					$closed[] = $el;
 				} elseif ($el->end_date > $now) {
 					$active[] = $el;
 				} else {
@@ -383,17 +401,19 @@ class VotingRepository
 				}
 			}
 		} elseif ($isCouncilMember) {
-			// Člen rady vidí pouze publikovaná (aktivní a uzavřená)
-			$all = $electionsQuery->where('status', 'published')->order('created_at DESC')->fetchAll();
+			// Člen rady vidí publikovaná a stornovaná
+			$all = $electionsQuery->where('status', ['published', 'cancelled'])->order('created_at DESC')->fetchAll();
 			foreach ($all as $el) {
-				if ($el->end_date > $now) {
+				if ($el->status === 'cancelled') {
+					$closed[] = $el;
+				} elseif ($el->end_date > $now) {
 					$active[] = $el;
 				} else {
 					$closed[] = $el;
 				}
 			}
 		} else {
-			// Nečlen rady nevidí aktivní. Vidí pouze uzavřená, kterých se sám zúčastnil
+			// Nečlen rady nevidí aktivní. Vidí pouze uzavřená/stornovaná, kterých se sám zúčastnil
 			$participatedElectionIds = $this->database->table('votes')
 				->where('person_id', $personId)
 				->select('election_id')
@@ -404,9 +424,8 @@ class VotingRepository
 			if (!empty($ids)) {
 				$closed = $this->database->table('elections')
 					->where('unit_id', $unitId)
-					->where('status', 'published')
+					->where('status', ['published', 'cancelled'])
 					->where('id', $ids)
-					->where('end_date <=', $now)
 					->order('created_at DESC')
 					->fetchAll();
 			}
@@ -417,6 +436,26 @@ class VotingRepository
 			'drafts' => $drafts,
 			'closed' => $closed,
 		];
+	}
+
+	/**
+	 * Získá všechny hlasy daného uživatele indexované podle election_id
+	 */
+	public function getUserVotesForPerson(int $personId): array
+	{
+		$votes = $this->database->table('votes')
+			->where('person_id', $personId)
+			->fetchAll();
+
+		$result = [];
+		foreach ($votes as $vote) {
+			$result[$vote->election_id] = [
+				'option_id' => $vote->option_id,
+				'option_title' => $vote->option->title,
+				'created_at' => $vote->created_at,
+			];
+		}
+		return $result;
 	}
 
 	/**

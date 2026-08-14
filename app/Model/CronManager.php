@@ -152,4 +152,42 @@ class CronManager
 			$el->update(['results_sent' => 1]);
 		}
 	}
+
+	/**
+	 * Odešle notifikaci členům rady o stornování hlasování
+	 */
+	public function sendCancellationNotification(ActiveRow $election, string $reason): void
+	{
+		$smtp = $this->votingRepository->getSmtpSettings($election->unit_id);
+		if (!$smtp) {
+			return;
+		}
+
+		$members = $this->votingRepository->getCouncilMembers($election->unit_id);
+		$recipients = [];
+		foreach ($members as $m) {
+			if (!empty($m->email)) {
+				$recipients[$m->email] = $m->full_name;
+			}
+		}
+
+		if (empty($recipients)) {
+			return;
+		}
+
+		$subject = 'STORNO hlasování č. ' . $election->resolution_number . ': ' . $election->title;
+
+		$body = "<h2 style=\"color: #dc3545;\">Hlasování bylo stornováno</h2>";
+		$body .= "<p>Hlasování o usnesení č. <strong>" . htmlspecialchars($election->resolution_number) . "</strong> (" . htmlspecialchars($election->title) . ") bylo správcem stornováno a ukončeno.</p>";
+		$body .= "<div style=\"background: #f8d7da; border-left: 4px solid #dc3545; padding: 12px; margin: 15px 0;\">";
+		$body .= "<strong>Důvod stornování:</strong><br>" . nl2br(htmlspecialchars($reason));
+		$body .= "</div>";
+		$body .= "<p>Všechny dosavadní hlasy u tohoto hlasování byly anulovány. Očekávejte prosím případné nové hlasování s opraveným zněním.</p>";
+
+		$link = rtrim($this->baseUrl, '/') . '/election/show/' . $election->id;
+		$body .= "<p>Záznam o stornovaném hlasování naleznete zde: <a href=\"" . $link . "\">" . $link . "</a></p>";
+		$body .= "<hr><p>Toto je automatický e-mail z Hlasovacího Portálu.</p>";
+
+		$this->mailSender->sendEmail($smtp, $recipients, $subject, $body);
+	}
 }

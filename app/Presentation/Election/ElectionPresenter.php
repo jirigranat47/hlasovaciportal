@@ -13,7 +13,8 @@ final class ElectionPresenter extends BasePresenter
 {
 	public function __construct(
 		private SkautisAuthManager $skautisAuthManager,
-		private VotingRepository $votingRepository
+		private VotingRepository $votingRepository,
+		private \App\Model\CronManager $cronManager
 	) {
 		parent::__construct();
 	}
@@ -67,11 +68,11 @@ final class ElectionPresenter extends BasePresenter
 		$isCreator = ((int)$election->created_by_person_id === $personId);
 
 		$now = new \DateTime();
-		$isClosed = $election->end_date <= $now;
+		$isClosed = ($election->end_date <= $now || $election->status === 'cancelled');
 
 		// Kontrola přístupových práv k tomuto hlasování (admin, člen rady, nebo zakladatel mají přístup)
 		if (!$isAdmin && !$isCouncilMember && !$isCreator) {
-			// Nečlen rady vidí pouze uzavřená hlasování, kterých se sám zúčastnil
+			// Nečlen rady vidí pouze uzavřená/stornovaná hlasování, kterých se sám zúčastnil
 			$hasVoted = $this->votingRepository->hasVoted($id, $personId);
 			if (!$isClosed || !$hasVoted) {
 				$this->flashMessage('Nemáte oprávnění k zobrazení tohoto hlasování.', 'danger');
@@ -82,7 +83,7 @@ final class ElectionPresenter extends BasePresenter
 		$options = $this->votingRepository->getOptions($id);
 		$userVote = $this->votingRepository->getUserVote($id, $personId);
 		$hasVoted = ($userVote !== null);
-		$canVote = $isCouncilMember;
+		$canVote = $isCouncilMember && !$isClosed && $election->status === 'published';
 
 		$this->template->election = $election;
 		$this->template->options = $options;
@@ -192,6 +193,35 @@ final class ElectionPresenter extends BasePresenter
 	public function actionCreate(): void
 	{
 		$this->checkAdmin();
+	}
+
+	public function actionDuplicate(int $id): void
+	{
+		$this->checkAdmin();
+		$election = $this->votingRepository->getElection($id);
+		if (!$election) {
+			$this->error('Hlasování nebylo nalezeno.', 404);
+		}
+
+		$userData = $this->skautisAuthManager->getUserData();
+		$unitId = (int)($userData['unitId'] ?? 0);
+
+		$newResNum = $election->resolution_number . '-oprava';
+		if ($this->votingRepository->isResolutionNumberExists($unitId, $newResNum)) {
+			$newResNum = $election->resolution_number . '-' . time();
+		}
+
+		$this['electionForm']->setDefaults([
+			'resolution_number' => $newResNum,
+			'title' => $election->title,
+			'description' => $election->description,
+			'proposal_received_date' => $election->proposal_received_date ? $election->proposal_received_date->format('Y-m-d') : null,
+			'end_date' => (new \DateTime('+7 days'))->format('Y-m-d'),
+		]);
+
+		$this->template->isDuplicate = true;
+		$this->template->originalResolutionNumber = $election->resolution_number;
+		$this->setView('create');
 	}
 
 	public function actionEdit(int $id): void
@@ -309,6 +339,35 @@ final class ElectionPresenter extends BasePresenter
 			if ($redirectTarget) {
 				$this->redirect(...$redirectTarget);
 			}
+		};
+
+		return $form;
+	}
+
+	protected function createComponentCancelForm(): Form
+	{
+		$form = new Form();
+		$form->addTextArea('cancellation_reason', 'Důvod stornování hlasování:')
+			->setRequired('Zadejte prosím důvod stornování hlasování.');
+		$form->addSubmit('submit', 'Potvrdit stornování hlasování');
+
+		$form->onSuccess[] = function (Form $form, \stdClass $values): void {
+			$this->checkAdmin();
+			$id = (int)$this->getParameter('id');
+			$userData = $this->skautisAuthManager->getUserData();
+			$personId = (int)$userData['personId'];
+
+			$election = $this->votingRepository->getElection($id);
+			if (!$election || $election->status !== 'published') {
+				$this->flashMessage('Stornovat lze pouze probíhající (publikovaná) hlasování.', 'warning');
+				$this->redirect('show', $id);
+			}
+
+			$this->votingRepository->cancelElection($id, $values->cancellation_reason, $personId);
+			$this->cronManager->sendCancellationNotification($election, $values->cancellation_reason);
+
+			$this->flashMessage('Hlasování bylo úspěšně stornováno a členům rady byla odeslána notifikace.', 'success');
+			$this->redirect('show', $id);
 		};
 
 		return $form;

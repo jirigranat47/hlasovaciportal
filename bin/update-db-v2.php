@@ -31,7 +31,19 @@ try {
 	foreach ($queries as $query) {
 		$connection->query($query);
 	}
-	echo "Database structure version 2 applied successfully.\n";
+
+	// Vložíme testovací členy rady pro jednotku 123
+	$connection->query("
+		INSERT INTO `council_members` (`unit_id`, `person_id`, `full_name`, `email`) VALUES
+		(123, 1001, 'Jan Novak', 'jan.novak@skaut.cz'),
+		(123, 1002, 'Petr Svoboda', 'petr.svoboda@skaut.cz'),
+		(123, 1003, 'Marie Dvořáková', 'marie.dvorakova@skaut.cz'),
+		(123, 1004, 'Tomáš Kučera', 'tomas.kucera@skaut.cz'),
+		(123, 1005, 'Lucie Černá', 'lucie.cerna@skaut.cz')
+		ON DUPLICATE KEY UPDATE `full_name` = VALUES(`full_name`), `email` = VALUES(`email`);
+	");
+
+	echo "Database structure version 2 applied and test council members added successfully.\n";
 } catch (\Throwable $e) {
 	$connection->query('SET FOREIGN_KEY_CHECKS=1');
 	echo "Error updating database: " . $e->getMessage() . "\n";
