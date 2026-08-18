@@ -20,6 +20,22 @@
 					<div class="user-info">
 						👤 <strong>{$userData['personName']}</strong>
 					</div>
+
+					{if !empty($userRoles)}
+						<div class="role-switcher">
+							<label for="role-select" class="sr-only" style="display: none;">Role:</label>
+							<select id="role-select" class="role-select" onchange="if (this.value) window.location.href = this.value;" title="Přepnout roli">
+								{foreach $userRoles as $r}
+									{var $rId = (int)($r['ID'] ?? 0)}
+									{var $isSelected = ($rId === (int)$userData['roleId']) || ((int)($r['ID_Role'] ?? 0) === (int)$userData['roleId'])}
+									<option value="{link switchRole!, roleId => $rId}" {if $isSelected}selected{/if}>
+										{$r['Role'] ?? ($r['DisplayName'] ?? 'Role')}{if !empty($r['Unit'])} – {$r['Unit']}{/if}
+									</option>
+								{/foreach}
+							</select>
+						</div>
+					{/if}
+
 					<a n:href="Sign:out" class="btn btn-secondary">Odhlásit se</a>
 				{else}
 					<a n:href="Sign:in" class="btn btn-primary">Přihlásit se přes SkautIS</a>

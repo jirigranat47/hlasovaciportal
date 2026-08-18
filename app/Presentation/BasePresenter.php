@@ -18,5 +18,18 @@ abstract class BasePresenter extends Presenter
 		$isLoggedIn = $this->baseAuthManager->isLoggedIn();
 		$this->template->isLoggedIn = $isLoggedIn;
 		$this->template->userData = $isLoggedIn ? $this->baseAuthManager->getUserData() : null;
+		$this->template->userRoles = $isLoggedIn ? $this->baseAuthManager->getAllUserRoles() : [];
+	}
+
+	public function handleSwitchRole(int $roleId): void
+	{
+		if ($this->baseAuthManager->switchRole($roleId)) {
+			$userData = $this->baseAuthManager->getUserData();
+			$this->flashMessage("Aktivní role byla změněna na: {$userData['roleName']}", 'success');
+		} else {
+			$this->flashMessage('Změnu role se nepodařilo provést.', 'danger');
+		}
+
+		$this->redirect('this');
 	}
 }

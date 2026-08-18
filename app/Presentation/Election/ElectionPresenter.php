@@ -96,8 +96,8 @@ final class ElectionPresenter extends BasePresenter
 		$this->template->isCreator = $isCreator;
 		$this->template->canVote = $canVote;
 
-		// Pouze zakladatel a členové rady vidí jmenný seznam hlasů
-		$showVoterList = $isCreator || $isCouncilMember;
+		// Zakladatel, všichni administrátoři jednotky a členové rady vidí jmenný seznam hlasů
+		$showVoterList = $isAdmin || $isCreator || $isCouncilMember;
 		$this->template->showVoterList = $showVoterList;
 
 		if ($showVoterList) {

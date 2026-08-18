@@ -68,22 +68,44 @@ class SkautisAuthManager
 				$this->session->personName = 'Skaut';
 			}
 
-			// Získáme detaily o aktivní roli pro kontrolu administrátorských práv
+			// Získáme detaily o všech rolích a aktivní roli pro kontrolu administrátorských práv
 			$this->session->roleName = '';
 			$this->session->roleKey = '';
-			if ($roleId !== null && !empty($userDetail?->ID)) {
+			$this->session->allRoles = [];
+
+			if (!empty($userDetail?->ID)) {
 				try {
 					$roles = $this->skautis->user->UserRoleAll([
 						'ID_User' => $userDetail->ID,
 					]);
+					
+					// Převedeme na čisté asociativní pole se všemi parametry
+					$rolesArray = json_decode(json_encode($roles), true);
+					if (isset($rolesArray['ID'])) {
+						// Pokud byla vrácena pouze jedna role (jako asociativní pole místo pole rolí)
+						$rolesArray = [$rolesArray];
+					}
+					$this->session->allRoles = $rolesArray;
+
+					// Tracy debug výpis
+					\Tracy\Debugger::barDump($rolesArray, 'SkautIS - Všechny role uživatele (UserRoleAll)');
+					\Tracy\Debugger::log($rolesArray, 'user-roles');
+
 					if (is_iterable($roles)) {
 						foreach ($roles as $role) {
-							if ((int)($role->ID ?? 0) === $roleId || (int)($role->ID_Role ?? 0) === $roleId) {
+							if ($roleId !== null && ((int)($role->ID ?? 0) === $roleId || (int)($role->ID_Role ?? 0) === $roleId)) {
 								$this->session->roleName = $role->Role ?? ($role->DisplayName ?? '');
 								$this->session->roleKey = $role->Key ?? '';
+								$this->session->unitName = $role->Unit ?? '';
+								if (!empty($role->ID_Unit)) {
+									$this->session->unitId = (int)$role->ID_Unit;
+								}
 								break;
 							}
 						}
+					}
+					if (empty($this->session->unitName) && !empty($rolesArray[0]['Unit'])) {
+						$this->session->unitName = $rolesArray[0]['Unit'];
 					}
 				} catch (\Throwable $e) {
 					\Tracy\Debugger::log($e, \Tracy\ILogger::WARNING);
@@ -123,9 +145,70 @@ class SkautisAuthManager
 			'personName' => $this->session->personName ?? 'Neznámý skaut',
 			'roleId' => $this->session->roleId ?? 0,
 			'unitId' => $this->session->unitId ?? 0,
+			'unitName' => $this->session->unitName ?? ($this->session->unitId ? (string)$this->session->unitId : ''),
 			'roleName' => $this->session->roleName ?? '',
 			'roleKey' => $this->session->roleKey ?? '',
 		];
+	}
+
+	/**
+	 * Vrátí všechny role uživatele ze SkautISu
+	 */
+	public function getAllUserRoles(): array
+	{
+		return $this->session->allRoles ?? [];
+	}
+
+	private ?string $lastError = null;
+
+	public function getLastError(): ?string
+	{
+		return $this->lastError;
+	}
+
+	/**
+	 * Přepne aktivní roli přihlášeného uživatele
+	 */
+	public function switchRole(int $userRoleId): bool
+	{
+		if (!$this->isLoggedIn()) {
+			return false;
+		}
+
+		$roles = $this->getAllUserRoles();
+		foreach ($roles as $role) {
+			if ((int)($role['ID'] ?? 0) === $userRoleId || (int)($role['ID_Role'] ?? 0) === $userRoleId) {
+				$roleId = (int)$role['ID'];
+				$unitId = isset($role['ID_Unit']) ? (int)$role['ID_Unit'] : null;
+
+				$this->session->roleId = $roleId;
+				$this->session->unitId = $unitId;
+				$this->session->roleName = $role['Role'] ?? ($role['DisplayName'] ?? '');
+				$this->session->roleKey = $role['Key'] ?? '';
+				$this->session->unitName = $role['Unit'] ?? '';
+
+				// 1. Přepneme roli přímo na serveru SkautISu
+				try {
+					$this->skautis->user->LoginUpdate([
+						'ID' => $this->session->token,
+						'ID_UserRole' => $roleId,
+					]);
+				} catch (\Throwable $e) {
+					\Tracy\Debugger::log($e, \Tracy\ILogger::WARNING);
+				}
+
+				// 2. Aktualizujeme data v instanci Skautis knihovny
+				$this->skautis->getUser()->updateLoginData(
+					$this->session->token,
+					$roleId,
+					$unitId
+				);
+
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -137,22 +220,14 @@ class SkautisAuthManager
 			return false;
 		}
 
-		$adminKeys = ['administrator', 'vedouci', 'hospodar', 'tajemnik', 'mistopredseda'];
-		$roleKey = strtolower($this->session->roleKey ?? '');
+		$adminKeys = ['vedouciKraj', 'vedouciOkres', 'vedouciStredisko'];
+		$roleKey = $this->session->roleKey ?? '';
 
 		foreach ($adminKeys as $key) {
-			if (str_contains($roleKey, $key)) {
+			if (stripos($roleKey, $key) !== false) {
 				return true;
 			}
-		}
-
-		$roleName = mb_strtolower($this->session->roleName ?? '', 'utf-8');
-		$adminWords = ['administrátor', 'vedoucí', 'hospodář', 'tajemník', 'místopředseda', 'předseda'];
-		foreach ($adminWords as $word) {
-			if (str_contains($roleName, $word)) {
-				return true;
-			}
-		}
+		}		
 
 		return false;
 	}
@@ -162,34 +237,107 @@ class SkautisAuthManager
 	 */
 	public function getUnitMembers(): array
 	{
+		$this->lastError = null;
 		if (!$this->isLoggedIn() || empty($this->session->unitId)) {
 			return [];
 		}
 
+		// Obnovíme / prodloužíme přihlašovací relaci
+		try {
+			$this->skautis->user->LoginUpdateRefresh(['ID' => $this->session->token]);
+		} catch (\Throwable $e) {
+			\Tracy\Debugger::log($e, \Tracy\ILogger::WARNING);
+		}
+
 		$members = [];
+		$errors = [];
+
+		// 1. Zkusíme UserRoleALLUnit z UserManagement (všechny osoby s rolí v jednotce)
+		try {
+			$roleList = $this->skautis->user->UserRoleALLUnit([
+				'ID_Unit' => (int)$this->session->unitId,
+			]);
+
+			if (is_iterable($roleList)) {
+				foreach ($roleList as $ur) {
+					$pId = (int)($ur->ID_Person ?? 0);
+					if ($pId > 0) {
+						$members[$pId] = [
+							'personId' => $pId,
+							'fullName' => $ur->Person ?? ($ur->DisplayName ?? "Osoba #$pId"),
+							'role' => $ur->Role ?? '',
+							'email' => null,
+						];
+					}
+				}
+			}
+		} catch (\Throwable $e) {
+			$errors[] = 'UserRoleALLUnit: ' . $e->getMessage();
+			\Tracy\Debugger::log($e, \Tracy\ILogger::WARNING);
+		}
+
+		// 2. Zkusíme PersonAll z OrganizationUnit (všechny osoby v jednotce)
 		try {
 			$list = $this->skautis->org->PersonAll([
-				'ID_Unit' => $this->session->unitId,
+				//'ID_Unit' => (int)$this->session->unitId,
+				'ID_Unit' => 25784
 			]);
 
 			if (is_iterable($list)) {
 				foreach ($list as $p) {
-					$members[] = [
-						'personId' => (int)$p->ID,
-						'fullName' => trim(($p->FirstName ?? '') . ' ' . ($p->LastName ?? '')),
-						'email' => $p->Email ?? ($p->EmailDefault ?? null),
-					];
+					$fullName = !empty($p->DisplayName) ? $p->DisplayName : trim(($p->FirstName ?? '') . ' ' . ($p->LastName ?? ''));
+					if (!empty($p->NickName) && !str_contains($fullName, $p->NickName)) {
+						$fullName .= " ({$p->NickName})";
+					}
+					$pId = (int)$p->ID;
+					if ($pId > 0) {
+						$members[$pId] = [
+							'personId' => $pId,
+							'fullName' => $fullName,
+							'email' => $p->Email ?? ($p->EmailDefault ?? ($members[$pId]['email'] ?? null)),
+						];
+					}
 				}
 			}
 		} catch (\Throwable $e) {
-			\Tracy\Debugger::log($e, \Tracy\ILogger::EXCEPTION);
-			// Vrátíme prázdné pole, pokud se nepodaří načíst (např. chybí práva na PersonAll ve Skautisu)
+			$errors[] = 'PersonAll: ' . $e->getMessage();
+			\Tracy\Debugger::log($e, \Tracy\ILogger::WARNING);
 		}
 
-		// Setřídíme abecedně podle jména
-		usort($members, fn($a, $b) => strcmp($a['fullName'], $b['fullName']));
+		// 3. Zkusíme MembershipAll z OrganizationUnit
+		if (count($members) < 3) {
+			try {
+				$mList = $this->skautis->org->MembershipAll([
+					'ID_Unit' => (int)$this->session->unitId,
+					'IsValid' => true,
+				]);
+				if (is_iterable($mList)) {
+					foreach ($mList as $m) {
+						$pId = (int)($m->ID_Person ?? $m->ID ?? 0);
+						if ($pId > 0 && !isset($members[$pId])) {
+							$members[$pId] = [
+								'personId' => $pId,
+								'fullName' => $m->Person ?? ($m->DisplayName ?? "Osoba #$pId"),
+								'email' => null,
+							];
+						}
+					}
+				}
+			} catch (\Throwable $e2) {
+				$errors[] = 'MembershipAll: ' . $e2->getMessage();
+				\Tracy\Debugger::log($e2, \Tracy\ILogger::WARNING);
+			}
+		}
 
-		return $members;
+		if (empty($members) && !empty($errors)) {
+			$this->lastError = implode(' | ', $errors);
+		}
+
+		$result = array_values($members);
+		// Setřídíme abecedně podle jména
+		usort($result, fn($a, $b) => strcmp($a['fullName'], $b['fullName']));
+
+		return $result;
 	}
 
 	/**

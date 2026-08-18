@@ -18,7 +18,7 @@
 		<div>
 			<h1 style="color: var(--skaut-blue); margin: 0;">{$userData['personName']}</h1>
 			<p style="color: var(--skaut-muted); margin: 5px 0 0 0;">
-				Aktivní role: <strong>{$userData['roleName']}</strong> | Jednotka ID: <strong>{$userData['unitId']}</strong>
+				Aktivní role: <strong>{$userData['roleName']}</strong> | Jednotka: <strong>{$userData['unitName'] ?: $userData['unitId']}</strong>
 				{if $isCouncilMember}
 					<span style="display: inline-block; margin-left: 10px; padding: 2px 8px; font-size: 0.8rem; background: #e2f0d9; color: #385723; border-radius: 10px; font-weight: bold;">Člen rady</span>
 				{else}
@@ -35,6 +35,74 @@
 			</div>
 		{/if}
 	</div>
+
+	{* TESTOVACÍ VÝPIS VŠECH ROLÍ UŽIVATELE *}
+	{if !empty($allUserRoles)}
+		<div style="margin-bottom: 2.5rem; background: #f8fafc; border: 2px dashed #0284c7; border-radius: 8px; padding: 1.25rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+			<details>
+				<summary style="cursor: pointer; font-weight: bold; color: #0369a1; font-size: 1.05rem; display: flex; align-items: center; justify-content: space-between;">
+					<span>🧪 Testovací výpis: Všechny role uživatele ze SkautISu (UserRoleAll) &bull; Nalezeno rolí: {count($allUserRoles)}</span>
+					<span style="font-size: 0.8rem; font-weight: normal; color: #64748b;">(Kliknutím rozbalit/sbalit)</span>
+				</summary>
+				
+				<div style="overflow-x: auto; margin-top: 1rem;">
+					<table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; background: white; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+						<thead>
+							<tr style="background: #0284c7; color: white; text-align: left;">
+								<th style="padding: 8px 10px; border: 1px solid #0369a1;">ID (UserRole)</th>
+								<th style="padding: 8px 10px; border: 1px solid #0369a1;">ID_Role</th>
+								<th style="padding: 8px 10px; border: 1px solid #0369a1;">Role</th>
+								<th style="padding: 8px 10px; border: 1px solid #0369a1;">Key</th>
+								<th style="padding: 8px 10px; border: 1px solid #0369a1;">ID_Unit</th>
+								<th style="padding: 8px 10px; border: 1px solid #0369a1;">Unit</th>
+								<th style="padding: 8px 10px; border: 1px solid #0369a1;">DisplayName</th>
+								<th style="padding: 8px 10px; border: 1px solid #0369a1;">Aktivní přihlášení?</th>
+								<th style="padding: 8px 10px; border: 1px solid #0369a1;">Všechny parametry (Raw JSON)</th>
+							</tr>
+						</thead>
+						<tbody>
+							{foreach $allUserRoles as $r}
+								{var $isActive = (($r['ID'] ?? null) == $userData['roleId']) || (($r['ID_Role'] ?? null) == $userData['roleId'])}
+								<tr style="{if $isActive}background: #fef9c3; font-weight: bold;{else}background: {if $iterator->isOdd()}#ffffff{else}#f8fafc{/if};{/if}">
+									<td style="padding: 8px 10px; border: 1px solid #e2e8f0;">
+										{$r['ID'] ?? '-'}
+									</td>
+									<td style="padding: 8px 10px; border: 1px solid #e2e8f0;">
+										{$r['ID_Role'] ?? '-'}
+									</td>
+									<td style="padding: 8px 10px; border: 1px solid #e2e8f0; color: #0369a1;">
+										{$r['Role'] ?? '-'}
+									</td>
+									<td style="padding: 8px 10px; border: 1px solid #e2e8f0;">
+										<code style="background: #e2e8f0; padding: 2px 5px; border-radius: 3px; font-size: 0.8rem;">{$r['Key'] ?? '-'}</code>
+									</td>
+									<td style="padding: 8px 10px; border: 1px solid #e2e8f0;">
+										{$r['ID_Unit'] ?? '-'}
+									</td>
+									<td style="padding: 8px 10px; border: 1px solid #e2e8f0;">
+										{$r['Unit'] ?? '-'}
+									</td>
+									<td style="padding: 8px 10px; border: 1px solid #e2e8f0;">
+										{$r['DisplayName'] ?? '-'}
+									</td>
+									<td style="padding: 8px 10px; border: 1px solid #e2e8f0; text-align: center;">
+										{if $isActive}
+											<span style="background: #16a34a; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">✓ Aktivní</span>
+										{else}
+											<span style="color: #94a3b8;">-</span>
+										{/if}
+									</td>
+									<td style="padding: 6px 10px; border: 1px solid #e2e8f0;">
+										<pre style="margin: 0; font-size: 0.73rem; max-height: 120px; overflow: auto; background: #0f172a; color: #f8fafc; padding: 6px; border-radius: 4px; line-height: 1.3;">{json_encode($r, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)}</pre>
+									</td>
+								</tr>
+							{/foreach}
+						</tbody>
+					</table>
+				</div>
+			</details>
+		</div>
+	{/if}
 
 	{* AKTIVNÍ HLASOVÁNÍ *}
 	<div style="margin-bottom: 3rem;">

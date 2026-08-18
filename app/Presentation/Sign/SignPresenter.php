@@ -52,6 +52,20 @@ final class SignPresenter extends BasePresenter
 	}
 
 	/**
+	 * Přepnutí role uživatele
+	 */
+	public function actionSwitchRole(int $roleId): void
+	{
+		if ($this->skautisAuthManager->switchRole($roleId)) {
+			$userData = $this->skautisAuthManager->getUserData();
+			$this->flashMessage("Aktivní role byla změněna na: {$userData['roleName']}", 'success');
+		} else {
+			$this->flashMessage('Změnu role se nepodařilo provést.', 'danger');
+		}
+		$this->redirect('Home:default');
+	}
+
+	/**
 	 * Vývojový login pro simulaci uživatele
 	 */
 	public function actionDevLogin(int $unitId, int $personId, string $personName, string $roleKey = 'clened', string $roleName = 'Člen'): void

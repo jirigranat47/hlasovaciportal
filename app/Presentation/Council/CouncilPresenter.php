@@ -43,6 +43,8 @@ final class CouncilPresenter extends BasePresenter
 		
 		// Načteme členy jednotky ze Skautisu pro dropdown
 		$this->skautisMembers = $this->skautisAuthManager->getUnitMembers();
+		$this->template->skautisMembersCount = count($this->skautisMembers);
+		$this->template->skautisError = $this->skautisAuthManager->getLastError();
 	}
 
 	public function actionDelete(int $personId): void
@@ -100,6 +102,36 @@ final class CouncilPresenter extends BasePresenter
 			try {
 				$this->votingRepository->addCouncilMember($unitId, $personId, $name, $email);
 				$this->flashMessage('Osoba byla úspěšně přidána do Rady jednotky.', 'success');
+			} catch (\Nette\Database\UniqueConstraintViolationException $e) {
+				$this->flashMessage('Tento uživatel již v radě jednotky je.', 'warning');
+			} catch (\Throwable $e) {
+				$this->flashMessage('Chyba při ukládání: ' . $e->getMessage(), 'danger');
+			}
+
+			$this->redirect('default');
+		};
+
+		return $form;
+	}
+
+	protected function createComponentAddManualMemberForm(): Form
+	{
+		$form = new Form();
+		$form->addInteger('personId', 'SkautIS Person ID:')
+			->setRequired('Zadejte číselné Person ID.');
+		$form->addText('fullName', 'Jméno a příjmení:')
+			->setRequired('Zadejte jméno osoby.');
+		$form->addEmail('email', 'E-mail (volitelné):')
+			->setNullable();
+		$form->addSubmit('submit', 'Přidat člena ručně');
+
+		$form->onSuccess[] = function (Form $form, \stdClass $values): void {
+			$userData = $this->skautisAuthManager->getUserData();
+			$unitId = (int)$userData['unitId'];
+
+			try {
+				$this->votingRepository->addCouncilMember($unitId, (int)$values->personId, $values->fullName, $values->email);
+				$this->flashMessage("Osoba {$values->fullName} byla úspěšně přidána do Rady jednotky.", 'success');
 			} catch (\Nette\Database\UniqueConstraintViolationException $e) {
 				$this->flashMessage('Tento uživatel již v radě jednotky je.', 'warning');
 			} catch (\Throwable $e) {
