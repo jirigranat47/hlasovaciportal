@@ -132,9 +132,9 @@ class VotingRepository
 	}
 
 	/**
-	 * Odevzdá nebo změní hlas (s evidencí historie)
+	 * Odevzdá nebo změní hlas (s evidencí historie a auditu)
 	 */
-	public function vote(int $electionId, int $optionId, int $personId, string $personName): bool
+	public function vote(int $electionId, int $optionId, int $personId, string $personName, ?string $roleName = null): bool
 	{
 		$targetOption = $this->database->table('options')->get($optionId);
 		if (!$targetOption || (int)$targetOption->election_id !== $electionId) {
@@ -187,6 +187,16 @@ class VotingRepository
 					'created_at' => $now,
 				]);
 
+				// Auditní záznam
+				$this->logElectionAudit(
+					$electionId,
+					$personId,
+					$personName,
+					$roleName,
+					'vote_changed',
+					"Změněn hlas na: '{$targetOption->title}'"
+				);
+
 			} else {
 				// Vložíme nový hlas
 				$this->database->table('votes')->insert([
@@ -214,6 +224,16 @@ class VotingRepository
 					'action' => 'voted',
 					'created_at' => $now,
 				]);
+
+				// Auditní záznam
+				$this->logElectionAudit(
+					$electionId,
+					$personId,
+					$personName,
+					$roleName,
+					'vote_cast',
+					"Odevzdán hlas: '{$targetOption->title}'"
+				);
 			}
 
 			$this->database->commit();
@@ -243,8 +263,13 @@ class VotingRepository
 	/**
 	 * Založí nové hlasování a vytvoří standardní možnosti Pro, Proti, Zdržel se
 	 */
-	public function createElection(array $values, int $unitId, int $createdByPersonId): ActiveRow
-	{
+	public function createElection(
+		array $values,
+		int $unitId,
+		int $createdByPersonId,
+		?string $personName = null,
+		?string $roleName = null
+	): ActiveRow {
 		$this->database->beginTransaction();
 		try {
 			$endDate = new \DateTime($values['end_date']);
@@ -269,6 +294,16 @@ class VotingRepository
 				['election_id' => $election->id, 'title' => 'Zdržel se'],
 			]);
 
+			// Auditní záznam
+			$this->logElectionAudit(
+				(int)$election->id,
+				$createdByPersonId,
+				$personName ?? "Osoba #$createdByPersonId",
+				$roleName,
+				'created_draft',
+				"Vytvořen návrh usnesení č. {$values['resolution_number']} (Draft). Termín hlasování nastaven do {$endDate->format('d. m. Y H:i')}."
+			);
+
 			$this->database->commit();
 			return $election;
 		} catch (\Throwable $e) {
@@ -280,12 +315,28 @@ class VotingRepository
 	/**
 	 * Aktualizuje existující hlasování (pouze pokud je draft)
 	 */
-	public function updateElection(int $id, array $values): void
-	{
+	public function updateElection(
+		int $id,
+		array $values,
+		int $personId,
+		string $personName,
+		?string $roleName = null
+	): void {
 		$election = $this->getElection($id);
 		if ($election && $election->status === 'draft') {
 			$endDate = new \DateTime($values['end_date']);
 			$endDate->setTime(23, 59, 59);
+
+			$changes = [];
+			if ($election->resolution_number !== trim($values['resolution_number'])) {
+				$changes[] = "číslo usnesení z '{$election->resolution_number}' na '" . trim($values['resolution_number']) . "'";
+			}
+			if ($election->title !== $values['title']) {
+				$changes[] = "text usnesení";
+			}
+			if ($election->end_date->format('Y-m-d') !== $endDate->format('Y-m-d')) {
+				$changes[] = "termín konce na " . $endDate->format('d. m. Y');
+			}
 
 			$election->update([
 				'resolution_number' => trim($values['resolution_number']),
@@ -294,19 +345,31 @@ class VotingRepository
 				'proposal_received_date' => $values['proposal_received_date'] ? new \DateTime($values['proposal_received_date']) : null,
 				'end_date' => $endDate,
 			]);
+
+			$details = !empty($changes) ? "Upraveny údaje: " . implode(', ', $changes) . "." : "Upraveny podklady / text návrhu usnesení.";
+			$this->logElectionAudit($id, $personId, $personName, $roleName, 'updated_draft', $details);
 		}
 	}
 
 	/**
 	 * Přepne hlasování do stavu Published
 	 */
-	public function publishElection(int $id): void
+	public function publishElection(int $id, int $personId, string $personName, ?string $roleName = null): void
 	{
 		$election = $this->getElection($id);
 		if ($election && $election->status === 'draft') {
 			$election->update([
 				'status' => 'published',
 			]);
+
+			$this->logElectionAudit(
+				$id,
+				$personId,
+				$personName,
+				$roleName,
+				'published',
+				"Usnesení bylo publikováno a zahájeno hlasování (do {$election->end_date->format('d. m. Y H:i')})."
+			);
 		}
 	}
 
@@ -324,8 +387,13 @@ class VotingRepository
 	/**
 	 * Stornuje publikované hlasování
 	 */
-	public function cancelElection(int $id, string $reason, int $cancelledByPersonId): void
-	{
+	public function cancelElection(
+		int $id,
+		string $reason,
+		int $cancelledByPersonId,
+		string $personName,
+		?string $roleName = null
+	): void {
 		$election = $this->getElection($id);
 		if ($election && $election->status === 'published') {
 			$election->update([
@@ -334,7 +402,93 @@ class VotingRepository
 				'cancelled_at' => new \DateTime(),
 				'cancelled_by_person_id' => $cancelledByPersonId,
 			]);
+
+			$this->logElectionAudit(
+				$id,
+				$cancelledByPersonId,
+				$personName,
+				$roleName,
+				'cancelled',
+				"Hlasování bylo stornováno. Důvod: " . trim($reason)
+			);
 		}
+	}
+
+	/**
+	 * Zapíše auditní záznam o změně usnesení / hlasování
+	 */
+	public function logElectionAudit(
+		int $electionId,
+		int $personId,
+		string $personName,
+		?string $roleName,
+		string $action,
+		?string $details = null
+	): void {
+		$this->database->table('election_audit_logs')->insert([
+			'election_id' => $electionId,
+			'person_id' => $personId,
+			'person_name' => $personName,
+			'role_name' => $roleName,
+			'action' => $action,
+			'details' => $details,
+			'created_at' => new \DateTime(),
+		]);
+	}
+
+	/**
+	 * Vrátí auditní záznamy pro dané usnesení
+	 */
+	public function getElectionAuditLogs(int $electionId): array
+	{
+		return $this->database->table('election_audit_logs')
+			->where('election_id', $electionId)
+			->order('created_at ASC, id ASC')
+			->fetchAll();
+	}
+
+	/**
+	 * Zapíše auditní záznam o přihlášení nebo přepnutí role
+	 */
+	public function logUserLogin(
+		int $personId,
+		string $userName,
+		string $personName,
+		?int $unitId,
+		?string $unitName,
+		?string $roleName,
+		?string $ipAddress,
+		?string $userAgent,
+		string $action = 'login'
+	): void {
+		$this->database->table('user_login_logs')->insert([
+			'person_id' => $personId,
+			'user_name' => $userName,
+			'person_name' => $personName,
+			'unit_id' => $unitId,
+			'unit_name' => $unitName,
+			'role_name' => $roleName,
+			'action' => $action,
+			'ip_address' => $ipAddress,
+			'user_agent' => $userAgent ? mb_substr($userAgent, 0, 255) : null,
+			'logged_at' => new \DateTime(),
+		]);
+	}
+
+	/**
+	 * Vrátí historii přihlášení uživatelů
+	 */
+	public function getLoginLogs(?int $unitId = null, int $limit = 100): array
+	{
+		$query = $this->database->table('user_login_logs')
+			->order('logged_at DESC, id DESC')
+			->limit($limit);
+
+		if ($unitId !== null) {
+			$query->where('unit_id', $unitId);
+		}
+
+		return $query->fetchAll();
 	}
 
 	/**

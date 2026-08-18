@@ -1,0 +1,82 @@
+{block title}Audit přihlášení a aktivit{/block}
+
+{block content}
+
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+	<div>
+		<a n:href="Home:default" style="color: var(--skaut-muted); text-decoration: none;">&larr; Zpět na přehled</a>
+		<h1 style="color: var(--skaut-blue); margin-top: 0.5rem; margin-bottom: 0.2rem;">📜 Audit přihlášení uživatelů</h1>
+		<p style="color: var(--skaut-muted); margin: 0;">
+			Jednotka: <strong>{$userData['unitName'] ?: $userData['unitId']}</strong> (ID: {$userData['unitId']})
+		</p>
+	</div>
+
+	<div style="display: flex; gap: 0.5rem;">
+		<a n:href="Council:default" class="btn" style="background: #555; color: white;">Správa Rady</a>
+		<a n:href="Council:smtp" class="btn" style="background: #777; color: white;">Nastavení SMTP</a>
+	</div>
+</div>
+
+<div class="election-card">
+	<h2 style="color: var(--skaut-blue); margin-top: 0; margin-bottom: 1.2rem; font-size: 1.25rem;">
+		Historie přihlášení a změn rolí v jednotce
+	</h2>
+
+	{if empty($loginLogs)}
+		<p style="color: var(--skaut-muted); margin: 0;">Zatím nejsou zaznamenána žádná přihlášení.</p>
+	{else}
+		<div style="overflow-x: auto;">
+			<table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+				<thead>
+					<tr style="border-bottom: 2px solid #e2e8f0; background: #f8fafc; color: #475569;">
+						<th style="padding: 10px;">Datum a čas</th>
+						<th style="padding: 10px;">Osoba</th>
+						<th style="padding: 10px;">SkautIS Účet</th>
+						<th style="padding: 10px;">Aktivní Role</th>
+						<th style="padding: 10px;">Akce</th>
+						<th style="padding: 10px;">IP Adresa</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr n:foreach="$loginLogs as $log" style="border-bottom: 1px solid #f1f5f9;">
+						<td style="padding: 10px; font-weight: 500; color: #334155; white-space: nowrap;">
+							{$log->logged_at|date:'d. m. Y H:i:s'}
+						</td>
+						<td style="padding: 10px; font-weight: bold; color: var(--skaut-blue);">
+							{$log->person_name}
+							<span style="font-size: 0.75rem; color: #94a3b8; font-weight: normal;">(#{$log->person_id})</span>
+						</td>
+						<td style="padding: 10px; color: #475569;">
+							{$log->user_name}
+						</td>
+						<td style="padding: 10px;">
+							<span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; font-weight: 500;">
+								{$log->role_name ?? 'Nespecifikována'}
+							</span>
+						</td>
+						<td style="padding: 10px;">
+							{if $log->action === 'login'}
+								<span style="background: #dcfce7; color: #15803d; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; font-weight: bold;">
+									Přihlášení
+								</span>
+							{elseif $log->action === 'role_switch'}
+								<span style="background: #fef3c7; color: #b45309; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; font-weight: bold;">
+									Přepnutí role
+								</span>
+							{else}
+								<span style="background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem;">
+									{$log->action}
+								</span>
+							{/if}
+						</td>
+						<td style="padding: 10px; font-family: monospace; font-size: 0.8rem; color: #64748b;">
+							{$log->ip_address ?? '–'}
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	{/if}
+</div>
+
+{/block}

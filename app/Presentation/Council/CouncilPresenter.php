@@ -68,6 +68,14 @@ final class CouncilPresenter extends BasePresenter
 		}
 	}
 
+	public function actionAudit(): void
+	{
+		$userData = $this->skautisAuthManager->getUserData();
+		$unitId = (int)$userData['unitId'];
+		$this->template->userData = $userData;
+		$this->template->loginLogs = $this->votingRepository->getLoginLogs($unitId, 100);
+	}
+
 	protected function createComponentAddMemberForm(): Form
 	{
 		$form = new Form();

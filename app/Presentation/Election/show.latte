@@ -30,15 +30,14 @@
 		</div>
 	</div>
 
-	{if $isAdmin && $election->status === 'draft'}
-		<div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+	<div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+		<a n:href="history, $election->id" class="btn" style="background: #475569; color: white; font-size: 0.9rem;">📜 Historie a audit</a>
+		{if $isAdmin && $election->status === 'draft'}
 			<a n:href="delete, $election->id" class="btn btn-vote" style="background: #dc3545; font-size: 0.9rem;" onclick="return confirm('Opravdu chcete tento návrh smazat?')">🗑 Smazat</a>
-		</div>
-	{elseif $isAdmin && $election->status === 'published'}
-		<div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+		{elseif $isAdmin && $election->status === 'published'}
 			<button type="button" class="btn btn-vote" style="background: #dc3545; font-size: 0.9rem;" onclick="document.getElementById('cancelFormBox').style.display='block'">🚫 Stornovat hlasování</button>
-		</div>
-	{/if}
+		{/if}
+	</div>
 </div>
 
 <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
@@ -252,25 +251,6 @@
 								</span>
 							{/if}
 						</span>
-					</div>
-				</div>
-			</div>
-
-			{* HISTORIE ZMĚN HLASŮ (Audit Log) *}
-			<div class="election-card" n:if="!empty($voteHistory)">
-				<h2 style="color: var(--skaut-blue); margin-top: 0; font-size: 1.1rem; margin-bottom: 0.8rem;">📜 Historie hlasování (Audit log)</h2>
-				<div style="display: flex; flex-direction: column; gap: 4px; max-height: 250px; overflow-y: auto;">
-					<div n:foreach="$voteHistory as $h" class="history-item">
-						<div>
-							<strong>{$h->person_name}</strong>
-							<span style="color: #666;">
-								{if $h->action === 'voted'}hlasoval(a){else}změnil(a) hlas na{/if}
-							</span>
-							<span style="font-weight: bold;">{$h->option_title}</span>
-						</div>
-						<div style="font-size: 0.78rem; color: #888;">
-							{$h->created_at|date:'d. m. Y H:i:s'}
-						</div>
 					</div>
 				</div>
 			</div>

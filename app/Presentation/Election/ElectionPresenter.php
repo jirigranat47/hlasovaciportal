@@ -153,6 +153,41 @@ final class ElectionPresenter extends BasePresenter
 			$this->template->isAdopted = $proCount > ($councilMembersCount / 2);
 			$this->template->voteHistory = [];
 		}
+
+		$this->template->auditLogs = $this->votingRepository->getElectionAuditLogs($id);
+	}
+
+	public function actionHistory(int $id): void
+	{
+		$election = $this->votingRepository->getElection($id);
+		if (!$election) {
+			$this->error('Hlasování nebylo nalezeno.', 404);
+		}
+
+		$userData = $this->skautisAuthManager->getUserData();
+		$unitId = (int)$userData['unitId'];
+		$personId = (int)$userData['personId'];
+
+		$isAdmin = $this->skautisAuthManager->isAdmin();
+		$isCouncilMember = $this->votingRepository->isCouncilMember($unitId, $personId);
+		$isCreator = ((int)$election->created_by_person_id === $personId);
+
+		$now = new \DateTime();
+		$isClosed = ($election->end_date <= $now || $election->status === 'cancelled');
+
+		// Kontrola přístupových práv
+		if (!$isAdmin && !$isCouncilMember && !$isCreator) {
+			$hasVoted = $this->votingRepository->hasVoted($id, $personId);
+			if (!$isClosed || !$hasVoted) {
+				$this->flashMessage('Nemáte oprávnění k zobrazení historie tohoto hlasování.', 'danger');
+				$this->redirect('Home:default');
+			}
+		}
+
+		$this->template->election = $election;
+		$this->template->isClosed = $isClosed;
+		$this->template->auditLogs = $this->votingRepository->getElectionAuditLogs($id);
+		$this->template->voteHistory = $this->votingRepository->getVoteHistory($id);
 	}
 
 	public function handleVote(int $electionId, int $optionId): void
@@ -179,7 +214,7 @@ final class ElectionPresenter extends BasePresenter
 			$this->redirect('show', $electionId);
 		}
 
-		$success = $this->votingRepository->vote($electionId, $optionId, $personId, $userData['personName']);
+		$success = $this->votingRepository->vote($electionId, $optionId, $personId, $userData['personName'], $userData['roleName'] ?? null);
 
 		if ($success) {
 			$this->flashMessage('Váš hlas byl úspěšně zaznamenán / změněn.', 'success');
@@ -254,7 +289,10 @@ final class ElectionPresenter extends BasePresenter
 			$this->error('Hlasování nebylo nalezeno.', 404);
 		}
 
-		$this->votingRepository->publishElection($id);
+		$userData = $this->skautisAuthManager->getUserData();
+		$personId = (int)$userData['personId'];
+
+		$this->votingRepository->publishElection($id, $personId, $userData['personName'], $userData['roleName'] ?? null);
 		$this->flashMessage('Hlasování bylo úspěšně publikováno. Členům rady bude odeslána notifikace na pozadí.', 'success');
 		$this->redirect('Home:default');
 	}
@@ -318,16 +356,18 @@ final class ElectionPresenter extends BasePresenter
 			$userData = $this->skautisAuthManager->getUserData();
 			$unitId = (int)$userData['unitId'];
 			$personId = (int)$userData['personId'];
+			$personName = $userData['personName'];
+			$roleName = $userData['roleName'] ?? null;
 
 			$id = $this->getParameter('id');
 			$redirectTarget = null;
 			try {
 				if ($id !== null) {
-					$this->votingRepository->updateElection((int)$id, (array)$values);
+					$this->votingRepository->updateElection((int)$id, (array)$values, $personId, $personName, $roleName);
 					$this->flashMessage('Hlasování bylo úspěšně upraveno.', 'success');
 					$redirectTarget = ['show', (int)$id];
 				} else {
-					$election = $this->votingRepository->createElection((array)$values, $unitId, $personId);
+					$election = $this->votingRepository->createElection((array)$values, $unitId, $personId, $personName, $roleName);
 					$this->flashMessage('Návrh hlasování byl úspěšně vytvořen (zatím v režimu Draft).', 'success');
 					$redirectTarget = ['show', (int)$election->id];
 				}
@@ -356,6 +396,8 @@ final class ElectionPresenter extends BasePresenter
 			$id = (int)$this->getParameter('id');
 			$userData = $this->skautisAuthManager->getUserData();
 			$personId = (int)$userData['personId'];
+			$personName = $userData['personName'];
+			$roleName = $userData['roleName'] ?? null;
 
 			$election = $this->votingRepository->getElection($id);
 			if (!$election || $election->status !== 'published') {
@@ -363,7 +405,7 @@ final class ElectionPresenter extends BasePresenter
 				$this->redirect('show', $id);
 			}
 
-			$this->votingRepository->cancelElection($id, $values->cancellation_reason, $personId);
+			$this->votingRepository->cancelElection($id, $values->cancellation_reason, $personId, $personName, $roleName);
 			$this->cronManager->sendCancellationNotification($election, $values->cancellation_reason);
 
 			$this->flashMessage('Hlasování bylo úspěšně stornováno a členům rady byla odeslána notifikace.', 'success');

@@ -150,6 +150,16 @@ class CronManager
 			}
 
 			$el->update(['results_sent' => 1]);
+
+			// Auditní log automatického uzavření
+			$this->votingRepository->logElectionAudit(
+				(int)$el->id,
+				0,
+				'Systém (Automatické vyhodnocení)',
+				'Cron',
+				'closed',
+				"Hlasování bylo uzavřeno. Výsledek: " . ($isAdopted ? 'PŘIJATO' : 'NEPŘIJATO') . " (Pro: {$proCount}, Proti: " . ($votesCount['Proti'] ?? 0) . ", Zdržel se: " . ($votesCount['Zdržel se'] ?? 0) . ")."
+			);
 		}
 	}
 

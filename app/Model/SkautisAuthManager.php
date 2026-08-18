@@ -7,6 +7,7 @@ namespace App\Model;
 use Skautis\Skautis;
 use Nette\Http\Session;
 use Nette\Http\SessionSection;
+use Nette\Http\Request;
 
 class SkautisAuthManager
 {
@@ -15,6 +16,8 @@ class SkautisAuthManager
 	public function __construct(
 		private Skautis $skautis,
 		Session $session,
+		private VotingRepository $votingRepository,
+		private Request $httpRequest,
 		private string $appId,
 		private bool $isTest = true
 	) {
@@ -112,6 +115,25 @@ class SkautisAuthManager
 				}
 			}
 
+			// Auditní logování přihlášení
+			try {
+				$ip = $this->httpRequest->getRemoteAddress();
+				$userAgent = $this->httpRequest->getHeader('User-Agent');
+				$this->votingRepository->logUserLogin(
+					(int)($this->session->personId ?? 0),
+					$this->session->userName ?? 'Skaut',
+					$this->session->personName ?? 'Neznámý',
+					$this->session->unitId ? (int)$this->session->unitId : null,
+					$this->session->unitName ?? null,
+					$this->session->roleName ?? null,
+					$ip,
+					$userAgent,
+					'login'
+				);
+			} catch (\Throwable $e) {
+				\Tracy\Debugger::log($e, \Tracy\ILogger::WARNING);
+			}
+
 			return true;
 		}
 
@@ -203,6 +225,25 @@ class SkautisAuthManager
 					$roleId,
 					$unitId
 				);
+
+				// 3. Auditní logování přepnutí role
+				try {
+					$ip = $this->httpRequest->getRemoteAddress();
+					$userAgent = $this->httpRequest->getHeader('User-Agent');
+					$this->votingRepository->logUserLogin(
+						(int)($this->session->personId ?? 0),
+						$this->session->userName ?? 'Skaut',
+						$this->session->personName ?? 'Neznámý',
+						$unitId,
+						$this->session->unitName,
+						$this->session->roleName,
+						$ip,
+						$userAgent,
+						'role_switch'
+					);
+				} catch (\Throwable $e) {
+					\Tracy\Debugger::log($e, \Tracy\ILogger::WARNING);
+				}
 
 				return true;
 			}
