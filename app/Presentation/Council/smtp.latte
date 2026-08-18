@@ -1,61 +1,170 @@
-{block title}Nastavení SMTP{/block}
+{block title}Nastavení SMTP odesílání e-mailů{/block}
 
 {block content}
 
-<div style="margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+<div style="margin-bottom: 2rem; max-width: 680px; margin-left: auto; margin-right: auto;">
 	<a n:href="Home:default" style="color: var(--skaut-muted); text-decoration: none;">&larr; Zpět na přehled</a>
-	<h1 style="color: var(--skaut-blue); margin-top: 0.5rem;">Konfigurace SMTP odesílání</h1>
-	<p style="color: var(--skaut-muted);">
-		Nastavte přístup k e-mailové schránce vaší jednotky (např. střediskový e-mail @skaut.cz). 
-		Přes toto SMTP budou odcházet notifikace o spuštění hlasování a výsledky všem členům rady.
+	<h1 style="color: var(--skaut-blue); margin-top: 0.5rem; margin-bottom: 0.3rem;">✉ Konfigurace e-mailů jednotky</h1>
+	<p style="color: var(--skaut-muted); margin: 0;">
+		Jednotka: <strong>{$userData['unitName'] ?: $userData['unitId']}</strong> | Zadejte e-mailovou schránku, ze které budou odcházet notifikace o spuštění hlasování a výsledcích usnesení.
 	</p>
 </div>
 
-<div class="election-card" style="max-width: 600px; margin: 0 auto 3rem auto; padding: 2rem;">
+<div class="election-card" style="max-width: 680px; margin: 0 auto 3rem auto; padding: 2rem;">
+
+	{* RYCHLÁ PŘEDVOLBA POSKYTOVATELE *}
+	<div style="margin-bottom: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
+		<strong style="color: #1e293b; font-size: 0.95rem; display: block; margin-bottom: 0.6rem;">
+			⚡ Rychlé přednastavení podle poskytovatele:
+		</strong>
+		<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+			<button type="button" class="btn" style="background: #0284c7; color: white; font-size: 0.85rem; padding: 6px 12px;" onclick="setProvider('gmail')">
+				🔵 Google / Gmail / @skaut.cz
+			</button>
+			<button type="button" class="btn" style="background: #dc2626; color: white; font-size: 0.85rem; padding: 6px 12px;" onclick="setProvider('seznam')">
+				🔴 Seznam.cz (@email.cz, @seznam.cz)
+			</button>
+			<button type="button" class="btn" style="background: #64748b; color: white; font-size: 0.85rem; padding: 6px 12px;" onclick="toggleAdvanced(true)">
+				⚙ Vlastní SMTP server
+			</button>
+		</div>
+	</div>
+
+	{* NÁVOD PRO GOOGLE / GMAIL *}
+	<div id="gmailHelpBox" style="margin-bottom: 1.5rem; background: #eff6ff; border: 1px solid #bfdbfe; border-left: 4px solid #0284c7; padding: 1rem; border-radius: 6px;">
+		<strong style="color: #1e40af; font-size: 0.95rem;">💡 Jak nastavit Gmail nebo Skautský Google Workspace (@skaut.cz):</strong>
+		<ol style="margin: 0.5rem 0 0 0; padding-left: 1.2rem; font-size: 0.88rem; color: #1e3a8a; line-height: 1.5;">
+			<li>Otevřete Google správu hesel aplikací na: <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" style="color: #0284c7; font-weight: bold; text-decoration: underline;">myaccount.google.com/apppasswords</a></li>
+			<li>Zadejte název aplikace např. <em>Hlasovací portál</em> a klikněte na <strong>Vytvořit</strong>.</li>
+			<li>Vygenerované <strong>16místné heslo aplikace</strong> vložte níže do pole <em>Heslo / Heslo aplikace</em>.</li>
+			<li>Do polí <em>Přihlašovací e-mail</em> a <em>E-mail odesílatele</em> zadejte vaši adresu (např. <code>stredisko@skaut.cz</code>).</li>
+		</ol>
+	</div>
+
 	<form n:name="smtpForm" style="display: flex; flex-direction: column; gap: 1.2rem;">
 		
-		<div style="display: flex; gap: 1rem;">
-			<div style="flex: 2; display: flex; flex-direction: column; gap: 5px;">
-				<label n:name="host" style="font-weight: bold;">SMTP Server / Host:</label>
-				<input n:name="host" class="form-control" placeholder="např. smtp.skaut.cz" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px;">
+		{* ZÁKLADNÍ ÚDAJE (E-MAIL A HESLO) *}
+		<div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+			<div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 5px;">
+				<label n:name="username" style="font-weight: bold; font-size: 0.9rem;">Přihlašovací e-mail:</label>
+				<input n:name="username" id="smtp-username" class="form-control" placeholder="např. stredisko123@skaut.cz" style="padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 4px;" oninput="syncEmailFields(this.value)">
 			</div>
-			<div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
-				<label n:name="port" style="font-weight: bold;">Port:</label>
-				<input n:name="port" class="form-control" placeholder="např. 587" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px;">
-			</div>
-		</div>
-
-		<div style="display: flex; gap: 1rem;">
-			<div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
-				<label n:name="username" style="font-weight: bold;">Uživatelské jméno:</label>
-				<input n:name="username" class="form-control" placeholder="např. stredisko@skaut.cz" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px;">
-			</div>
-			<div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
-				<label n:name="password" style="font-weight: bold;">Heslo:</label>
-				<input n:name="password" class="form-control" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px;">
+			<div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 5px;">
+				<label n:name="password" style="font-weight: bold; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center;">
+					<span>Heslo:</span>
+					{if !empty($hasExistingPassword)}
+						<span style="color: #15803d; font-weight: normal; font-size: 0.78rem; background: #dcfce7; padding: 1px 6px; border-radius: 4px;">
+							✓ Heslo uloženo a zašifrováno
+						</span>
+					{/if}
+				</label>
+				<input n:name="password" id="smtp-password" class="form-control" placeholder="{if !empty($hasExistingPassword)}•••••••••••••••• (pro zachování ponechte prázdné){else}16místné heslo aplikace{/if}" style="padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 4px;">
 			</div>
 		</div>
 
-		<div style="display: flex; flex-direction: column; gap: 5px;">
-			<label n:name="secure" style="font-weight: bold;">Zabezpečení připojení:</label>
-			<select n:name="secure" class="form-control" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px;"></select>
-		</div>
-
-		<hr style="border: 0; border-top: 1px solid #eee; margin: 0.5rem 0;">
-
-		<div style="display: flex; gap: 1rem;">
-			<div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
-				<label n:name="from_email" style="font-weight: bold;">E-mail odesílatele:</label>
-				<input n:name="from_email" class="form-control" placeholder="např. stredisko@skaut.cz" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px;">
+		<div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+			<div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 5px;">
+				<label n:name="from_email" style="font-weight: bold; font-size: 0.9rem;">E-mail odesílatele:</label>
+				<input n:name="from_email" id="smtp-from-email" class="form-control" placeholder="např. stredisko123@skaut.cz" style="padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 4px;">
 			</div>
-			<div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
-				<label n:name="from_name" style="font-weight: bold;">Jméno odesílatele:</label>
-				<input n:name="from_name" class="form-control" placeholder="např. Rada střediska" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px;">
+			<div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 5px;">
+				<label n:name="from_name" style="font-weight: bold; font-size: 0.9rem;">Jméno odesílatele (v e-mailu):</label>
+				<input n:name="from_name" id="smtp-from-name" class="form-control" placeholder="např. Rada střediska" style="padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 4px;">
 			</div>
 		</div>
 
-		<button n:name="submit" class="btn" style="background: var(--skaut-yellow); color: #000; font-weight: bold; padding: 0.8rem; border: none; border-radius: 4px; cursor: pointer; font-size: 1.1rem; margin-top: 1rem;">Uložit konfiguraci</button>
+		{* POKROČILÁ NASTAVENÍ (HOST, PORT, ŠIFROVÁNÍ) *}
+		<details id="advancedDetails" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.8rem 1rem;">
+			<summary style="cursor: pointer; font-weight: bold; color: var(--skaut-blue); font-size: 0.9rem;">
+				⚙ Zobrazit technické parametry SMTP (Host, Port, Šifrování)
+			</summary>
+			
+			<div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
+				<div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+					<div style="flex: 2; min-width: 200px; display: flex; flex-direction: column; gap: 5px;">
+						<label n:name="host" style="font-weight: bold; font-size: 0.85rem;">SMTP Server / Host:</label>
+						<input n:name="host" id="smtp-host" class="form-control" placeholder="smtp.gmail.com" style="padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 4px;">
+					</div>
+					<div style="flex: 1; min-width: 100px; display: flex; flex-direction: column; gap: 5px;">
+						<label n:name="port" style="font-weight: bold; font-size: 0.85rem;">Port:</label>
+						<input n:name="port" id="smtp-port" class="form-control" placeholder="587" style="padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 4px;">
+					</div>
+				</div>
+
+				<div style="display: flex; flex-direction: column; gap: 5px;">
+					<label n:name="secure" style="font-weight: bold; font-size: 0.85rem;">Zabezpečení připojení:</label>
+					<select n:name="secure" id="smtp-secure" class="form-control" style="padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 4px;"></select>
+				</div>
+			</div>
+		</details>
+
+		<hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 0.5rem 0;">
+
+		{* TESTOVACÍ ODESLÁNÍ *}
+		<div style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 1rem; display: flex; flex-direction: column; gap: 0.6rem;">
+			<label n:name="test_recipient" style="font-weight: bold; font-size: 0.9rem; color: #334155;">
+				🧪 Otestovat funkčnost konfigurace (odeslání zkušebního e-mailu):
+			</label>
+			<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+				<input n:name="test_recipient" class="form-control" placeholder="Zadejte vaši e-mailovou adresu pro test" style="flex: 1; min-width: 250px; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 4px;">
+				<button n:name="test" class="btn" style="background: #0284c7; color: white; font-weight: bold; padding: 0.6rem 1.2rem; border: none; border-radius: 4px; cursor: pointer;">
+					🧪 Odeslat test
+				</button>
+			</div>
+			<small style="color: #64748b; font-size: 0.8rem;">
+				Kliknutím se prověří spojení na SMTP server a odešle se zkušební zpráva na zadaný e-mail.
+			</small>
+		</div>
+
+		{* HLAVNÍ TLAČÍTKO PRO ULOŽENÍ *}
+		<button n:name="submit" class="btn" style="background: var(--skaut-yellow); color: #000; font-weight: bold; padding: 0.8rem; border: none; border-radius: 4px; cursor: pointer; font-size: 1.1rem; margin-top: 0.5rem;">
+			💾 Uložit konfiguraci jednotky
+		</button>
 	</form>
 </div>
+
+<script>
+function setProvider(provider) {
+	const host = document.getElementById('smtp-host');
+	const port = document.getElementById('smtp-port');
+	const secure = document.getElementById('smtp-secure');
+	const helpBox = document.getElementById('gmailHelpBox');
+
+	if (provider === 'gmail') {
+		host.value = 'smtp.gmail.com';
+		port.value = '587';
+		secure.value = 'tls';
+		if (helpBox) helpBox.style.display = 'block';
+	} else if (provider === 'seznam') {
+		host.value = 'smtp.seznam.cz';
+		port.value = '465';
+		secure.value = 'ssl';
+		if (helpBox) helpBox.style.display = 'none';
+	}
+}
+
+function toggleAdvanced(open) {
+	const adv = document.getElementById('advancedDetails');
+	if (adv && open) {
+		adv.open = true;
+	}
+}
+
+function syncEmailFields(val) {
+	const fromEmail = document.getElementById('smtp-from-email');
+	if (fromEmail && (!fromEmail.value || fromEmail.dataset.autoFilled === 'true')) {
+		fromEmail.value = val;
+		fromEmail.dataset.autoFilled = 'true';
+	}
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+	const host = document.getElementById('smtp-host');
+	// Pokud je pole host prázdné, nastavíme výchozí Gmail
+	if (!host.value) {
+		setProvider('gmail');
+	}
+});
+</script>
 
 {/block}

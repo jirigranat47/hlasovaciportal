@@ -60,6 +60,43 @@ class VotingRepository
 			->delete();
 	}
 
+	private string $encryptionKey = 'skaut_hlasovaci_portal_smtp_secret_key_v1';
+
+	public function encryptPassword(string $plain): string
+	{
+		if (empty($plain)) {
+			return '';
+		}
+		// Pokud už je zašifrováno
+		if (str_starts_with($plain, 'ENC:')) {
+			return $plain;
+		}
+		$key = hash('sha256', $this->encryptionKey, true);
+		$iv = openssl_random_pseudo_bytes(16);
+		$encrypted = openssl_encrypt($plain, 'AES-256-CBC', $key, 0, $iv);
+		return 'ENC:' . base64_encode($iv . '::' . $encrypted);
+	}
+
+	public function decryptPassword(?string $encoded): string
+	{
+		if (empty($encoded)) {
+			return '';
+		}
+		if (!str_starts_with($encoded, 'ENC:')) {
+			// Pro zpětnou kompatibilitu s plain textem
+			return $encoded;
+		}
+		$raw = substr($encoded, 4);
+		$decoded = base64_decode($raw, true);
+		if ($decoded === false || !str_contains($decoded, '::')) {
+			return $encoded;
+		}
+		[$iv, $encrypted] = explode('::', $decoded, 2);
+		$key = hash('sha256', $this->encryptionKey, true);
+		$decrypted = openssl_decrypt($encrypted, 'AES-256-CBC', $key, 0, $iv);
+		return $decrypted !== false ? $decrypted : '';
+	}
+
 	/**
 	 * Získá SMTP nastavení pro danou jednotku
 	 */
@@ -69,21 +106,30 @@ class VotingRepository
 	}
 
 	/**
-	 * Uloží SMTP nastavení pro jednotku
+	 * Uloží SMTP nastavení pro jednotku (s šifrováním hesla)
 	 */
 	public function saveSmtpSettings(int $unitId, array $values): void
 	{
+		$row = $this->database->table('smtp_settings')->get($unitId);
+		$password = trim((string)($values['password'] ?? ''));
+
+		if (empty($password) && $row) {
+			// Ponecháme původní uložené heslo
+			$encryptedPassword = $row->password;
+		} else {
+			$encryptedPassword = $this->encryptPassword($password);
+		}
+
 		$data = [
 			'host' => $values['host'],
 			'port' => (int)$values['port'],
 			'username' => $values['username'],
-			'password' => $values['password'],
+			'password' => $encryptedPassword,
 			'secure' => $values['secure'],
 			'from_email' => $values['from_email'],
 			'from_name' => $values['from_name'],
 		];
 
-		$row = $this->database->table('smtp_settings')->get($unitId);
 		if ($row) {
 			$row->update($data);
 		} else {

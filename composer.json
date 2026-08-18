@@ -5,6 +5,7 @@
     "license": "MIT",
     "require": {
         "php": ">=8.2",
+        "latte/latte": "^3.0",
         "nette/application": "^3.2",
         "nette/bootstrap": "^3.2",
         "nette/caching": "^3.2",
@@ -12,12 +13,12 @@
         "nette/di": "^3.2",
         "nette/forms": "^3.2",
         "nette/http": "^3.2",
+        "nette/mail": "^4.2",
         "nette/robot-loader": "^4.0",
         "nette/security": "^3.2",
         "nette/utils": "^4.0",
-        "latte/latte": "^3.0",
-        "tracy/tracy": "^2.10",
-        "skautis/skautis": "^2.1"
+        "skautis/skautis": "^2.1",
+        "tracy/tracy": "^2.10"
     },
     "require-dev": {
         "nette/tester": "^2.5"
