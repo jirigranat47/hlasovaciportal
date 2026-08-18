@@ -47,32 +47,50 @@ class SkautisAuthManager
 			$this->session->unitId = $unitId;
 
 			// Načteme a uložíme základní údaje o uživateli ze SkautISu
+			$userDetail = null;
 			try {
-				$userDetail = $this->skautis->userManagement->UserDetail();
+				$userDetail = $this->skautis->user->UserDetail();
 				$this->session->personId = $userDetail->ID_Person ?? null;
 				$this->session->userName = $userDetail->UserName ?? 'Skaut';
-				$this->session->personName = ($userDetail->PersonGivenName ?? '') . ' ' . ($userDetail->PersonFamilyName ?? '');
+				
+				$personName = '';
+				if (!empty($userDetail->Person)) {
+					$personName = $userDetail->Person;
+				} elseif (!empty($userDetail->PersonGivenName) || !empty($userDetail->PersonFamilyName)) {
+					$personName = trim(($userDetail->PersonGivenName ?? '') . ' ' . ($userDetail->PersonFamilyName ?? ''));
+				} else {
+					$personName = $userDetail->UserName ?? 'Skaut';
+				}
+				$this->session->personName = $personName;
+			} catch (\Throwable $e) {
+				\Tracy\Debugger::log($e, \Tracy\ILogger::WARNING);
+				$this->session->userName = 'Skaut';
+				$this->session->personName = 'Skaut';
+			}
 
-				// Získáme detaily o aktivní roli pro kontrolu administrátorských práv
-				$this->session->roleName = '';
-				$this->session->roleKey = '';
-				if ($roleId !== null) {
-					$roles = $this->skautis->userManagement->UserRoleAll();
-					foreach ($roles as $role) {
-						if ((int)$role->ID === $roleId) {
-							$this->session->roleName = $role->RoleName ?? '';
-							$this->session->roleKey = $role->RoleKey ?? '';
-							break;
+			// Získáme detaily o aktivní roli pro kontrolu administrátorských práv
+			$this->session->roleName = '';
+			$this->session->roleKey = '';
+			if ($roleId !== null && !empty($userDetail?->ID)) {
+				try {
+					$roles = $this->skautis->user->UserRoleAll([
+						'ID_User' => $userDetail->ID,
+					]);
+					if (is_iterable($roles)) {
+						foreach ($roles as $role) {
+							if ((int)($role->ID ?? 0) === $roleId || (int)($role->ID_Role ?? 0) === $roleId) {
+								$this->session->roleName = $role->Role ?? ($role->DisplayName ?? '');
+								$this->session->roleKey = $role->Key ?? '';
+								break;
+							}
 						}
 					}
+				} catch (\Throwable $e) {
+					\Tracy\Debugger::log($e, \Tracy\ILogger::WARNING);
 				}
-
-				return true;
-			} catch (\Throwable $e) {
-				// Pokud selže načtení UserDetail (např. vypršel token)
-				$this->logout();
-				return false;
 			}
+
+			return true;
 		}
 
 		return false;
@@ -150,18 +168,21 @@ class SkautisAuthManager
 
 		$members = [];
 		try {
-			$list = $this->skautis->organizationManagement->PersonAll([
+			$list = $this->skautis->org->PersonAll([
 				'ID_Unit' => $this->session->unitId,
 			]);
 
-			foreach ($list as $p) {
-				$members[] = [
-					'personId' => (int)$p->ID,
-					'fullName' => ($p->FirstName ?? '') . ' ' . ($p->LastName ?? ''),
-					'email' => $p->Email ?? ($p->EmailDefault ?? null),
-				];
+			if (is_iterable($list)) {
+				foreach ($list as $p) {
+					$members[] = [
+						'personId' => (int)$p->ID,
+						'fullName' => trim(($p->FirstName ?? '') . ' ' . ($p->LastName ?? '')),
+						'email' => $p->Email ?? ($p->EmailDefault ?? null),
+					];
+				}
 			}
 		} catch (\Throwable $e) {
+			\Tracy\Debugger::log($e, \Tracy\ILogger::EXCEPTION);
 			// Vrátíme prázdné pole, pokud se nepodaří načíst (např. chybí práva na PersonAll ve Skautisu)
 		}
 
