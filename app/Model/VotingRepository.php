@@ -139,6 +139,24 @@ class VotingRepository
 	}
 
 	/**
+	 * Získá název jednotky (z historie přihlášení uživatelů)
+	 */
+	public function getUnitName(int $unitId): ?string
+	{
+		$row = $this->database->table('user_login_logs')
+			->where('unit_id', $unitId)
+			->where('unit_name IS NOT NULL')
+			->order('id DESC')
+			->fetch();
+
+		if ($row && !empty($row->unit_name)) {
+			return $row->unit_name;
+		}
+
+		return null;
+	}
+
+	/**
 	 * Vrátí konkrétní hlasování
 	 */
 	public function getElection(int $id): ?ActiveRow
@@ -615,6 +633,68 @@ class VotingRepository
 	}
 
 	/**
+	 * Spočítá a vrátí výsledky (přijato / nepřijato, počty hlasů) pro zadaný seznam usnesení
+	 */
+	public function getElectionsOutcomes(array $elections, int $unitId): array
+	{
+		$totalMembers = count($this->getCouncilMembers($unitId));
+		$outcomes = [];
+
+		foreach ($elections as $el) {
+			$elId = (int)$el->id;
+			if ($el->status === 'cancelled') {
+				$outcomes[$elId] = [
+					'status' => 'cancelled',
+					'isAdopted' => false,
+					'statusLabel' => '🚫 Stornováno',
+					'badgeBg' => '#f1f5f9',
+					'badgeColor' => '#475569',
+					'borderLeft' => '#94a3b8',
+					'pro' => 0,
+					'against' => 0,
+					'abstain' => 0,
+					'totalMembers' => $totalMembers,
+				];
+				continue;
+			}
+
+			// Spočítáme hlasy pro jednotlivé možnosti
+			$options = $this->getOptions($elId);
+			$proCount = 0;
+			$againstCount = 0;
+			$abstainCount = 0;
+
+			foreach ($options as $opt) {
+				if ($opt->title === 'Pro') {
+					$proCount = (int)$opt->votes_count;
+				} elseif ($opt->title === 'Proti') {
+					$againstCount = (int)$opt->votes_count;
+				} elseif ($opt->title === 'Zdržel se') {
+					$abstainCount = (int)$opt->votes_count;
+				}
+			}
+
+			// Nadpoloviční většina všech členů rady (pokud již stav není uložen jako adopted / rejected)
+			$isAdopted = ($el->status === 'adopted') || ($totalMembers > 0 && ($proCount > ($totalMembers / 2)));
+
+			$outcomes[$elId] = [
+				'status' => $isAdopted ? 'adopted' : 'rejected',
+				'isAdopted' => $isAdopted,
+				'statusLabel' => $isAdopted ? '✓ PŘIJATO' : '✕ NEPŘIJATO',
+				'badgeBg' => $isAdopted ? '#dcfce7' : '#fee2e2',
+				'badgeColor' => $isAdopted ? '#166534' : '#991b1b',
+				'borderLeft' => $isAdopted ? '#16a34a' : '#dc2626',
+				'pro' => $proCount,
+				'against' => $againstCount,
+				'abstain' => $abstainCount,
+				'totalMembers' => $totalMembers,
+			];
+		}
+
+		return $outcomes;
+	}
+
+	/**
 	 * Získá kompletní historii a auditní log změny hlasů pro dané hlasování
 	 */
 	public function getVoteHistory(int $electionId): array
@@ -643,7 +723,7 @@ class VotingRepository
 			foreach ($all as $el) {
 				if ($el->status === 'draft') {
 					$drafts[] = $el;
-				} elseif ($el->status === 'cancelled') {
+				} elseif (in_array($el->status, ['cancelled', 'adopted', 'rejected'], true)) {
 					$closed[] = $el;
 				} elseif ($el->end_date > $now) {
 					$active[] = $el;
@@ -653,9 +733,9 @@ class VotingRepository
 			}
 		} elseif ($isCouncilMember) {
 			// 2. Člen rady jednotky vidí probíhající hlasování a ukončená/stornovaná usnesení (nevidí drafty)
-			$all = $electionsQuery->where('status', ['published', 'cancelled'])->order('created_at DESC')->fetchAll();
+			$all = $electionsQuery->where('status', ['published', 'adopted', 'rejected', 'cancelled'])->order('created_at DESC')->fetchAll();
 			foreach ($all as $el) {
-				if ($el->status === 'cancelled') {
+				if (in_array($el->status, ['cancelled', 'adopted', 'rejected'], true)) {
 					$closed[] = $el;
 				} elseif ($el->end_date > $now) {
 					$active[] = $el;
@@ -677,13 +757,13 @@ class VotingRepository
 			if (!empty($ids)) {
 				$past = $this->database->table('elections')
 					->where('unit_id', $unitId)
-					->where('status', ['published', 'cancelled'])
+					->where('status', ['published', 'adopted', 'rejected', 'cancelled'])
 					->where('id', $ids)
 					->order('created_at DESC')
 					->fetchAll();
 
 				foreach ($past as $el) {
-					if ($el->status === 'cancelled' || $el->end_date <= $now) {
+					if (in_array($el->status, ['cancelled', 'adopted', 'rejected'], true) || $el->end_date <= $now) {
 						$closed[] = $el;
 					}
 				}

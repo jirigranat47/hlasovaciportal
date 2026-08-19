@@ -269,17 +269,24 @@
 
 				<div id="closedElectionsList">
 					<div n:foreach="$closedElections as $el" 
-						class="election-card closed-election-item" 
+						{var $oc = $closedOutcomes[$el->id] ?? null}
+						class="election-card closed-election-item {if $el->status === 'cancelled'}election-card-cancelled{elseif $oc && $oc['isAdopted']}election-card-adopted{else}election-card-rejected{/if}" 
 						data-closed-date="{($el->status === 'cancelled' && $el->cancelled_at) ? $el->cancelled_at->format('Y-m-d') : ($el->end_date ? $el->end_date->format('Y-m-d') : '')}"
 						data-title="{$el->title|lower}"
 						data-number="{$el->resolution_number|lower}"
-						style="margin-bottom: 1rem; opacity: 0.9;">
+						data-status="{$oc ? $oc['status'] : ''}"
+						data-outcome="{$oc ? $oc['statusLabel']|lower : ''}"
+						style="margin-bottom: 1rem;">
 						<div class="election-header" style="display: flex; justify-content: space-between; align-items: center; gap: 1.5rem;">
 							<div style="flex: 1; min-width: 0;">
-								<div style="font-size: 0.85rem; font-weight: bold; color: #555; text-transform: uppercase; margin-bottom: 2px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+								<div style="font-size: 0.85rem; font-weight: bold; color: #555; text-transform: uppercase; margin-bottom: 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
 									<span>Usnesení č. {$el->resolution_number}</span>
 									{if $el->status === 'cancelled'}
-										<span style="background: #f8d7da; color: #721c24; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; text-transform: none;">Stornováno</span>
+										<span class="badge-status badge-status-cancelled">🚫 Stornováno</span>
+									{elseif $oc && $oc['isAdopted']}
+										<span class="badge-status badge-status-adopted">✓ PŘIJATO</span>
+									{else}
+										<span class="badge-status badge-status-rejected">✕ NEPŘIJATO</span>
 									{/if}
 								</div>
 								<h3 style="margin: 0; font-size: 1.15rem; line-height: 1.5;"><a n:href="Election:show, $el->id" style="color: #333; text-decoration: none; font-weight: bold;">{$el->title}</a></h3>
@@ -287,12 +294,17 @@
 									{if $el->status === 'cancelled'}
 										Stornováno: <strong>{$el->cancelled_at ? ($el->cancelled_at|date:'d. m. Y H:i') : ''}</strong>
 									{else}
-										Ukončeno: <strong>{$el->end_date|date:'d. m. Y'} (23:59)</strong>
+										Ukončeno: <strong>{$el->end_date|date:'d. m. Y'}</strong>
+										{if $oc}
+											<span style="margin-left: 8px; color: #475569;">
+												(Pro: <strong>{$oc['pro']}</strong>, Proti: <strong>{$oc['against']}</strong>, Zdržel se: <strong>{$oc['abstain']}</strong> / Členů: {$oc['totalMembers']})
+											</span>
+										{/if}
 									{/if}
 								</p>
 							</div>
 							<div style="flex-shrink: 0; white-space: nowrap;">
-								<a n:href="Election:show, $el->id" class="btn" style="background: {if $el->status === 'cancelled'}#dc3545{else}#777{/if}; color: white; white-space: nowrap; padding: 0.7rem 1.4rem;">
+								<a n:href="Election:show, $el->id" class="btn {if $el->status === 'cancelled'}btn-outcome-cancelled{elseif $oc && $oc['isAdopted']}btn-outcome-adopted{else}btn-outcome-rejected{/if}" style="white-space: nowrap; padding: 0.7rem 1.4rem;">
 									{if $el->status === 'cancelled'}Detail storna{else}Výsledky{/if}
 								</a>
 							</div>
@@ -337,6 +349,8 @@ document.addEventListener('DOMContentLoaded', function () {
 			const title = item.getAttribute('data-title') || '';
 			const number = item.getAttribute('data-number') || '';
 
+			const outcome = item.getAttribute('data-outcome') || '';
+
 			let matchesDate = true;
 			if (limitDate && dateStr) {
 				const itemDate = new Date(dateStr);
@@ -345,7 +359,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 			let matchesQuery = true;
 			if (query !== '') {
-				matchesQuery = title.includes(query) || number.includes(query);
+				matchesQuery = title.includes(query) || number.includes(query) || outcome.includes(query);
 			}
 
 			if (matchesDate && matchesQuery) {

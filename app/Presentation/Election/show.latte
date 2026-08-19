@@ -12,8 +12,10 @@
 				<span class="election-status" style="background: #e9ecef; color: #495057;">● Rozpracovaný návrh (Draft)</span>
 			{elseif $election->status === 'cancelled'}
 				<span class="election-status" style="background: #f8d7da; color: #721c24; font-weight: bold;">● Stornováno</span>
-			{elseif $isClosed}
-				<span class="election-status" style="background: #f8d7da; color: #721c24;">● Ukončeno</span>
+			{elseif $election->status === 'adopted' || ($isClosed && $isAdopted)}
+				<span class="election-status badge-status-adopted" style="font-weight: bold;">✓ Ukončeno – Přijato</span>
+			{elseif $election->status === 'rejected' || ($isClosed && !$isAdopted)}
+				<span class="election-status badge-status-rejected" style="font-weight: bold;">✕ Ukončeno – Nepřijato</span>
 			{else}
 				<span class="election-status status-active">● Probíhá</span>
 			{/if}

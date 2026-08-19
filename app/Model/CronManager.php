@@ -68,8 +68,9 @@ class CronManager
 			return [];
 		}
 
-		// Zjistíme název jednotky z SMTP nastavení, pokud není předán
-		$resolvedUnitName = $unitName ?: ($smtp->from_name ?: "jednotka #$unitId");
+		// Zjistíme název jednotky z DB (historie přihlášení) nebo SMTP nastavení
+		$realUnitName = $this->votingRepository->getUnitName((int)$unitId);
+		$resolvedUnitName = $unitName ?: ($realUnitName ?: ($smtp->from_name ?: "jednotka #$unitId"));
 
 		// Počet usnesení
 		$count = count($elections);
@@ -205,7 +206,8 @@ class CronManager
 				continue;
 			}
 
-			$unitName = $smtp->from_name ?: "jednotka #$unitId";
+			$realUnitName = $this->votingRepository->getUnitName((int)$unitId);
+			$unitName = $realUnitName ?: ($smtp->from_name ?: "jednotka #$unitId");
 
 			$remindedMembersPerElection = [];
 
@@ -335,7 +337,8 @@ class CronManager
 			}
 
 			$totalMembers = count($members);
-			$unitName = $smtp->from_name ?: "jednotka #$unitId";
+			$realUnitName = $this->votingRepository->getUnitName((int)$unitId);
+			$unitName = $realUnitName ?: ($smtp->from_name ?: "jednotka #$unitId");
 			$count = count($unitElections);
 
 			$subject = "Výsledky hlasování rady – {$unitName}";
@@ -360,9 +363,9 @@ class CronManager
 					'Zdržel se' => 0,
 				];
 
-				foreach ($results as $r) {
-					if (isset($votesCount[$r['title']])) {
-						$votesCount[$r['title']] = $r['votes_count'];
+				foreach ($results['options'] as $opt) {
+					if (isset($votesCount[$opt->title])) {
+						$votesCount[$opt->title] = (int)$opt->votes_count;
 					}
 				}
 
@@ -409,7 +412,10 @@ class CronManager
 					"Hlasování bylo uzavřeno. Výsledek: " . ($isAdopted ? 'PŘIJATO' : 'NEPŘIJATO') . " (Pro: {$proCount}, Proti: " . ($votesCount['Proti'] ?? 0) . ", Zdržel se: " . ($votesCount['Zdržel se'] ?? 0) . ", Celkem členů: {$totalMembers})."
 				);
 
-				$el->update(['results_sent' => 1]);
+				$el->update([
+					'status' => $isAdopted ? 'adopted' : 'rejected',
+					'results_sent' => 1,
+				]);
 				$totalProcessed++;
 			}
 

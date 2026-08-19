@@ -1,3 +1,6 @@
+php:
+	date.timezone: Europe/Prague
+
 parameters:
 	skautis:
 		appId: 'a3d42171-84fb-4f27-8ad6-d98c92a95c47' # Zadejte vaše přidělené AppID

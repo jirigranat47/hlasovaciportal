@@ -10,6 +10,8 @@ class Bootstrap
 {
 	public static function boot(): Configurator
 	{
+		date_default_timezone_set('Europe/Prague');
+
 		$configurator = new Configurator();
 
 		$rootDir = dirname(__DIR__);

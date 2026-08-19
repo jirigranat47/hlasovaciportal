@@ -57,7 +57,7 @@ final class ElectionPresenter extends BasePresenter
 		$isUnitAdmin = $isAdmin && (int)$election->unit_id === $unitId;
 		$isUnitCouncilMember = $isCouncilMember && (int)$election->unit_id === $unitId;
 		$now = new \DateTime();
-		$isClosed = ($election->end_date <= $now || $election->status === 'cancelled');
+		$isClosed = ($election->end_date <= $now || in_array($election->status, ['cancelled', 'adopted', 'rejected'], true));
 
 		// 1. Usnesení rozpracovaná (Draft) vidí POUZE administrátor jednotky
 		if ($election->status === 'draft') {
@@ -110,7 +110,7 @@ final class ElectionPresenter extends BasePresenter
 		$this->checkElectionAccess($election, $personId, $unitId, $isAdmin, $isCouncilMember);
 
 		$now = new \DateTime();
-		$isClosed = ($election->end_date <= $now || $election->status === 'cancelled');
+		$isClosed = ($election->end_date <= $now || in_array($election->status, ['cancelled', 'adopted', 'rejected'], true));
 
 		$options = $this->votingRepository->getOptions($id);
 		$userVote = $this->votingRepository->getUserVote($id, $personId);
@@ -207,7 +207,7 @@ final class ElectionPresenter extends BasePresenter
 		$this->checkElectionAccess($election, $personId, $unitId, $isAdmin, $isCouncilMember);
 
 		$now = new \DateTime();
-		$isClosed = ($election->end_date <= $now || $election->status === 'cancelled');
+		$isClosed = ($election->end_date <= $now || in_array($election->status, ['cancelled', 'adopted', 'rejected'], true));
 
 		$this->template->election = $election;
 		$this->template->isClosed = $isClosed;
