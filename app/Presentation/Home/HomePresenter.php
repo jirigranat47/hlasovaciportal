@@ -55,5 +55,6 @@ final class HomePresenter extends BasePresenter
 		$this->template->closedElections = $closed;
 		$this->template->userVotes = $userVotes;
 		$this->template->allUserRoles = $isLoggedIn ? $this->skautisAuthManager->getAllUserRoles() : [];
+		$this->template->debugRoles = $this->skautisAuthManager->isDebugRoles();
 	}
 }

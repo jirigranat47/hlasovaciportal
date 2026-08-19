@@ -438,7 +438,8 @@ class VotingRepository
 		string $reason,
 		int $cancelledByPersonId,
 		string $personName,
-		?string $roleName = null
+		?string $roleName = null,
+		array $sentEmails = []
 	): void {
 		$election = $this->getElection($id);
 		if ($election && $election->status === 'published') {
@@ -449,13 +450,20 @@ class VotingRepository
 				'cancelled_by_person_id' => $cancelledByPersonId,
 			]);
 
+			$details = "Hlasování bylo stornováno. Důvod: " . trim($reason);
+			if (!empty($sentEmails)) {
+				$details .= " | E-mailové upozornění odesláno na adresy (" . count($sentEmails) . "): " . implode(', ', $sentEmails);
+			} else {
+				$details .= " | (E-mailová notifikace neodešla - chybí SMTP nebo e-maily členů)";
+			}
+
 			$this->logElectionAudit(
 				$id,
 				$cancelledByPersonId,
 				$personName,
 				$roleName,
 				'cancelled',
-				"Hlasování bylo stornováno. Důvod: " . trim($reason)
+				$details
 			);
 		}
 	}

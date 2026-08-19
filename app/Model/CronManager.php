@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Model;
 
 use Nette\Database\Explorer;
+use Nette\Database\Table\ActiveRow;
 
 class CronManager
 {
@@ -164,13 +165,14 @@ class CronManager
 	}
 
 	/**
-	 * Odešle notifikaci členům rady o stornování hlasování
+	 * Odešle notifikaci členům rady o stornování hlasování a vrátí seznam příjemců
+	 * @return string[] pole e-mailových adres příjemců
 	 */
-	public function sendCancellationNotification(ActiveRow $election, string $reason): void
+	public function sendCancellationNotification(ActiveRow $election, string $reason): array
 	{
 		$smtp = $this->votingRepository->getSmtpSettings($election->unit_id);
 		if (!$smtp) {
-			return;
+			return [];
 		}
 
 		$members = $this->votingRepository->getCouncilMembers($election->unit_id);
@@ -182,7 +184,7 @@ class CronManager
 		}
 
 		if (empty($recipients)) {
-			return;
+			return [];
 		}
 
 		$subject = 'STORNO hlasování č. ' . $election->resolution_number . ': ' . $election->title;
@@ -199,5 +201,7 @@ class CronManager
 		$body .= "<hr><p>Toto je automatický e-mail z Hlasovacího Portálu.</p>";
 
 		$this->mailSender->sendEmail($smtp, $recipients, $subject, $body);
+
+		return array_keys($recipients);
 	}
 }

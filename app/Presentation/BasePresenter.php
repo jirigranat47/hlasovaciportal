@@ -12,6 +12,20 @@ abstract class BasePresenter extends Presenter
 	/** @inject */
 	public SkautisAuthManager $baseAuthManager;
 
+	protected function startup(): void
+	{
+		parent::startup();
+		if ($this->baseAuthManager->isLoggedIn()) {
+			$this->baseAuthManager->keepAlive();
+			if ($this->baseAuthManager->hasSessionJustExpired()) {
+				$this->flashMessage('Vaše přihlášení do SkautISu vypršelo. Přihlaste se prosím znovu.', 'warning');
+				if (!$this->isLinkCurrent('Home:default') && !$this->isLinkCurrent('Sign:*')) {
+					$this->redirect('Home:default');
+				}
+			}
+		}
+	}
+
 	protected function beforeRender(): void
 	{
 		parent::beforeRender();

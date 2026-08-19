@@ -1,0 +1,126 @@
+{block title}Debug SkautIS – Načítání osob (MembershipAll){/block}
+
+{block content}
+
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+	<div>
+		<a n:href="Council:default" style="color: var(--skaut-muted); text-decoration: none;">&larr; Zpět do Správy Rady</a>
+		<h1 style="color: var(--skaut-blue); margin-top: 0.5rem; margin-bottom: 0.3rem;">
+			🧪 Debug SkautIS – Načtení osob (MembershipAll)
+		</h1>
+		<p style="color: var(--skaut-muted); margin: 0;">
+			Operace <code>org->MembershipAll</code> ze služby <code>OrganizationUnit</code>.
+		</p>
+	</div>
+
+	<div>
+		<form method="get" action="{link this}" style="display: flex; gap: 0.5rem; align-items: center;">
+			<label for="debug-unitId" style="font-weight: bold; font-size: 0.9rem;">ID Jednotky:</label>
+			<input type="number" id="debug-unitId" name="unitId" value="{$targetUnitId}" style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; width: 120px; font-family: monospace;">
+			<button type="submit" class="btn" style="background: var(--skaut-blue); color: white; padding: 6px 14px; border: none; border-radius: 4px; cursor: pointer;">
+				🔄 Načíst
+			</button>
+		</form>
+	</div>
+</div>
+
+{* INFO O AKTIVNÍ RELACI *}
+<div class="election-card" style="margin-bottom: 1.5rem; background: #f8fafc; border-left: 4px solid var(--skaut-blue);">
+	<h3 style="margin-top: 0; margin-bottom: 0.6rem; color: #1e293b; font-size: 1.05rem;">
+		🔑 Aktivní přihlášená relace ve SkautISu:
+	</h3>
+	<div style="display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.9rem; color: #334155;">
+		<div>Přihlášený: <strong>{$debugInfo['session']['personName']}</strong> (ID: {$debugInfo['session']['personId']}, {$debugInfo['session']['userName']})</div>
+		<div>Aktivní role: <strong>{$debugInfo['session']['roleName']}</strong> (Klíč: <code>{$debugInfo['session']['roleKey']}</code>)</div>
+		<div>Aktivní jednotka: <strong>ID {$targetUnitId}</strong></div>
+	</div>
+</div>
+
+{if isset($debugInfo['error'])}
+	<div style="background: #fee2e2; border: 1px solid #fca5a5; padding: 1.2rem; border-radius: 8px; color: #991b1b; margin-bottom: 2rem;">
+		<strong>Chyba:</strong> {$debugInfo['error']}
+	</div>
+{else}
+
+	{* VÝPIS MEMBERSHIP ALL *}
+	<div style="display: flex; flex-direction: column; gap: 2rem;">
+		{foreach $debugInfo['variants'] as $key => $v}
+			<div class="election-card" style="padding: 1.5rem; border-top: 4px solid {if $v['success']}var(--skaut-blue){else}#dc2626{/if};">
+				<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.8rem;">
+					<div>
+						<h2 style="margin: 0; color: var(--skaut-blue); font-size: 1.25rem;">
+							{$key} <span style="font-size: 0.9rem; color: #64748b; font-weight: normal;">(Služba: {$v['service']})</span>
+						</h2>
+						<p style="margin: 3px 0 0 0; font-size: 0.85rem; color: #64748b;">
+							Parametry volání: <code>{json_encode($v['params'])}</code>
+						</p>
+					</div>
+					<div>
+						{if $v['success']}
+							<span style="background: #dcfce7; color: #15803d; font-weight: bold; font-size: 0.9rem; padding: 4px 10px; border-radius: 12px;">
+								✓ Nalezeno osob: {$v['count']}
+							</span>
+						{else}
+							<span style="background: #fee2e2; color: #b91c1c; font-weight: bold; font-size: 0.9rem; padding: 4px 10px; border-radius: 12px;">
+								✕ Chyba: {$v['error']}
+							</span>
+						{/if}
+					</div>
+				</div>
+
+				{if $v['success'] && !empty($v['data'])}
+					{* TABULKA VRÁCENÝCH DAT *}
+					<div style="overflow-x: auto; margin-bottom: 1.2rem;">
+						<table style="width: 100%; border-collapse: collapse; font-size: 0.84rem; text-align: left; background: white;">
+							<thead>
+								<tr style="background: #f1f5f9; border-bottom: 2px solid #cbd5e1; color: #334155;">
+									{var $firstRow = (array)$v['data'][0]}
+									{foreach $firstRow as $colName => $colVal}
+										<th style="padding: 8px 10px; white-space: nowrap;">{$colName}</th>
+									{/foreach}
+								</tr>
+							</thead>
+							<tbody>
+								<tr n:foreach="$v['data'] as $row" style="border-bottom: 1px solid #e2e8f0;">
+									{var $rowArr = (array)$row}
+									{foreach $rowArr as $colKey => $val}
+										<td style="padding: 7px 10px; color: #334155;">
+											{if is_array($val) || is_object($val)}
+												<code>{json_encode($val)}</code>
+											{elseif is_bool($val)}
+												<span style="font-weight: bold; color: {if $val}#16a34a{else}#dc2626{/if};">{$val ? 'true' : 'false'}</span>
+											{elseif $val === null || $val === ''}
+												<span style="color: #94a3b8;">–</span>
+											{else}
+												{if stripos((string)$colKey, 'birthday') !== false || stripos((string)$colKey, 'date') !== false}
+													<strong>{$val}</strong>
+												{else}
+													{$val}
+												{/if}
+											{/if}
+										</td>
+									{/foreach}
+								</tr>
+							</tbody>
+						</table>
+					</div>
+
+					{* RAW JSON DUMP PRO DETAILNÍ INSPEKCI *}
+					<details style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.8rem 1rem;">
+						<summary style="cursor: pointer; font-weight: bold; color: #0284c7; font-size: 0.85rem;">
+							🔍 Zobrazit kompletní surový JSON výstup ({$v['count']} položek)
+						</summary>
+						<pre style="margin-top: 0.8rem; background: #0f172a; color: #f8fafc; padding: 1rem; border-radius: 6px; font-size: 0.78rem; overflow-x: auto; max-height: 400px;">{\json_encode($v['data'], \JSON_PRETTY_PRINT | \JSON_UNESCAPED_UNICODE)}</pre>
+					</details>
+				{elseif $v['success']}
+					<div style="color: #64748b; font-style: italic; padding: 1rem 0;">
+						Služba proběhla úspěšně, ale nevrátila žádné záznamy (prázdný výsledek pro ID {$targetUnitId}).
+					</div>
+				{/if}
+			</div>
+		{/foreach}
+	</div>
+
+{/if}
+
+{/block}

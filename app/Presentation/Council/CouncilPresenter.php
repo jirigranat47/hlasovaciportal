@@ -42,8 +42,9 @@ final class CouncilPresenter extends BasePresenter
 		$this->template->userData = $userData;
 		$this->template->members = $this->votingRepository->getCouncilMembers($unitId);
 		
-		// Načteme členy jednotky ze Skautisu pro dropdown
+		// Načteme členy jednotky ze Skautisu pro autocomplete dropdown
 		$this->skautisMembers = $this->skautisAuthManager->getUnitMembers();
+		$this->template->skautisMembers = $this->skautisMembers;
 		$this->template->skautisMembersCount = count($this->skautisMembers);
 		$this->template->skautisError = $this->skautisAuthManager->getLastError();
 	}
@@ -88,17 +89,34 @@ final class CouncilPresenter extends BasePresenter
 		$this->template->loginLogs = $this->votingRepository->getLoginLogs($unitId, 100);
 	}
 
+	public function actionDebugMembers(?int $unitId = null): void
+	{
+		$userData = $this->skautisAuthManager->getUserData();
+		$targetUnitId = $unitId ?: (int)($userData['unitId'] ?? 0);
+
+		$this->template->userData = $userData;
+		$this->template->targetUnitId = $targetUnitId;
+		$this->template->debugInfo = $this->skautisAuthManager->debugFetchUnitMembers($targetUnitId);
+	}
+
 	protected function createComponentAddMemberForm(): Form
 	{
 		$form = new Form();
 
 		$options = [];
 		foreach ($this->skautisMembers as $m) {
-			$options[$m['personId']] = $m['fullName'] . ($m['email'] ? ' (' . $m['email'] . ')' : '');
+			$label = $m['fullName'];
+			if (!empty($m['birthday'])) {
+				$label .= ' (* ' . $m['birthday'] . ')';
+			}
+			if (!empty($m['email'])) {
+				$label .= ' (' . $m['email'] . ')';
+			}
+			$options[$m['personId']] = $label;
 		}
 
 		$form->addSelect('personId', 'Vybrat člena z jednotky:', $options)
-			->setPrompt('--- Vyberte osobu ---')
+			->setPrompt('--- Vyberte nebo vyhledejte osobu ---')
 			->setRequired('Vyberte prosím osobu ze seznamu.');
 
 		$form->addSubmit('submit', 'Přidat do Rady');
@@ -108,7 +126,7 @@ final class CouncilPresenter extends BasePresenter
 			$unitId = (int)$userData['unitId'];
 			$personId = (int)$values->personId;
 
-			// Najdeme údaje o osobě
+			// Najdeme údaje o osobě ze seznamu
 			$name = '';
 			$email = null;
 			foreach ($this->skautisMembers as $m) {
@@ -119,39 +137,28 @@ final class CouncilPresenter extends BasePresenter
 				}
 			}
 
-			try {
-				$this->votingRepository->addCouncilMember($unitId, $personId, $name, $email);
-				$this->flashMessage('Osoba byla úspěšně přidána do Rady jednotky.', 'success');
-			} catch (\Nette\Database\UniqueConstraintViolationException $e) {
-				$this->flashMessage('Tento uživatel již v radě jednotky je.', 'warning');
-			} catch (\Throwable $e) {
-				$this->flashMessage('Chyba při ukládání: ' . $e->getMessage(), 'danger');
+			// Pokud e-mail chybí, dotážeme se na detail osoby ze SkautISu
+			if (empty($email)) {
+				$detail = $this->skautisAuthManager->getPersonDetail($personId);
+				if (!empty($detail['email'])) {
+					$email = $detail['email'];
+				}
+				if (empty($name) && !empty($detail['fullName'])) {
+					$name = $detail['fullName'];
+				}
 			}
 
-			$this->redirect('default');
-		};
-
-		return $form;
-	}
-
-	protected function createComponentAddManualMemberForm(): Form
-	{
-		$form = new Form();
-		$form->addInteger('personId', 'SkautIS Person ID:')
-			->setRequired('Zadejte číselné Person ID.');
-		$form->addText('fullName', 'Jméno a příjmení:')
-			->setRequired('Zadejte jméno osoby.');
-		$form->addEmail('email', 'E-mail (volitelné):')
-			->setNullable();
-		$form->addSubmit('submit', 'Přidat člena ručně');
-
-		$form->onSuccess[] = function (Form $form, \stdClass $values): void {
-			$userData = $this->skautisAuthManager->getUserData();
-			$unitId = (int)$userData['unitId'];
+			if (empty($name)) {
+				$name = "Osoba #$personId";
+			}
 
 			try {
-				$this->votingRepository->addCouncilMember($unitId, (int)$values->personId, $values->fullName, $values->email);
-				$this->flashMessage("Osoba {$values->fullName} byla úspěšně přidána do Rady jednotky.", 'success');
+				$this->votingRepository->addCouncilMember($unitId, $personId, $name, $email);
+				if ($email) {
+					$this->flashMessage("Osoba {$name} byla úspěšně přidána do Rady jednotky s e-mailem {$email}.", 'success');
+				} else {
+					$this->flashMessage("Osoba {$name} byla úspěšně přidána do Rady jednotky.", 'success');
+				}
 			} catch (\Nette\Database\UniqueConstraintViolationException $e) {
 				$this->flashMessage('Tento uživatel již v radě jednotky je.', 'warning');
 			} catch (\Throwable $e) {

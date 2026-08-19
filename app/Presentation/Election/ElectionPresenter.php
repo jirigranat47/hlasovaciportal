@@ -359,13 +359,14 @@ final class ElectionPresenter extends BasePresenter
 			$personName = $userData['personName'];
 			$roleName = $userData['roleName'] ?? null;
 
-			$id = $this->getParameter('id');
+			$isEdit = ($this->getAction() === 'edit' && $this->getParameter('id') !== null);
 			$redirectTarget = null;
 			try {
-				if ($id !== null) {
-					$this->votingRepository->updateElection((int)$id, (array)$values, $personId, $personName, $roleName);
+				if ($isEdit) {
+					$id = (int)$this->getParameter('id');
+					$this->votingRepository->updateElection($id, (array)$values, $personId, $personName, $roleName);
 					$this->flashMessage('Hlasování bylo úspěšně upraveno.', 'success');
-					$redirectTarget = ['show', (int)$id];
+					$redirectTarget = ['show', $id];
 				} else {
 					$election = $this->votingRepository->createElection((array)$values, $unitId, $personId, $personName, $roleName);
 					$this->flashMessage('Návrh hlasování byl úspěšně vytvořen (zatím v režimu Draft).', 'success');
@@ -405,8 +406,18 @@ final class ElectionPresenter extends BasePresenter
 				$this->redirect('show', $id);
 			}
 
-			$this->votingRepository->cancelElection($id, $values->cancellation_reason, $personId, $personName, $roleName);
-			$this->cronManager->sendCancellationNotification($election, $values->cancellation_reason);
+			// 1. Odešleme e-mailové upozornění a získáme seznam adres příjemců
+			$sentEmails = $this->cronManager->sendCancellationNotification($election, $values->cancellation_reason);
+
+			// 2. Provedeme storno v DB a zapíšeme audit včetně seznamu adres
+			$this->votingRepository->cancelElection(
+				$id,
+				$values->cancellation_reason,
+				$personId,
+				$personName,
+				$roleName,
+				$sentEmails
+			);
 
 			$this->flashMessage('Hlasování bylo úspěšně stornováno a členům rady byla odeslána notifikace.', 'success');
 			$this->redirect('show', $id);

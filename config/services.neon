@@ -1,7 +1,7 @@
 services:
 	router: App\Core\RouterFactory::createRouter
 	skautis: App\Model\SkautisFactory::create(%skautis.appId%, %skautis.isTest%)
-	skautisAuthManager: App\Model\SkautisAuthManager(appId: %skautis.appId%, isTest: %skautis.isTest%)
+	skautisAuthManager: App\Model\SkautisAuthManager(appId: %skautis.appId%, isTest: %skautis.isTest%, debugRoles: %skautis.debugRoles%)
 	- App\Model\VotingRepository
 	- App\Model\MailSender
 	- App\Model\CronManager(baseUrl: %baseUrl%)

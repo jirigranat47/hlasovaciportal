@@ -19,7 +19,8 @@ class SkautisAuthManager
 		private VotingRepository $votingRepository,
 		private Request $httpRequest,
 		private string $appId,
-		private bool $isTest = true
+		private bool $isTest = true,
+		private bool $debugRoles = false
 	) {
 		$this->session = $session->getSection('skautis_auth');
 	}
@@ -90,9 +91,11 @@ class SkautisAuthManager
 					}
 					$this->session->allRoles = $rolesArray;
 
-					// Tracy debug výpis
-					\Tracy\Debugger::barDump($rolesArray, 'SkautIS - Všechny role uživatele (UserRoleAll)');
-					\Tracy\Debugger::log($rolesArray, 'user-roles');
+					// Tracy debug výpis (pokud je zapnut v neon konfiguraci: skautis.debugRoles)
+					if ($this->debugRoles) {
+						\Tracy\Debugger::barDump($rolesArray, 'SkautIS - Všechny role uživatele (UserRoleAll)');
+						\Tracy\Debugger::log($rolesArray, 'user-roles');
+					}
 
 					if (is_iterable($roles)) {
 						foreach ($roles as $role) {
@@ -140,6 +143,86 @@ class SkautisAuthManager
 		return false;
 	}
 
+	private bool $sessionJustExpired = false;
+
+	public function hasSessionJustExpired(): bool
+	{
+		return $this->sessionJustExpired;
+	}
+
+	/**
+	 * Aktivně udržuje a obnovuje přihlášení do SkautISu (Keep-Alive)
+	 * Prodlouží token každé 2 minuty při aktivitě uživatele
+	 */
+	public function keepAlive(bool $force = false): bool
+	{
+		if (empty($this->session->token)) {
+			return false;
+		}
+
+		if ($this->session->token === 'mock_token') {
+			return true;
+		}
+
+		$now = time();
+		$lastRefresh = (int)($this->session->lastRefresh ?? 0);
+
+		// Obnovujeme max 1x za 2 minuty (120 s), aby se neposílaly zbytečné SOAP dotazy na každý klik
+		if (!$force && ($now - $lastRefresh) < 120) {
+			return true;
+		}
+
+		try {
+			$this->skautis->user->LoginUpdateRefresh(['ID' => $this->session->token]);
+			$this->session->lastRefresh = $now;
+			return true;
+		} catch (\Throwable $e) {
+			if ($this->isAuthenticationError($e)) {
+				\Tracy\Debugger::log('SkautIS session expired during keepAlive: ' . $e->getMessage(), \Tracy\ILogger::INFO);
+				$this->logout();
+				$this->sessionJustExpired = true;
+				return false;
+			}
+			\Tracy\Debugger::log($e, \Tracy\ILogger::WARNING);
+			return false;
+		}
+	}
+
+	/**
+	 * Zjistí, zda výjimka ze SkautISu znamená vypršení přihlášení nebo neplatný token
+	 */
+	public function isAuthenticationError(\Throwable $e): bool
+	{
+		$msg = mb_strtolower($e->getMessage(), 'UTF-8');
+		$authKeywords = [
+			'vypršel',
+			'vyprsel',
+			'neplatn',
+			'token',
+			'není přihlášen',
+			'neni prihlasen',
+			'session expired',
+			'authentication',
+			'unauthorized',
+			'accessdenied',
+			'relace',
+			'přihlašovací údaje',
+		];
+
+		foreach ($authKeywords as $kw) {
+			if (str_contains($msg, $kw)) {
+				return true;
+			}
+		}
+
+		$class = get_class($e);
+		if (str_contains($class, 'AuthenticationException') || str_contains($class, 'UserManagementException')) {
+			return true;
+		}
+
+		return false;
+	}
+
 	/**
 	 * Zkontroluje, zda je uživatel přihlášen
 	 */
@@ -179,6 +262,14 @@ class SkautisAuthManager
 	public function getAllUserRoles(): array
 	{
 		return $this->session->allRoles ?? [];
+	}
+
+	/**
+	 * Vrátí zda je povolen debug výpis rolí
+	 */
+	public function isDebugRoles(): bool
+	{
+		return $this->debugRoles;
 	}
 
 	private ?string $lastError = null;
@@ -274,7 +365,7 @@ class SkautisAuthManager
 	}
 
 	/**
-	 * Získá seznam osob v aktivní jednotce ze skautISu pro naplnění Rady jednotky
+	 * Získá seznam osob v aktivní jednotce ze skautISu přes MembershipAll pro naplnění Rady jednotky
 	 */
 	public function getUnitMembers(): array
 	{
@@ -283,95 +374,54 @@ class SkautisAuthManager
 			return [];
 		}
 
-		// Obnovíme / prodloužíme přihlašovací relaci
-		try {
-			$this->skautis->user->LoginUpdateRefresh(['ID' => $this->session->token]);
-		} catch (\Throwable $e) {
-			\Tracy\Debugger::log($e, \Tracy\ILogger::WARNING);
+		// Obnovíme / ověříme přihlašovací relaci před voláním
+		if (!$this->keepAlive(true) || !$this->isLoggedIn()) {
+			return [];
 		}
 
 		$members = [];
-		$errors = [];
 
-		// 1. Zkusíme UserRoleALLUnit z UserManagement (všechny osoby s rolí v jednotce)
 		try {
-			$roleList = $this->skautis->user->UserRoleALLUnit([
+			$mList = $this->skautis->org->MembershipAll([
 				'ID_Unit' => (int)$this->session->unitId,
+				'IsValid' => true,
 			]);
 
-			if (is_iterable($roleList)) {
-				foreach ($roleList as $ur) {
-					$pId = (int)($ur->ID_Person ?? 0);
-					if ($pId > 0) {
-						$members[$pId] = [
-							'personId' => $pId,
-							'fullName' => $ur->Person ?? ($ur->DisplayName ?? "Osoba #$pId"),
-							'role' => $ur->Role ?? '',
-							'email' => null,
-						];
+			if (is_iterable($mList)) {
+				foreach ($mList as $m) {
+					$pId = (int)($m->ID_Person ?? ($m->ID ?? 0));
+					if ($pId <= 0 || isset($members[$pId])) {
+						continue;
 					}
-				}
-			}
-		} catch (\Throwable $e) {
-			$errors[] = 'UserRoleALLUnit: ' . $e->getMessage();
-			\Tracy\Debugger::log($e, \Tracy\ILogger::WARNING);
-		}
 
-		// 2. Zkusíme PersonAll z OrganizationUnit (všechny osoby v jednotce)
-		try {
-			$list = $this->skautis->org->PersonAll([
-				//'ID_Unit' => (int)$this->session->unitId,
-				'ID_Unit' => 25784
-			]);
-
-			if (is_iterable($list)) {
-				foreach ($list as $p) {
-					$fullName = !empty($p->DisplayName) ? $p->DisplayName : trim(($p->FirstName ?? '') . ' ' . ($p->LastName ?? ''));
-					if (!empty($p->NickName) && !str_contains($fullName, $p->NickName)) {
-						$fullName .= " ({$p->NickName})";
-					}
-					$pId = (int)$p->ID;
-					if ($pId > 0) {
-						$members[$pId] = [
-							'personId' => $pId,
-							'fullName' => $fullName,
-							'email' => $p->Email ?? ($p->EmailDefault ?? ($members[$pId]['email'] ?? null)),
-						];
-					}
-				}
-			}
-		} catch (\Throwable $e) {
-			$errors[] = 'PersonAll: ' . $e->getMessage();
-			\Tracy\Debugger::log($e, \Tracy\ILogger::WARNING);
-		}
-
-		// 3. Zkusíme MembershipAll z OrganizationUnit
-		if (count($members) < 3) {
-			try {
-				$mList = $this->skautis->org->MembershipAll([
-					'ID_Unit' => (int)$this->session->unitId,
-					'IsValid' => true,
-				]);
-				if (is_iterable($mList)) {
-					foreach ($mList as $m) {
-						$pId = (int)($m->ID_Person ?? $m->ID ?? 0);
-						if ($pId > 0 && !isset($members[$pId])) {
-							$members[$pId] = [
-								'personId' => $pId,
-								'fullName' => $m->Person ?? ($m->DisplayName ?? "Osoba #$pId"),
-								'email' => null,
-							];
+					// Zpracování data narození
+					$birthdayRaw = $m->Birthday ?? ($m->BirthDate ?? ($m->PersonBirthday ?? ($m->PersonBirthDate ?? null)));
+					$birthdayFormatted = null;
+					if (!empty($birthdayRaw)) {
+						try {
+							$dt = new \DateTime((string)$birthdayRaw);
+							$birthdayFormatted = $dt->format('d. m. Y');
+						} catch (\Throwable) {
+							$birthdayFormatted = (string)$birthdayRaw;
 						}
 					}
-				}
-			} catch (\Throwable $e2) {
-				$errors[] = 'MembershipAll: ' . $e2->getMessage();
-				\Tracy\Debugger::log($e2, \Tracy\ILogger::WARNING);
-			}
-		}
 
-		if (empty($members) && !empty($errors)) {
-			$this->lastError = implode(' | ', $errors);
+					$members[$pId] = [
+						'personId' => $pId,
+						'fullName' => $m->Person ?? ($m->DisplayName ?? "Osoba #$pId"),
+						'birthday' => $birthdayFormatted,
+						'email' => $m->Email ?? ($m->PersonEmail ?? null),
+						'membershipType' => $m->MembershipType ?? null,
+					];
+				}
+			}
+		} catch (\Throwable $e) {
+			$this->lastError = 'MembershipAll: ' . $e->getMessage();
+			\Tracy\Debugger::log($e, \Tracy\ILogger::WARNING);
+			if ($this->isAuthenticationError($e)) {
+				$this->logout();
+				$this->sessionJustExpired = true;
+			}
 		}
 
 		$result = array_values($members);
@@ -379,6 +429,138 @@ class SkautisAuthManager
 		usort($result, fn($a, $b) => strcmp($a['fullName'], $b['fullName']));
 
 		return $result;
+	}
+
+	/**
+	 * Získá detail osoby včetně e-mailu ze SkautISu (volá se při výběru člena)
+	 */
+	public function getPersonDetail(int $personId): array
+	{
+		if (!$this->isLoggedIn() || $personId <= 0) {
+			return [];
+		}
+
+		$detail = [
+			'personId' => $personId,
+			'email' => null,
+			'phone' => null,
+			'fullName' => null,
+		];
+
+		// 1. Zkusíme org->PersonDetail
+		try {
+			$p = $this->skautis->org->PersonDetail(['ID' => $personId]);
+			if (!empty($p)) {
+				$detail['email'] = $p->Email ?? ($p->EmailDefault ?? null);
+				$detail['phone'] = $p->Phone ?? ($p->PhoneDefault ?? null);
+				$fullName = !empty($p->DisplayName) ? $p->DisplayName : trim(($p->FirstName ?? '') . ' ' . ($p->LastName ?? ''));
+				if (!empty($p->NickName) && !str_contains($fullName, $p->NickName)) {
+					$fullName .= " ({$p->NickName})";
+				}
+				if (!empty($fullName)) {
+					$detail['fullName'] = $fullName;
+				}
+				if (!empty($detail['email'])) {
+					return $detail;
+				}
+			}
+		} catch (\Throwable $e) {
+			\Tracy\Debugger::log($e, \Tracy\ILogger::WARNING);
+		}
+
+		// 2. Zkusíme org->PersonContactAll
+		try {
+			$contacts = $this->skautis->org->PersonContactAll(['ID_Person' => $personId]);
+			if (is_iterable($contacts)) {
+				foreach ($contacts as $c) {
+					$type = strtolower((string)($c->ContactType ?? ''));
+					$val = trim((string)($c->Value ?? ''));
+					if (empty($detail['email']) && (str_contains($type, 'email') || filter_var($val, FILTER_VALIDATE_EMAIL))) {
+						$detail['email'] = $val;
+					}
+					if (empty($detail['phone']) && (str_contains($type, 'telefon') || str_contains($type, 'phone') || str_contains($type, 'mobil'))) {
+						$detail['phone'] = $val;
+					}
+				}
+				if (!empty($detail['email'])) {
+					return $detail;
+				}
+			}
+		} catch (\Throwable $e) {
+			\Tracy\Debugger::log($e, \Tracy\ILogger::WARNING);
+		}
+
+		// 3. Zkusíme user->UserDetail
+		try {
+			$u = $this->skautis->user->UserDetail(['ID_Person' => $personId]);
+			if (!empty($u->Email)) {
+				$detail['email'] = $u->Email;
+			}
+		} catch (\Throwable $e) {
+			\Tracy\Debugger::log($e, \Tracy\ILogger::WARNING);
+		}
+
+		return $detail;
+	}
+
+	/**
+	 * Získá podrobný debug výpis z MembershipAll ze SkautISu
+	 */
+	public function debugFetchUnitMembers(?int $unitId = null): array
+	{
+		$targetUnitId = $unitId ?: (int)($this->session->unitId ?? 0);
+		if (!$this->isLoggedIn() || empty($targetUnitId)) {
+			return ['error' => 'Uživatel není přihlášen nebo nebyla zadána jednotka.'];
+		}
+
+		// Obnovíme relaci
+		try {
+			$this->skautis->user->LoginUpdateRefresh(['ID' => $this->session->token]);
+		} catch (\Throwable $e) {
+			\Tracy\Debugger::log($e, \Tracy\ILogger::WARNING);
+		}
+
+		$results = [
+			'unitId' => $targetUnitId,
+			'session' => [
+				'token' => substr((string)$this->session->token, 0, 10) . '...',
+				'personId' => $this->session->personId,
+				'userName' => $this->session->userName,
+				'personName' => $this->session->personName,
+				'roleId' => $this->session->roleId,
+				'roleName' => $this->session->roleName,
+				'roleKey' => $this->session->roleKey,
+			],
+			'variants' => [],
+		];
+
+		// MembershipAll (OrganizationUnit)
+		try {
+			$r3 = $this->skautis->org->MembershipAll(['ID_Unit' => $targetUnitId, 'IsValid' => true]);
+			$r3Array = json_decode(json_encode($r3), true);
+			if (isset($r3Array['ID'])) {
+				$r3Array = [$r3Array];
+			}
+			$results['variants']['MembershipAll'] = [
+				'service' => 'org (OrganizationUnit)',
+				'operation' => 'MembershipAll',
+				'params' => ['ID_Unit' => $targetUnitId, 'IsValid' => true],
+				'success' => true,
+				'count' => is_array($r3Array) ? count($r3Array) : (is_countable($r3) ? count($r3) : 0),
+				'data' => $r3Array,
+			];
+		} catch (\Throwable $e) {
+			$results['variants']['MembershipAll'] = [
+				'service' => 'org (OrganizationUnit)',
+				'operation' => 'MembershipAll',
+				'params' => ['ID_Unit' => $targetUnitId, 'IsValid' => true],
+				'success' => false,
+				'error' => $e->getMessage(),
+				'data' => null,
+			];
+		}
+
+		return $results;
 	}
 
 	/**
