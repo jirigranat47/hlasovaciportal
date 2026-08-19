@@ -1,4 +1,13 @@
 parameters:
 	skautis:
 		appId: 'vložte-vaše-skautis-app-id'
-		isTest: true
+		isTest: false # Na produkci nastavit na false (pro testovací prostředí true)
+		debugRoles: false
+	cron:
+		token: 'vložte-silné-tajné-heslo-pro-cron'
+
+database:
+	dsn: 'mysql:host=localhost;dbname=hlasovaciportal;charset=utf8mb4'
+	user: 'db_user'
+	password: 'db_password'
+

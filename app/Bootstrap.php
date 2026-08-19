@@ -22,7 +22,9 @@ class Bootstrap
 			@mkdir($rootDir . '/log', 0777, true);
 		}
 
-		$configurator->setDebugMode(true);
+		// Na localhostu a ve vývojovém prostředí zapneme ladicí režim Tracy, na produkci bezpečně logujeme do složky /log
+		$isDev = in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true) || (getenv('NETTE_ENV') === 'dev');
+		$configurator->setDebugMode($isDev);
 		$configurator->enableTracy($rootDir . '/log');
 
 		// Suppress PHP 8.4 deprecation notices in 3rd party libraries
