@@ -20,14 +20,36 @@ Aplikace pro online hlasování v prostředí Junák - český skaut, postavená
 
 ## 🔑 Konfigurace SkautISu
 
-V souboru `config/local.neon` nastavte vaše **AppID** získáne z [ws.skautis.cz/zadost](https://ws.skautis.cz/zadost):
+V souboru `config/local.neon` nastavte vaše **AppID** získané z [ws.skautis.cz/zadost](https://ws.skautis.cz/zadost):
 
 ```neon
 parameters:
 	skautis:
 		appId: 'VAŠE-PRIDELENE-APP-ID'
-		isTest: true # Pro vývoj nechte true (směřuje na test-is.skaut.cz)
+		isTest: false # Pro vývoj true (směřuje na test-is.skaut.cz), pro produkci false
 ```
+
+---
+
+## 📋 Požadavky na SkautIS API (Podklady pro žádost o produkční AppID)
+
+Při vyplňování žádosti o nové / produkční **AppID** na [ws.skautis.cz](https://ws.skautis.cz) uveďte následující webové služby a operace:
+
+### 1. Webová služba `UserManagement` (Uživatelé a autentizace)
+* **`UserDetail`** – získání údajů o přihlášeném uživateli (jméno, příjmení, Person ID, uživatelské jméno, e-mail).
+* **`UserRoleAll`** – načtení všech rolí uživatele (pro přepínání jednotek/rolí v horní liště a detekci administrátorských oprávnění).
+* **`LoginUpdate`** – přepnutí aktivní role uživatele v relaci SkautISu.
+* **`LoginUpdateRefresh`** – udržování aktivní přihlašovací relace (Keep-Alive mechanismus).
+
+### 2. Webová služba `OrganizationUnit` (Jednotky a členové)
+* **`MembershipAll`** – načtení seznamu členů aktivní jednotky (pro našeptávač a správu hlasujících členů Rady jednotky: Person ID, jméno, datum narození, typ členství).
+* **`PersonDetail`** – načtení základních údajů o vybrané osobě (jméno, přezdívka, výchozí e-mail) při zařazení do Rady jednotky.
+* **`PersonContactAll`** – dohledání e-mailové adresy z kontaktů osoby ve SkautISu pro doručování e-mailových výzev a upomínek k hlasování.
+
+### 📝 Vzorový text popisu aplikace pro schvalovatele SkautISu:
+> *„Webová aplikace Hlasovací Portál slouží pro elektronické hlasování (per rollam) rad skautských jednotek (středisek, okresů, krajů). Uživatelé se přihlašují svými skautIS účty, aplikace ověřuje jejich role v jednotce a umožňuje členům rady hlasovat o návrzích usnesení a správcům spravovat Radu jednotky s dohledáním kontaktů.“*
+
+---
 
 ## 🛠 Lokální simulace přihlášení (vývoj a testování)
 
