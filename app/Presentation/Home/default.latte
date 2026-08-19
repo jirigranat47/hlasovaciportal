@@ -227,35 +227,75 @@
 
 	{* UZAVŘENÁ HLASOVÁNÍ - Pro adminy, členy rady a bývalé hlasující *}
 	{if $isAdmin || $isCouncilMember || !empty($closedElections)}
-		<div style="margin-bottom: 3rem;">
-			<h2 style="color: var(--skaut-blue); margin-bottom: 1rem; border-left: 4px solid var(--skaut-blue); padding-left: 10px;">Uzavřená hlasování</h2>
+		<div style="margin-bottom: 3rem;" id="closedElectionsSection">
+			<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+				<h2 style="color: var(--skaut-blue); margin: 0; border-left: 4px solid var(--skaut-blue); padding-left: 10px;">
+					Uzavřená hlasování
+					<span id="closedCountBadge" style="font-size: 0.85rem; font-weight: normal; color: var(--skaut-muted); margin-left: 8px;"></span>
+				</h2>
+
+				{if !empty($closedElections)}
+					<div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+						<div style="position: relative;">
+							<input type="text" id="closedSearchInput" placeholder="🔍 Hledat usnesení..." style="padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; width: 180px;">
+						</div>
+
+						<div style="display: flex; align-items: center; gap: 6px;">
+							<label for="closedPeriodSelect" style="font-size: 0.9rem; color: #475569; font-weight: bold;">Období:</label>
+							<select id="closedPeriodSelect" style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; background: white; font-weight: 500; cursor: pointer;">
+								<option value="1m" selected>Poslední měsíc (30 dní)</option>
+								<option value="3m">Poslední 3 měsíce</option>
+								<option value="1y">Poslední rok (12 měsíců)</option>
+								<option value="all">Všechna usnesení ({count($closedElections)})</option>
+							</select>
+						</div>
+					</div>
+				{/if}
+			</div>
+
 			{if empty($closedElections)}
 				<div class="election-card">
 					<p style="color: var(--skaut-muted); margin: 0;">Žádná uzavřená hlasování k zobrazení.</p>
 				</div>
 			{else}
-				<div n:foreach="$closedElections as $el" class="election-card" style="margin-bottom: 1rem; opacity: 0.85;">
-					<div class="election-header" style="display: flex; justify-content: space-between; align-items: center; gap: 1.5rem;">
-						<div style="flex: 1; min-width: 0;">
-							<div style="font-size: 0.85rem; font-weight: bold; color: #555; text-transform: uppercase; margin-bottom: 2px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-								<span>Usnesení č. {$el->resolution_number}</span>
-								{if $el->status === 'cancelled'}
-									<span style="background: #f8d7da; color: #721c24; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; text-transform: none;">Stornováno</span>
-								{/if}
+				<div id="noFilteredResultsCard" class="election-card" style="display: none; text-align: center; padding: 2.5rem 1.5rem; background: #ffffff; border: 1px dashed #cbd5e1;">
+					<p style="color: var(--skaut-muted); font-size: 1rem; margin-bottom: 0.75rem;">
+						V tomto zvoleném filtru nebylo nalezeno žádné uzavřené usnesení.
+					</p>
+					<button type="button" class="btn" style="background: var(--skaut-blue); color: white; font-size: 0.85rem; font-weight: bold; border-radius: 6px; padding: 6px 14px;" onclick="resetClosedFilter()">
+						Zobrazit všechna usnesení &rarr;
+					</button>
+				</div>
+
+				<div id="closedElectionsList">
+					<div n:foreach="$closedElections as $el" 
+						class="election-card closed-election-item" 
+						data-closed-date="{($el->status === 'cancelled' && $el->cancelled_at) ? $el->cancelled_at->format('Y-m-d') : ($el->end_date ? $el->end_date->format('Y-m-d') : '')}"
+						data-title="{$el->title|lower}"
+						data-number="{$el->resolution_number|lower}"
+						style="margin-bottom: 1rem; opacity: 0.9;">
+						<div class="election-header" style="display: flex; justify-content: space-between; align-items: center; gap: 1.5rem;">
+							<div style="flex: 1; min-width: 0;">
+								<div style="font-size: 0.85rem; font-weight: bold; color: #555; text-transform: uppercase; margin-bottom: 2px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+									<span>Usnesení č. {$el->resolution_number}</span>
+									{if $el->status === 'cancelled'}
+										<span style="background: #f8d7da; color: #721c24; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; text-transform: none;">Stornováno</span>
+									{/if}
+								</div>
+								<h3 style="margin: 0; font-size: 1.15rem; line-height: 1.5;"><a n:href="Election:show, $el->id" style="color: #333; text-decoration: none; font-weight: bold;">{$el->title}</a></h3>
+								<p style="color: var(--skaut-muted); margin: 5px 0 0 0; font-size: 0.9rem;">
+									{if $el->status === 'cancelled'}
+										Stornováno: <strong>{$el->cancelled_at ? ($el->cancelled_at|date:'d. m. Y H:i') : ''}</strong>
+									{else}
+										Ukončeno: <strong>{$el->end_date|date:'d. m. Y'} (23:59)</strong>
+									{/if}
+								</p>
 							</div>
-							<h3 style="margin: 0; font-size: 1.15rem; line-height: 1.5;"><a n:href="Election:show, $el->id" style="color: #333; text-decoration: none; font-weight: bold;">{$el->title}</a></h3>
-							<p style="color: var(--skaut-muted); margin: 5px 0 0 0; font-size: 0.9rem;">
-								{if $el->status === 'cancelled'}
-									Stornováno: <strong>{$el->cancelled_at ? ($el->cancelled_at|date:'d. m. Y H:i') : ''}</strong>
-								{else}
-									Ukončeno: <strong>{$el->end_date|date:'d. m. Y'} (23:59)</strong>
-								{/if}
-							</p>
-						</div>
-						<div style="flex-shrink: 0; white-space: nowrap;">
-							<a n:href="Election:show, $el->id" class="btn" style="background: {if $el->status === 'cancelled'}#dc3545{else}#777{/if}; color: white; white-space: nowrap; padding: 0.7rem 1.4rem;">
-								{if $el->status === 'cancelled'}Detail storna{else}Výsledky{/if}
-							</a>
+							<div style="flex-shrink: 0; white-space: nowrap;">
+								<a n:href="Election:show, $el->id" class="btn" style="background: {if $el->status === 'cancelled'}#dc3545{else}#777{/if}; color: white; white-space: nowrap; padding: 0.7rem 1.4rem;">
+									{if $el->status === 'cancelled'}Detail storna{else}Výsledky{/if}
+								</a>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -263,5 +303,81 @@
 		</div>
 	{/if}
 {/if}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+	const periodSelect = document.getElementById('closedPeriodSelect');
+	const searchInput = document.getElementById('closedSearchInput');
+	const items = document.querySelectorAll('.closed-election-item');
+	const noResultsCard = document.getElementById('noFilteredResultsCard');
+	const countBadge = document.getElementById('closedCountBadge');
+
+	if (!periodSelect || items.length === 0) return;
+
+	function filterElections() {
+		const period = periodSelect.value;
+		const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+		const now = new Date();
+
+		let limitDate = null;
+		if (period === '1m') {
+			limitDate = new Date();
+			limitDate.setDate(now.getDate() - 30);
+		} else if (period === '3m') {
+			limitDate = new Date();
+			limitDate.setDate(now.getDate() - 90);
+		} else if (period === '1y') {
+			limitDate = new Date();
+			limitDate.setFullYear(now.getFullYear() - 1);
+		}
+
+		let visibleCount = 0;
+		items.forEach(function (item) {
+			const dateStr = item.getAttribute('data-closed-date');
+			const title = item.getAttribute('data-title') || '';
+			const number = item.getAttribute('data-number') || '';
+
+			let matchesDate = true;
+			if (limitDate && dateStr) {
+				const itemDate = new Date(dateStr);
+				matchesDate = (itemDate >= limitDate);
+			}
+
+			let matchesQuery = true;
+			if (query !== '') {
+				matchesQuery = title.includes(query) || number.includes(query);
+			}
+
+			if (matchesDate && matchesQuery) {
+				item.style.display = 'block';
+				visibleCount++;
+			} else {
+				item.style.display = 'none';
+			}
+		});
+
+		if (noResultsCard) {
+			noResultsCard.style.display = (visibleCount === 0) ? 'block' : 'none';
+		}
+		if (countBadge) {
+			countBadge.textContent = '(' + visibleCount + ' z ' + items.length + ')';
+		}
+	}
+
+	window.resetClosedFilter = function () {
+		if (periodSelect) periodSelect.value = 'all';
+		if (searchInput) searchInput.value = '';
+		filterElections();
+	};
+
+	periodSelect.addEventListener('change', filterElections);
+	if (searchInput) {
+		searchInput.addEventListener('input', filterElections);
+	}
+
+	// Spustíme výchozí filtr při načtení
+	filterElections();
+});
+</script>
 
 {/block}
