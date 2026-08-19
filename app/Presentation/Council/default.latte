@@ -10,7 +10,7 @@
 
 <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
 	{* FORMULÁŘ PRO PŘIDÁNÍ ČLENA *}
-	<div style="flex: 1; min-width: 340px; display: flex; flex-direction: column; gap: 1.5rem;">
+	<div style="flex: 1; min-width: 280px; width: 100%; display: flex; flex-direction: column; gap: 1.5rem;">
 		<div class="election-card">
 			<h2 style="color: var(--skaut-blue); margin-top: 0; margin-bottom: 1.2rem; font-size: 1.25rem;">
 				Výběr ze SkautISu
@@ -66,12 +66,13 @@
 	</div>
 
 	{* SEZNAM AKTUÁLNÍCH ČLENŮ *}
-	<div class="election-card" style="flex: 2; min-width: 450px;">
+	<div class="election-card" style="flex: 2; min-width: 280px; width: 100%;">
 		<h2 style="color: var(--skaut-blue); margin-top: 0; margin-bottom: 1.5rem; font-size: 1.3rem;">Aktuální složení Rady</h2>
 
 		{if empty($members)}
 			<p style="color: var(--skaut-muted); margin: 0;">V radě jednotky nejsou aktuálně zapsáni žádní členové.</p>
 		{else}
+			<div class="table-responsive">
 			<table style="width: 100%; border-collapse: collapse; text-align: left;">
 				<thead>
 					<tr style="border-bottom: 2px solid #ddd; color: #555;">
@@ -98,6 +99,7 @@
 					</tr>
 				</tbody>
 			</table>
+			</div>
 		{/if}
 	</div>
 </div>

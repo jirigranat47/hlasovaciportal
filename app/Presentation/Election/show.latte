@@ -33,23 +33,35 @@
 	</div>
 
 	<div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-		<a n:href="history, $election->id" class="btn" style="background: #475569; color: white; font-size: 0.9rem;">📜 Historie a audit</a>
+		<a n:href="history, $election->id" class="btn" style="background: #475569; color: white; font-size: 0.9rem;" title="Historie změn hlasů a auditní log">
+			<span class="btn-icon">📜</span><span class="btn-label"> Historie a audit</span>
+		</a>
 		{if $isAdmin && $election->status === 'draft'}
-			<a n:href="edit, $election->id" class="btn btn-vote" style="background: var(--skaut-blue); font-size: 0.9rem;">✏️ Upravit návrh</a>
-			<a n:href="publish, $election->id" class="btn btn-vote" style="background: #28a745; font-size: 0.9rem;" onclick="return confirm('Opravdu chcete toto hlasování publikovat?')">✓ Publikovat</a>
-			<a n:href="delete, $election->id" class="btn btn-vote" style="background: #dc3545; font-size: 0.9rem;" onclick="return confirm('Opravdu chcete tento návrh smazat?')">🗑 Smazat</a>
+			<a n:href="edit, $election->id" class="btn btn-vote" style="background: var(--skaut-blue); font-size: 0.9rem;" title="Upravit návrh">
+				<span class="btn-icon">✏️</span><span class="btn-label"> Upravit</span>
+			</a>
+			<a n:href="publish, $election->id" class="btn btn-vote" style="background: #28a745; font-size: 0.9rem;" onclick="return confirm('Opravdu chcete toto hlasování publikovat?')" title="Zahájit hlasování">
+				<span class="btn-icon">✓</span><span class="btn-label"> Publikovat</span>
+			</a>
+			<a n:href="delete, $election->id" class="btn btn-vote" style="background: #dc3545; font-size: 0.9rem;" onclick="return confirm('Opravdu chcete tento návrh smazat?')" title="Smazat návrh">
+				<span class="btn-icon">🗑</span><span class="btn-label"> Smazat</span>
+			</a>
 		{elseif $isAdmin && $election->status === 'published'}
 			{if $canRevertToDraft}
-				<a n:href="revertToDraft, $election->id" class="btn" style="background: #f59e0b; color: #000; font-weight: bold; font-size: 0.9rem; text-decoration: none;" onclick="return confirm('Opravdu chcete usnesení vrátit do stavu Návrh (Draft)? Dosud nikdo nehlasoval, takže budete moci text a podklady upravit a znovu publikovat.')">↩ Vrátit do návrhu (Draft)</a>
+				<a n:href="revertToDraft, $election->id" class="btn" style="background: #f59e0b; color: #000; font-weight: bold; font-size: 0.9rem; text-decoration: none;" onclick="return confirm('Opravdu chcete usnesení vrátit do stavu Návrh (Draft)? Dosud nikdo nehlasoval, takže budete moci text a podklady upravit a znovu publikovat.')" title="Vrátit do stavu Návrh">
+					<span class="btn-icon">↩</span><span class="btn-label"> Vrátit do návrhu</span>
+				</a>
 			{/if}
-			<button type="button" class="btn btn-vote" style="background: #dc3545; font-size: 0.9rem;" onclick="document.getElementById('cancelFormBox').style.display='block'">🚫 Stornovat hlasování</button>
+			<button type="button" class="btn btn-vote" style="background: #dc3545; font-size: 0.9rem;" onclick="document.getElementById('cancelFormBox').style.display='block'" title="Stornovat toto hlasování">
+				<span class="btn-icon">🚫</span><span class="btn-label"> Stornovat</span>
+			</button>
 		{/if}
 	</div>
 </div>
 
-<div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+<div class="election-detail-layout">
 	{* LEVÝ PANEL - DETAILY A HLASOVÁNÍ *}
-	<div style="flex: 2; min-width: 300px; display: flex; flex-direction: column; gap: 1.5rem;">
+	<div class="election-detail-main">
 		
 		{if $election->status === 'cancelled'}
 			<div style="background: #f8d7da; border: 2px solid #f5c6cb; border-left: 6px solid #dc3545; padding: 1.2rem; border-radius: 8px; margin-bottom: 1.5rem;">
@@ -175,7 +187,7 @@
 	</div>
 
 	{* PRAVÝ PANEL - STATISTIKY A VÝSLEDKY *}
-	<div style="flex: 1; min-width: 280px; display: flex; flex-direction: column; gap: 1.5rem;">
+	<div class="election-detail-sidebar">
 		
 		{* AGREGAVANÉ VÝSLEDKY / STATISTIKA *}
 		<div class="election-card">

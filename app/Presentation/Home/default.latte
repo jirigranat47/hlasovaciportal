@@ -32,11 +32,19 @@
 		</div>
 
 		{if $isAdmin}
-			<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-				<a n:href="Election:create" class="btn btn-vote" style="background: var(--skaut-blue);">+ Nové hlasování</a>
-				<a n:href="Council:default" class="btn" style="background: #555; color: white;">Správa Rady</a>
-				<a n:href="Council:smtp" class="btn" style="background: #777; color: white;">Nastavení SMTP</a>
-				<a n:href="Council:audit" class="btn" style="background: #475569; color: white;">📜 Audit přihlášení</a>
+			<div class="admin-quick-actions" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+				<a n:href="Election:create" class="btn btn-vote" style="background: var(--skaut-blue);" title="Založit nové hlasování">
+					<span class="btn-icon">➕</span><span class="btn-label"> Nové hlasování</span>
+				</a>
+				<a n:href="Council:default" class="btn" style="background: #555; color: white;" title="Správa členů Rady jednotky">
+					<span class="btn-icon">👥</span><span class="btn-label"> Správa Rady</span>
+				</a>
+				<a n:href="Council:smtp" class="btn" style="background: #777; color: white;" title="Nastavení e-mailového serveru SMTP">
+					<span class="btn-icon">✉️</span><span class="btn-label"> Nastavení SMTP</span>
+				</a>
+				<a n:href="Council:audit" class="btn" style="background: #475569; color: white;" title="Audit a historie přihlášení">
+					<span class="btn-icon">📜</span><span class="btn-label"> Audit přihlášení</span>
+				</a>
 			</div>
 		{/if}
 	</div>
@@ -60,7 +68,7 @@
 
 			<div>
 				<a n:href="sendBatchNotification!" class="btn" style="background: var(--skaut-yellow); color: #000; font-weight: bold; padding: 0.6rem 1.2rem; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); text-decoration: none; display: inline-flex; align-items: center; gap: 6px;" onclick="return confirm('Opravdu chcete členům rady odeslat souhrnný e-mail s {$unnotifiedElectionsCount} novými usneseními?')">
-					✉ Odeslat členům rady souhrnnou výzvu ({$unnotifiedElectionsCount})
+					✉ Odeslat radě souhrnnou výzvu ({$unnotifiedElectionsCount})
 				</a>
 			</div>
 		</div>
