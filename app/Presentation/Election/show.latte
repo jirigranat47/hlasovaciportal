@@ -33,8 +33,13 @@
 	<div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
 		<a n:href="history, $election->id" class="btn" style="background: #475569; color: white; font-size: 0.9rem;">📜 Historie a audit</a>
 		{if $isAdmin && $election->status === 'draft'}
+			<a n:href="edit, $election->id" class="btn btn-vote" style="background: var(--skaut-blue); font-size: 0.9rem;">✏️ Upravit návrh</a>
+			<a n:href="publish, $election->id" class="btn btn-vote" style="background: #28a745; font-size: 0.9rem;" onclick="return confirm('Opravdu chcete toto hlasování publikovat?')">✓ Publikovat</a>
 			<a n:href="delete, $election->id" class="btn btn-vote" style="background: #dc3545; font-size: 0.9rem;" onclick="return confirm('Opravdu chcete tento návrh smazat?')">🗑 Smazat</a>
 		{elseif $isAdmin && $election->status === 'published'}
+			{if $canRevertToDraft}
+				<a n:href="revertToDraft, $election->id" class="btn" style="background: #f59e0b; color: #000; font-weight: bold; font-size: 0.9rem; text-decoration: none;" onclick="return confirm('Opravdu chcete usnesení vrátit do stavu Návrh (Draft)? Dosud nikdo nehlasoval, takže budete moci text a podklady upravit a znovu publikovat.')">↩ Vrátit do návrhu (Draft)</a>
+			{/if}
 			<button type="button" class="btn btn-vote" style="background: #dc3545; font-size: 0.9rem;" onclick="document.getElementById('cancelFormBox').style.display='block'">🚫 Stornovat hlasování</button>
 		{/if}
 	</div>
@@ -86,15 +91,9 @@
 		{/if}
 
 		{if $isAdmin && $election->status === 'draft'}
-			<div style="background: #fff8e6; border: 1px solid #ffe58f; padding: 1rem 1.2rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-				<div>
-					<strong style="color: #873800;">ℹ Návrh hlasování (Draft)</strong>
-					<p style="margin: 2px 0 0 0; color: #612500; font-size: 0.9rem;">Toto hlasování zatím nebylo publikováno a je viditelné pouze pro správce.</p>
-				</div>
-				<div style="display: flex; gap: 0.5rem;">
-					<a n:href="edit, $election->id" class="btn btn-vote" style="background: var(--skaut-blue); font-size: 0.85rem;">Upravit návrh</a>
-					<a n:href="publish, $election->id" class="btn btn-vote" style="background: #28a745; font-size: 0.85rem;" onclick="return confirm('Opravdu chcete toto hlasování publikovat?')">✓ Publikovat</a>
-				</div>
+			<div style="background: #fff8e6; border: 1px solid #ffe58f; padding: 1rem 1.2rem; border-radius: 8px;">
+				<strong style="color: #873800;">ℹ Návrh hlasování (Draft)</strong>
+				<p style="margin: 2px 0 0 0; color: #612500; font-size: 0.9rem;">Toto hlasování zatím nebylo publikováno a je viditelné pouze pro správce.</p>
 			</div>
 		{/if}
 

@@ -406,6 +406,9 @@ class VotingRepository
 		if ($election && $election->status === 'draft') {
 			$election->update([
 				'status' => 'published',
+				'notification_sent' => 0, // Resetujeme příznak notifikace, aby se mohla odeslat nová výzva k upravenému znění
+				'reminder_sent' => 0,
+				'results_sent' => 0,
 			]);
 
 			$this->logElectionAudit(
@@ -417,6 +420,46 @@ class VotingRepository
 				"Usnesení bylo publikováno a zahájeno hlasování (do {$election->end_date->format('d. m. Y H:i')})."
 			);
 		}
+	}
+
+	/**
+	 * Zjistí, zda lze publikované hlasování vrátit do draftu (pouze pokud dosud nikdo nehlasoval)
+	 */
+	public function canRevertToDraft(int $id): bool
+	{
+		$election = $this->getElection($id);
+		if (!$election || $election->status !== 'published') {
+			return false;
+		}
+
+		$votesCount = $this->database->table('votes')->where('election_id', $id)->count();
+		return $votesCount === 0;
+	}
+
+	/**
+	 * Vrátí publikované usnesení zpět do stavu Draft (pokud nikdo nehlasoval)
+	 */
+	public function revertToDraft(int $id, int $personId, string $personName, ?string $roleName = null): bool
+	{
+		if (!$this->canRevertToDraft($id)) {
+			return false;
+		}
+
+		$election = $this->getElection($id);
+		$election->update([
+			'status' => 'draft',
+		]);
+
+		$this->logElectionAudit(
+			$id,
+			$personId,
+			$personName,
+			$roleName,
+			'reverted_to_draft',
+			"Usnesení bylo vráceno z publikovaného stavu zpět do režimu návrhu (Draft), protože dosud nikdo nehlasoval. Nyní je možné text a podklady upravit."
+		);
+
+		return true;
 	}
 
 	/**

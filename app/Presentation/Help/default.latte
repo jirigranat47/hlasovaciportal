@@ -1,0 +1,192 @@
+{block content}
+
+<div style="max-width: 960px; margin: 0 auto; padding-bottom: 3rem;">
+
+	<!-- HLAVIČKA NÁPOVĚDY -->
+	<div style="margin-bottom: 2rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+		<div>
+			<h1 style="color: var(--skaut-blue); margin: 0; display: flex; align-items: center; gap: 10px;">
+				<span>📖</span>
+				<span>Uživatelská a administrátorská nápověda</span>
+			</h1>
+			<p style="color: var(--skaut-muted); margin: 5px 0 0 0; font-size: 1rem;">
+				Kompletní průvodce používáním Hlasovacího Portálu pro členy rady i správce jednotek.
+			</p>
+		</div>
+		<div>
+			<a n:href="Home:default" class="btn" style="background: #f1f5f9; color: #334155; text-decoration: none; font-weight: bold; border: 1px solid #cbd5e1;">&larr; Zpět na přehled</a>
+		</div>
+	</div>
+
+	<!-- RYCHLÝ ROZCESTNÍK -->
+	<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 2.5rem; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+		<strong style="color: #0f172a; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 0.75rem;">⚡ Rychlý přechod na sekci:</strong>
+		<div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+			<a href="#pro-cleny-rady" class="btn" style="background: #e0f2fe; color: #0369a1; text-decoration: none; font-size: 0.9rem; font-weight: bold; padding: 6px 12px; border-radius: 6px;">👤 1. Pro členy rady (Hlasování)</a>
+			<a href="#pro-spravce" class="btn" style="background: #fef3c7; color: #92400e; text-decoration: none; font-size: 0.9rem; font-weight: bold; padding: 6px 12px; border-radius: 6px;">⚙️ 2. Pro administrátory jednotky</a>
+			<a href="#zivotni-cyklus" class="btn" style="background: #f1f5f9; color: #334155; text-decoration: none; font-size: 0.9rem; font-weight: bold; padding: 6px 12px; border-radius: 6px;">🔄 Životní cyklus usnesení</a>
+			<a href="#automaticke-emaily" class="btn" style="background: #dcfce7; color: #166534; text-decoration: none; font-size: 0.9rem; font-weight: bold; padding: 6px 12px; border-radius: 6px;">📬 3. Automatické e-maily</a>
+		</div>
+	</div>
+
+	<!-- SEKCE 1: PRO ČLENY RADY -->
+	<section id="pro-cleny-rady" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 2rem; margin-bottom: 2.5rem; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+		<h2 style="color: var(--skaut-blue); margin-top: 0; font-size: 1.4rem; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.75rem;">
+			<span>👤</span>
+			<span>1. Nápověda pro členy rady jednotky</span>
+		</h2>
+
+		<h3 style="color: #1e293b; font-size: 1.15rem; margin-top: 1.5rem;">🔑 Přihlášení do portálu</h3>
+		<p>
+			Do portálu se přihlašujete svými běžnými údaji ze <strong>SkautISu</strong> (uživatelské jméno a heslo). Portál si automaticky ověří vaši totožnost a aktivní roli.
+		</p>
+		<ul>
+			<li><strong>Člen rady:</strong> Pokud jste zapsáni v seznamu Rady jednotky, získáte plné právo hlasovat u všech probíhajících usnesení vaší jednotky.</li>
+			<li><strong>Host (nečlen rady):</strong> Máte přístup k archivovaným usnesením, ale nemůžete odevzdávat hlasy.</li>
+		</ul>
+
+		<h3 style="color: #1e293b; font-size: 1.15rem; margin-top: 1.5rem;">🗳️ Jak probíhá hlasování</h3>
+		<ol style="line-height: 1.8; padding-left: 1.25rem;">
+			<li>Na hlavní stránce v sekci <strong>Probíhající hlasování</strong> klikněte na tlačítko <strong>Přejít na hlasování</strong>.</li>
+			<li>V detailu usnesení si prostudujte text návrhu, případné podklady a termín konce hlasování.</li>
+			<li>Vyberte jednu ze tří možností:
+				<ul style="margin: 6px 0;">
+					<li><strong style="color: #16a34a;">Pro</strong> – souhlasíte s přijetím usnesení</li>
+					<li><strong style="color: #dc2626;">Proti</strong> – nesouhlasíte s přijetím usnesení</li>
+					<li><strong style="color: #d97706;">Zdržel(a) se</strong> – zdržujete se hlasování</li>
+				</ul>
+			</li>
+			<li>Klikněte na tlačítko <strong>Odevzdat hlas</strong>.</li>
+		</ol>
+
+		<div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-left: 4px solid #16a34a; padding: 12px 16px; border-radius: 6px; margin: 1.25rem 0;">
+			<strong style="color: #166534;">💡 Možnost změny hlasu:</strong><br>
+			Až do okamžiku vypršení termínu hlasování můžete svůj odevzdaný hlas kdykoliv změnit. Každá změna hlasu je zaznamenána v historii a auditu usnesení.
+		</div>
+
+		<h3 style="color: #1e293b; font-size: 1.15rem; margin-top: 1.5rem;">⚖️ Pravidlo pro schválení usnesení</h3>
+		<p>
+			Usnesení je <strong>PŘIJATO</strong>, pokud pro něj hlasovala <strong>nadpoloviční většina všech členů rady jednotky</strong> (nikoliv pouze zúčastněných). V opačném případě je usnesení vyhodnoceno jako <strong>NEPŘIJATO</strong>.
+		</p>
+	</section>
+
+	<!-- SEKCE 2: PRO ADMINISTRÁTORY -->
+	<section id="pro-spravce" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 2rem; margin-bottom: 2.5rem; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+		<h2 style="color: var(--skaut-blue); margin-top: 0; font-size: 1.4rem; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.75rem;">
+			<span>⚙️</span>
+			<span>2. Nápověda pro administrátory a správce jednotky</span>
+		</h2>
+
+		<p>
+			Administrátorská práva jsou automaticky přidělena uživatelům s odpovídající vedoucí či správcovskou rolí ve SkautISu (např. vedoucí střediska/oddílu, zástupce, hospodář, zpravodaj, administrátor apod.).
+		</p>
+
+		<!-- ŽIVOTNÍ CYKLUS USNESENÍ -->
+		<h3 id="zivotni-cyklus" style="color: #1e293b; font-size: 1.2rem; margin-top: 2rem; border-left: 4px solid var(--skaut-yellow); padding-left: 10px;">
+			🔄 Životní cyklus usnesení a stavy hlasování
+		</h3>
+
+		<div style="display: flex; flex-direction: column; gap: 14px; margin: 1.25rem 0;">
+			<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 5px solid #0284c7; padding: 14px 16px; border-radius: 6px;">
+				<strong style="color: #0369a1; font-size: 1.05rem;">1. Návrh usnesení (Draft)</strong>
+				<p style="margin: 6px 0 0 0; font-size: 0.95rem; color: #334155; line-height: 1.5;">
+					Při vytvoření nového usnesení přes formulář <em>+ Nové hlasování</em> se záznam uloží jako <strong>Draft</strong>. V tomto stavu je viditelný pouze pro správce. Můžete v klidu doplňovat text, upravovat termín nebo návrh úplně smazat.
+				</p>
+			</div>
+
+			<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 5px solid #16a34a; padding: 14px 16px; border-radius: 6px;">
+				<strong style="color: #15803d; font-size: 1.05rem;">2. Publikováno (Probíhá hlasování)</strong>
+				<p style="margin: 6px 0 0 0; font-size: 0.95rem; color: #334155; line-height: 1.5;">
+					Kliknutím na <strong>🚀 Publikovat</strong> se usnesení zpřístupní členům rady a je zahájeno hlasování. Na hlavní stránce se usnesení zařadí do fronty pro odeslání souhrnné výzvy k hlasování.
+				</p>
+			</div>
+
+			<div style="background: #fffbeb; border: 1px solid #fde68a; border-left: 5px solid #f59e0b; padding: 14px 16px; border-radius: 6px;">
+				<strong style="color: #92400e; font-size: 1.05rem;">↩ Možnost: Vrátit do návrhu (Draft) – <em>Pokud dosud nikdo nehlasoval</em></strong>
+				<p style="margin: 6px 0 0 0; font-size: 0.95rem; color: #78350f; line-height: 1.5;">
+					Pokud po publikaci zjistíte překlep nebo chybu a <strong>pro usnesení dosud nikdo nehlasoval</strong>, můžete v detailu usnesení kliknout na <strong>↩ Vrátit do návrhu (Draft)</strong>. Usnesení se bezpečně vrátí do rozpracovaného stavu, text opravíte a znovu publikujete.
+				</p>
+			</div>
+
+			<div style="background: #fef2f2; border: 1px solid #fecaca; border-left: 5px solid #dc2626; padding: 14px 16px; border-radius: 6px;">
+				<strong style="color: #991b1b; font-size: 1.05rem;">🚫 Možnost: Storno hlasování – <em>Pokud již někdo hlasoval</em></strong>
+				<p style="margin: 6px 0 0 0; font-size: 0.95rem; color: #7f1d1d; line-height: 1.5;">
+					Jakmile již alespoň jeden člen rady odevzdal hlas, z důvodu integrity voleb <strong>nelze usnesení vrátit do draftu</strong>. Jedinou možností pro zrušení je <strong>🚫 Stornovat hlasování</strong>. Správce zadá povinný důvod storna, dosavadní hlasy se anulují a členům rady odejde okamžitý e-mail s informací o stornu a uvedeným důvodem.
+				</p>
+			</div>
+
+			<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 5px solid #475569; padding: 14px 16px; border-radius: 6px;">
+				<strong style="color: #334155; font-size: 1.05rem;">3. Uzavřeno (Vyhodnoceno)</strong>
+				<p style="margin: 6px 0 0 0; font-size: 0.95rem; color: #334155; line-height: 1.5;">
+					Po uplynutí stanoveného data a času (vždy ve 23:59) plánovač hlasování automaticky uzavře, spočítá hlasy a odešle souhrnný e-mail s konečným výsledkem (Přijato / Nepřijato). Usnesení je přesunuto do archivu.
+				</p>
+			</div>
+		</div>
+
+		<!-- SPRÁVA RADY A SMTP -->
+		<h3 style="color: #1e293b; font-size: 1.15rem; margin-top: 2rem;">👥 Správa Rady jednotky</h3>
+		<p>
+			V sekci <strong>Správa Rady</strong> nastavujete seznam osob, které mají hlasovací právo.
+		</p>
+		<ul>
+			<li><strong>Rychlý našeptávač:</strong> Vyhledávejte členy jednotky ze SkautISu podle jména, data narození nebo Person ID.</li>
+			<li><strong>Automatické dohledání e-mailu:</strong> Při přidání člena systém automaticky dohledá jeho e-mailovou adresu z kontaktů ve SkautISu.</li>
+		</ul>
+
+		<h3 style="color: #1e293b; font-size: 1.15rem; margin-top: 1.5rem;">✉️ Nastavení SMTP pro odesílání e-mailů</h3>
+		<p>
+			V sekci <strong>Nastavení SMTP</strong> zadejte údaje k poštovnímu serveru vaší jednotky (např. Google Workspace / Seznam / vlastní doména). Heslo je v databázi bezpečně šifrováno pomocí silného AES-256 šifrování.
+		</p>
+
+		<h3 style="color: #1e293b; font-size: 1.15rem; margin-top: 1.5rem;">📜 Audit přihlášení a Historie změn</h3>
+		<ul>
+			<li><strong>Audit přihlášení:</strong> Zaznamenává každé přihlášení do aplikace včetně IP adresy, role a času.</li>
+			<li><strong>Historie a audit usnesení:</strong> Detailní záznam každého kroku – vytvoření, úpravy, odeslání výzvy, změny hlasů, upomínky i storno včetně příjemců e-mailů.</li>
+		</ul>
+	</section>
+
+	<!-- SEKCE 3: E-MAILY -->
+	<section id="automaticke-emaily" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 2rem; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+		<h2 style="color: var(--skaut-blue); margin-top: 0; font-size: 1.4rem; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.75rem;">
+			<span>📬</span>
+			<span>3. Systém automatických souhrnných e-mailů</span>
+		</h2>
+
+		<p>
+			Aplikace je vybavena systémem <strong>dávkových (souhrnných) e-mailů</strong>, aby členové rady nebyli zahlcováni desítkami jednotlivých zpráv.
+		</p>
+
+		<div style="display: flex; flex-direction: column; gap: 14px; margin: 1.5rem 0;">
+			<div style="background: #eff6ff; border: 1px solid #bfdbfe; border-left: 4px solid #2563eb; padding: 14px 16px; border-radius: 6px;">
+				<strong style="color: #1e40af; font-size: 1rem;">1. Souhrnná výzva k novým hlasováním</strong>
+				<p style="margin: 5px 0 0 0; font-size: 0.9rem; color: #1e3a8a; line-height: 1.5;">
+					Když správce publikuje několik usnesení najednou, na hlavní stránce se zobrazí tlačítko <em>✉ Odeslat členům rady souhrnnou výzvu</em>. Odejde <strong>1 společný e-mail</strong> se všemi novými usneseními. Pokud správce tlačítko nepoužije, cron odešle souhrnnou výzvu automaticky po půlnoci.
+				</p>
+			</div>
+
+			<div style="background: #fffbeb; border: 1px solid #fde68a; border-left: 4px solid #d97706; padding: 14px 16px; border-radius: 6px;">
+				<strong style="color: #92400e; font-size: 1rem;">2. Denní personalizovaná upomínka v 18:00</strong>
+				<p style="margin: 5px 0 0 0; font-size: 0.9rem; color: #78350f; line-height: 1.5;">
+					V 18:00 den před koncem hlasování cron zkontroluje, kdo ještě nehlasoval. Každému nehlasujícímu členovi odejde <strong>1 osobní e-mail</strong> se seznamem usnesení, kde dosud chybí jeho hlas. Členové, kteří již mají odhlasováno, e-mail nedostanou.
+				</p>
+			</div>
+
+			<div style="background: #f8fafc; border: 1px solid #cbd5e1; border-left: 4px solid #0f172a; padding: 14px 16px; border-radius: 6px;">
+				<strong style="color: #0f172a; font-size: 1rem;">3. Noční vyhodnocení výsledků po půlnoci</strong>
+				<p style="margin: 5px 0 0 0; font-size: 0.9rem; color: #334155; line-height: 1.5;">
+					Po půlnoci cron vyhodnotí všechna usnesení, která včera skončila, a odešle <strong>1 souhrnný e-mail s výsledky</strong> (přehled PŘIJATO / NEPŘIJATO a počty hlasů) všem členům rady.
+				</p>
+			</div>
+
+			<div style="background: #fef2f2; border: 1px solid #fecaca; border-left: 4px solid #dc3545; padding: 14px 16px; border-radius: 6px;">
+				<strong style="color: #991b1b; font-size: 1rem;">4. Okamžité storno</strong>
+				<p style="margin: 5px 0 0 0; font-size: 0.9rem; color: #7f1d1d; line-height: 1.5;">
+					Při stornování usnesení správcem odejde e-mail ihned s uvedením důvodu zrušení.
+				</p>
+			</div>
+		</div>
+	</section>
+
+</div>
+
+{/block}

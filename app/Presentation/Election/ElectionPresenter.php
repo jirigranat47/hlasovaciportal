@@ -95,6 +95,7 @@ final class ElectionPresenter extends BasePresenter
 		$this->template->isAdmin = $isAdmin;
 		$this->template->isCreator = $isCreator;
 		$this->template->canVote = $canVote;
+		$this->template->canRevertToDraft = $isAdmin && $this->votingRepository->canRevertToDraft($id);
 
 		// Zakladatel, všichni administrátoři jednotky a členové rady vidí jmenný seznam hlasů
 		$showVoterList = $isAdmin || $isCreator || $isCouncilMember;
@@ -295,6 +296,26 @@ final class ElectionPresenter extends BasePresenter
 		$this->votingRepository->publishElection($id, $personId, $userData['personName'], $userData['roleName'] ?? null);
 		$this->flashMessage('Hlasování bylo úspěšně publikováno. Notifikaci členům rady můžete odeslat souhrnně z hlavní stránky (nebo odejde automaticky v nočním souhrnu).', 'success');
 		$this->redirect('Home:default');
+	}
+
+	public function actionRevertToDraft(int $id): void
+	{
+		$this->checkAdmin();
+		$election = $this->votingRepository->getElection($id);
+		if (!$election) {
+			$this->error('Hlasování nebylo nalezeno.', 404);
+		}
+
+		$userData = $this->skautisAuthManager->getUserData();
+		$personId = (int)$userData['personId'];
+
+		if ($this->votingRepository->revertToDraft($id, $personId, $userData['personName'], $userData['roleName'] ?? null)) {
+			$this->flashMessage('Usnesení bylo úspěšně vráceno do stavu Návrh (Draft). Nyní jej můžete upravit a znovu publikovat.', 'success');
+			$this->redirect('show', $id);
+		} else {
+			$this->flashMessage('Usnesení nelze vrátit do návrhu, protože již bylo zahájeno hlasování a odevzdán hlas (v takovém případě lze pouze stornovat).', 'danger');
+			$this->redirect('show', $id);
+		}
 	}
 
 	public function actionDelete(int $id): void

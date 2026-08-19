@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS `elections` (
   `cancelled_at` DATETIME NULL COMMENT 'Datum a cas stornovani',
   `cancelled_by_person_id` INT NULL COMMENT 'ID osoby ktera hlasovani stornovala',
   `notification_sent` TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Zda byl odeslan email o zahajeni',
+  `reminder_sent` TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Zda byla odeslana denni upominka',
   `results_sent` TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Zda byl odeslan email s vysledky',
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY `unique_resolution_per_unit` (`unit_id`, `resolution_number`)

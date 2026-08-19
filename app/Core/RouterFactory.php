@@ -11,6 +11,8 @@ final class RouterFactory
 	public static function createRouter(): RouteList
 	{
 		$router = new RouteList();
+		$router->addRoute('napoveda', 'Help:default');
+		$router->addRoute('help', 'Help:default');
 		$router->addRoute('login', 'Sign:in');
 		$router->addRoute('login-callback', 'Sign:callback');
 		$router->addRoute('logout', 'Sign:out');
