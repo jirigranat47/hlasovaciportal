@@ -52,6 +52,45 @@ final class ElectionPresenter extends BasePresenter
 		return $clean;
 	}
 
+	private function checkElectionAccess(\Nette\Database\Table\ActiveRow $election, int $personId, int $unitId, bool $isAdmin, bool $isCouncilMember): void
+	{
+		$isUnitAdmin = $isAdmin && (int)$election->unit_id === $unitId;
+		$isUnitCouncilMember = $isCouncilMember && (int)$election->unit_id === $unitId;
+		$now = new \DateTime();
+		$isClosed = ($election->end_date <= $now || $election->status === 'cancelled');
+
+		// 1. Usnesení rozpracovaná (Draft) vidí POUZE administrátor jednotky
+		if ($election->status === 'draft') {
+			if (!$isUnitAdmin) {
+				$this->flashMessage('Nemáte oprávnění k zobrazení tohoto rozpracovaného návrhu.', 'danger');
+				$this->redirect('Home:default');
+			}
+			return;
+		}
+
+		// 2. Usnesení k hlasování (probíhající published) vidí POUZE admin jednotky a členové rady
+		if (!$isClosed && $election->status === 'published') {
+			if (!$isUnitAdmin && !$isUnitCouncilMember) {
+				$this->flashMessage('Nemáte oprávnění k zobrazení tohoto probíhajícího hlasování.', 'danger');
+				$this->redirect('Home:default');
+			}
+			return;
+		}
+
+		// 3. Usnesení ukončená vidí admin jednotky, členové rady a uživatelé, kteří pro dané hlasování v minulosti hlasovali
+		if ($isClosed) {
+			$hasVoted = $this->votingRepository->hasVoted((int)$election->id, $personId);
+			if (!$isUnitAdmin && !$isUnitCouncilMember && !$hasVoted) {
+				$this->flashMessage('Nemáte oprávnění k zobrazení tohoto ukončeného hlasování.', 'danger');
+				$this->redirect('Home:default');
+			}
+			return;
+		}
+
+		$this->flashMessage('Nemáte oprávnění k zobrazení tohoto hlasování.', 'danger');
+		$this->redirect('Home:default');
+	}
+
 	public function actionShow(int $id): void
 	{
 		$election = $this->votingRepository->getElection($id);
@@ -67,18 +106,11 @@ final class ElectionPresenter extends BasePresenter
 		$isCouncilMember = $this->votingRepository->isCouncilMember($unitId, $personId);
 		$isCreator = ((int)$election->created_by_person_id === $personId);
 
+		// Kontrola přístupových práv dle přesných pravidel
+		$this->checkElectionAccess($election, $personId, $unitId, $isAdmin, $isCouncilMember);
+
 		$now = new \DateTime();
 		$isClosed = ($election->end_date <= $now || $election->status === 'cancelled');
-
-		// Kontrola přístupových práv k tomuto hlasování (admin, člen rady, nebo zakladatel mají přístup)
-		if (!$isAdmin && !$isCouncilMember && !$isCreator) {
-			// Nečlen rady vidí pouze uzavřená/stornovaná hlasování, kterých se sám zúčastnil
-			$hasVoted = $this->votingRepository->hasVoted($id, $personId);
-			if (!$isClosed || !$hasVoted) {
-				$this->flashMessage('Nemáte oprávnění k zobrazení tohoto hlasování.', 'danger');
-				$this->redirect('Home:default');
-			}
-		}
 
 		$options = $this->votingRepository->getOptions($id);
 		$userVote = $this->votingRepository->getUserVote($id, $personId);
@@ -97,8 +129,8 @@ final class ElectionPresenter extends BasePresenter
 		$this->template->canVote = $canVote;
 		$this->template->canRevertToDraft = $isAdmin && $this->votingRepository->canRevertToDraft($id);
 
-		// Zakladatel, všichni administrátoři jednotky a členové rady vidí jmenný seznam hlasů
-		$showVoterList = $isAdmin || $isCreator || $isCouncilMember;
+		// Administrátoři jednotky a členové rady vidí jmenný seznam hlasů
+		$showVoterList = $isAdmin || $isCouncilMember;
 		$this->template->showVoterList = $showVoterList;
 
 		if ($showVoterList) {
@@ -136,7 +168,7 @@ final class ElectionPresenter extends BasePresenter
 			$this->template->isAdopted = $proCount > ($totalMembers / 2);
 			$this->template->voteHistory = $voteHistory;
 		} else {
-			// Pro hosty spočítáme pouze anonymní agregované výsledky
+			// Pro bývalé členy, kteří v minulosti hlasovali, spočítáme agregované výsledky
 			$votesCount = [
 				'Pro' => 0,
 				'Proti' => 0,
@@ -147,8 +179,7 @@ final class ElectionPresenter extends BasePresenter
 			}
 			$this->template->votesCount = $votesCount;
 			
-			// Pro nečlena počítáme přijetí podle počtu členů rady (který musíme stejně načíst z DB)
-			$councilMembersCount = count($this->votingRepository->getCouncilMembers($unitId));
+			$councilMembersCount = count($this->votingRepository->getCouncilMembers((int)$election->unit_id));
 			$proCount = $votesCount['Pro'] ?? 0;
 			$this->template->totalMembers = $councilMembersCount;
 			$this->template->isAdopted = $proCount > ($councilMembersCount / 2);
@@ -171,19 +202,12 @@ final class ElectionPresenter extends BasePresenter
 
 		$isAdmin = $this->skautisAuthManager->isAdmin();
 		$isCouncilMember = $this->votingRepository->isCouncilMember($unitId, $personId);
-		$isCreator = ((int)$election->created_by_person_id === $personId);
+
+		// Kontrola přístupových práv
+		$this->checkElectionAccess($election, $personId, $unitId, $isAdmin, $isCouncilMember);
 
 		$now = new \DateTime();
 		$isClosed = ($election->end_date <= $now || $election->status === 'cancelled');
-
-		// Kontrola přístupových práv
-		if (!$isAdmin && !$isCouncilMember && !$isCreator) {
-			$hasVoted = $this->votingRepository->hasVoted($id, $personId);
-			if (!$isClosed || !$hasVoted) {
-				$this->flashMessage('Nemáte oprávnění k zobrazení historie tohoto hlasování.', 'danger');
-				$this->redirect('Home:default');
-			}
-		}
 
 		$this->template->election = $election;
 		$this->template->isClosed = $isClosed;

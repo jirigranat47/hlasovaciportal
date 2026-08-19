@@ -134,49 +134,67 @@
 		</div>
 	{/if}
 
-	{* AKTIVNÍ HLASOVÁNÍ *}
-	<div style="margin-bottom: 3rem;">
-		<h2 style="color: var(--skaut-blue); margin-bottom: 1rem; border-left: 4px solid var(--skaut-yellow); padding-left: 10px;">Probíhající hlasování</h2>
-		{if empty($activeElections)}
-			<div class="election-card">
-				<p style="color: var(--skaut-muted); margin: 0;">V tuto chvíli neprobíhá žádné aktivní hlasování.</p>
-			</div>
-		{else}
-			<div n:foreach="$activeElections as $el" class="election-card" style="margin-bottom: 1rem; {if isset($userVotes[$el->id])}border-left: 5px solid #10b981;{elseif $isCouncilMember}border-left: 5px solid #f59e0b;{/if}">
-				{var $uv = $userVotes[$el->id] ?? null}
-				<div class="election-header" style="display: flex; justify-content: space-between; align-items: center; gap: 1.5rem;">
-					<div style="flex: 1; min-width: 0;">
-						<div style="font-size: 0.85rem; font-weight: bold; color: var(--skaut-blue); text-transform: uppercase; margin-bottom: 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-							<span>Usnesení č. {$el->resolution_number}</span>
-							{if $uv}
-								<span style="background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 4px; font-size: 0.78rem; text-transform: none; font-weight: bold;">
-									✓ Odhlasováno ({$uv['option_title']} &bull; {$uv['created_at']|date:'d. m. Y H:i'})
-								</span>
-							{elseif $isCouncilMember}
-								<span style="background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-size: 0.78rem; text-transform: none; font-weight: bold;">
-									⏳ Čeká na Váš hlas
-								</span>
-							{/if}
+	{* ZPRÁVA PRO NEČLENY RADY A NEADMINY BEZ HISTORIE *}
+	{if !$isAdmin && !$isCouncilMember && empty($closedElections)}
+		<div style="background: #ffffff; border: 1px solid #e2e8f0; border-left: 5px solid #94a3b8; border-radius: 8px; padding: 2.5rem 2rem; text-align: center; margin-top: 1.5rem; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+			<div style="font-size: 2.2rem; margin-bottom: 0.5rem;">🔒</div>
+			<h2 style="color: #1e293b; font-size: 1.25rem; margin: 0 0 0.5rem 0;">Žádná dostupná usnesení</h2>
+			<p style="color: var(--skaut-muted); max-width: 640px; margin: 0 auto; line-height: 1.6; font-size: 0.95rem;">
+				S vaší aktuálně zvolenou rolí <strong>{$userData['roleName']}</strong> pro jednotku <strong>{$userData['unitName'] ?: $userData['unitId']}</strong> nemáte přístup k rozpracovaným ani probíhajícím usnesením (nejste evidován(a) jako člen rady ani administrátor této jednotky a v minulosti jste se v ní neúčastnil(a) žádného hlasování).
+			</p>
+			{if !empty($userRoles) && count($userRoles) > 1}
+				<p style="color: #0369a1; font-size: 0.9rem; margin: 0.75rem auto 0 auto; background: #e0f2fe; padding: 8px 14px; border-radius: 6px; display: inline-block;">
+					💡 Pokud máte ve SkautISu jinou funkci, můžete roli přepnout v horní liště.
+				</p>
+			{/if}
+		</div>
+	{/if}
+
+	{* AKTIVNÍ HLASOVÁNÍ - Pouze pro adminy jednotky a členy rady *}
+	{if $isAdmin || $isCouncilMember}
+		<div style="margin-bottom: 3rem;">
+			<h2 style="color: var(--skaut-blue); margin-bottom: 1rem; border-left: 4px solid var(--skaut-yellow); padding-left: 10px;">Probíhající hlasování</h2>
+			{if empty($activeElections)}
+				<div class="election-card">
+					<p style="color: var(--skaut-muted); margin: 0;">V tuto chvíli neprobíhá žádné aktivní hlasování.</p>
+				</div>
+			{else}
+				<div n:foreach="$activeElections as $el" class="election-card" style="margin-bottom: 1rem; {if isset($userVotes[$el->id])}border-left: 5px solid #10b981;{elseif $isCouncilMember}border-left: 5px solid #f59e0b;{/if}">
+					{var $uv = $userVotes[$el->id] ?? null}
+					<div class="election-header" style="display: flex; justify-content: space-between; align-items: center; gap: 1.5rem;">
+						<div style="flex: 1; min-width: 0;">
+							<div style="font-size: 0.85rem; font-weight: bold; color: var(--skaut-blue); text-transform: uppercase; margin-bottom: 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+								<span>Usnesení č. {$el->resolution_number}</span>
+								{if $uv}
+									<span style="background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 4px; font-size: 0.78rem; text-transform: none; font-weight: bold;">
+										✓ Odhlasováno ({$uv['option_title']} &bull; {$uv['created_at']|date:'d. m. Y H:i'})
+									</span>
+								{elseif $isCouncilMember}
+									<span style="background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-size: 0.78rem; text-transform: none; font-weight: bold;">
+										⏳ Čeká na Váš hlas
+									</span>
+								{/if}
+							</div>
+							<h3 style="margin: 0; font-size: 1.15rem; line-height: 1.5;"><a n:href="Election:show, $el->id" style="color: var(--skaut-blue); text-decoration: none; font-weight: bold;">{$el->title}</a></h3>
+							<p style="color: var(--skaut-muted); margin: 5px 0 0 0; font-size: 0.9rem;">
+								Termín ukončení: <strong>{$el->end_date|date:'d. m. Y'} (23:59)</strong>
+								{if $el->proposal_received_date}
+									| Návrh obdržen: <strong>{$el->proposal_received_date|date:'d. m. Y'}</strong>
+								{/if}
+							</p>
 						</div>
-						<h3 style="margin: 0; font-size: 1.15rem; line-height: 1.5;"><a n:href="Election:show, $el->id" style="color: var(--skaut-blue); text-decoration: none; font-weight: bold;">{$el->title}</a></h3>
-						<p style="color: var(--skaut-muted); margin: 5px 0 0 0; font-size: 0.9rem;">
-							Termín ukončení: <strong>{$el->end_date|date:'d. m. Y'} (23:59)</strong>
-							{if $el->proposal_received_date}
-								| Návrh obdržen: <strong>{$el->proposal_received_date|date:'d. m. Y'}</strong>
-							{/if}
-						</p>
-					</div>
-					<div style="flex-shrink: 0; white-space: nowrap;">
-						<a n:href="Election:show, $el->id" class="btn btn-vote" style="white-space: nowrap; padding: 0.7rem 1.3rem; {if !$uv && $isCouncilMember}background: #f59e0b; color: white;{/if}">
-							{if $uv}Detail / Změna hlasu{elseif $isCouncilMember}Hlasovat{else}Otevřít detail{/if}
-						</a>
+						<div style="flex-shrink: 0; white-space: nowrap;">
+							<a n:href="Election:show, $el->id" class="btn btn-vote" style="white-space: nowrap; padding: 0.7rem 1.3rem; {if !$uv && $isCouncilMember}background: #f59e0b; color: white;{/if}">
+								{if $uv}Detail / Změna hlasu{elseif $isCouncilMember}Hlasovat{else}Otevřít detail{/if}
+							</a>
+						</div>
 					</div>
 				</div>
-			</div>
-		{/if}
-	</div>
+			{/if}
+		</div>
+	{/if}
 
-	{* NÁVRHY (DRAFTY) - Pouze pro adminy *}
+	{* NÁVRHY (DRAFTY) - Pouze pro adminy jednotky *}
 	{if $isAdmin}
 		<div style="margin-bottom: 3rem;">
 			<h2 style="color: #666; margin-bottom: 1rem; border-left: 4px solid #aaa; padding-left: 10px;">Rozpracované návrhy (Drafty)</h2>
@@ -207,41 +225,43 @@
 		</div>
 	{/if}
 
-	{* UZAVŘENÁ HLASOVÁNÍ *}
-	<div style="margin-bottom: 3rem;">
-		<h2 style="color: var(--skaut-blue); margin-bottom: 1rem; border-left: 4px solid var(--skaut-blue); padding-left: 10px;">Uzavřená hlasování</h2>
-		{if empty($closedElections)}
-			<div class="election-card">
-				<p style="color: var(--skaut-muted); margin: 0;">Žádná uzavřená hlasování k zobrazení.</p>
-			</div>
-		{else}
-			<div n:foreach="$closedElections as $el" class="election-card" style="margin-bottom: 1rem; opacity: 0.85;">
-				<div class="election-header" style="display: flex; justify-content: space-between; align-items: center; gap: 1.5rem;">
-					<div style="flex: 1; min-width: 0;">
-						<div style="font-size: 0.85rem; font-weight: bold; color: #555; text-transform: uppercase; margin-bottom: 2px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-							<span>Usnesení č. {$el->resolution_number}</span>
-							{if $el->status === 'cancelled'}
-								<span style="background: #f8d7da; color: #721c24; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; text-transform: none;">Stornováno</span>
-							{/if}
+	{* UZAVŘENÁ HLASOVÁNÍ - Pro adminy, členy rady a bývalé hlasující *}
+	{if $isAdmin || $isCouncilMember || !empty($closedElections)}
+		<div style="margin-bottom: 3rem;">
+			<h2 style="color: var(--skaut-blue); margin-bottom: 1rem; border-left: 4px solid var(--skaut-blue); padding-left: 10px;">Uzavřená hlasování</h2>
+			{if empty($closedElections)}
+				<div class="election-card">
+					<p style="color: var(--skaut-muted); margin: 0;">Žádná uzavřená hlasování k zobrazení.</p>
+				</div>
+			{else}
+				<div n:foreach="$closedElections as $el" class="election-card" style="margin-bottom: 1rem; opacity: 0.85;">
+					<div class="election-header" style="display: flex; justify-content: space-between; align-items: center; gap: 1.5rem;">
+						<div style="flex: 1; min-width: 0;">
+							<div style="font-size: 0.85rem; font-weight: bold; color: #555; text-transform: uppercase; margin-bottom: 2px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+								<span>Usnesení č. {$el->resolution_number}</span>
+								{if $el->status === 'cancelled'}
+									<span style="background: #f8d7da; color: #721c24; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; text-transform: none;">Stornováno</span>
+								{/if}
+							</div>
+							<h3 style="margin: 0; font-size: 1.15rem; line-height: 1.5;"><a n:href="Election:show, $el->id" style="color: #333; text-decoration: none; font-weight: bold;">{$el->title}</a></h3>
+							<p style="color: var(--skaut-muted); margin: 5px 0 0 0; font-size: 0.9rem;">
+								{if $el->status === 'cancelled'}
+									Stornováno: <strong>{$el->cancelled_at ? ($el->cancelled_at|date:'d. m. Y H:i') : ''}</strong>
+								{else}
+									Ukončeno: <strong>{$el->end_date|date:'d. m. Y'} (23:59)</strong>
+								{/if}
+							</p>
 						</div>
-						<h3 style="margin: 0; font-size: 1.15rem; line-height: 1.5;"><a n:href="Election:show, $el->id" style="color: #333; text-decoration: none; font-weight: bold;">{$el->title}</a></h3>
-						<p style="color: var(--skaut-muted); margin: 5px 0 0 0; font-size: 0.9rem;">
-							{if $el->status === 'cancelled'}
-								Stornováno: <strong>{$el->cancelled_at ? ($el->cancelled_at|date:'d. m. Y H:i') : ''}</strong>
-							{else}
-								Ukončeno: <strong>{$el->end_date|date:'d. m. Y'} (23:59)</strong>
-							{/if}
-						</p>
-					</div>
-					<div style="flex-shrink: 0; white-space: nowrap;">
-						<a n:href="Election:show, $el->id" class="btn" style="background: {if $el->status === 'cancelled'}#dc3545{else}#777{/if}; color: white; white-space: nowrap; padding: 0.7rem 1.4rem;">
-							{if $el->status === 'cancelled'}Detail storna{else}Výsledky{/if}
-						</a>
+						<div style="flex-shrink: 0; white-space: nowrap;">
+							<a n:href="Election:show, $el->id" class="btn" style="background: {if $el->status === 'cancelled'}#dc3545{else}#777{/if}; color: white; white-space: nowrap; padding: 0.7rem 1.4rem;">
+								{if $el->status === 'cancelled'}Detail storna{else}Výsledky{/if}
+							</a>
+						</div>
 					</div>
 				</div>
-			</div>
-		{/if}
-	</div>
+			{/if}
+		</div>
+	{/if}
 {/if}
 
 {/block}

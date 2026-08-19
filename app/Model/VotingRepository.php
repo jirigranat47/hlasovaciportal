@@ -638,7 +638,7 @@ class VotingRepository
 		$closed = [];
 
 		if ($isAdmin) {
-			// Admin vidí všechno pro svou jednotku
+			// 1. Admin jednotky vidí všechno pro svou jednotku (drafty, aktivní usnesení i ukončená)
 			$all = $electionsQuery->order('created_at DESC')->fetchAll();
 			foreach ($all as $el) {
 				if ($el->status === 'draft') {
@@ -652,7 +652,7 @@ class VotingRepository
 				}
 			}
 		} elseif ($isCouncilMember) {
-			// Člen rady vidí publikovaná a stornovaná
+			// 2. Člen rady jednotky vidí probíhající hlasování a ukončená/stornovaná usnesení (nevidí drafty)
 			$all = $electionsQuery->where('status', ['published', 'cancelled'])->order('created_at DESC')->fetchAll();
 			foreach ($all as $el) {
 				if ($el->status === 'cancelled') {
@@ -664,7 +664,9 @@ class VotingRepository
 				}
 			}
 		} else {
-			// Nečlen rady nevidí aktivní. Vidí pouze uzavřená/stornovaná, kterých se sám zúčastnil
+			// 3. Uživatel, který není admin ani člen rady:
+			// Nevidí rozpracované návrhy (drafty) ani probíhající hlasování.
+			// Vidí POUZE ta ukončená/stornovaná usnesení, pro která sám v minulosti hlasoval (byl členem rady v době hlasování).
 			$participatedElectionIds = $this->database->table('votes')
 				->where('person_id', $personId)
 				->select('election_id')
@@ -673,12 +675,18 @@ class VotingRepository
 			$ids = array_map(fn($row) => (int)$row->election_id, $participatedElectionIds);
 
 			if (!empty($ids)) {
-				$closed = $this->database->table('elections')
+				$past = $this->database->table('elections')
 					->where('unit_id', $unitId)
 					->where('status', ['published', 'cancelled'])
 					->where('id', $ids)
 					->order('created_at DESC')
 					->fetchAll();
+
+				foreach ($past as $el) {
+					if ($el->status === 'cancelled' || $el->end_date <= $now) {
+						$closed[] = $el;
+					}
+				}
 			}
 		}
 
