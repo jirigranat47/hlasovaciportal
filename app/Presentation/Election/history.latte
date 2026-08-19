@@ -81,7 +81,11 @@
 						{elseif $log->action === 'updated_draft'}
 							<span style="background: #fef3c7; color: #b45309; font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px;">✏️ Úprava údajů</span>
 						{elseif $log->action === 'published'}
-							<span style="background: #dcfce7; color: #15803d; font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px;">🚀 Publikováno a zahájeno</span>
+							<span style="background: #dcfce7; color: #15803d; font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px;">🚀 Publikováno</span>
+						{elseif $log->action === 'notification_sent'}
+							<span style="background: #eff6ff; color: #1e40af; font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px;">✉️ Odeslána výzva k hlasování</span>
+						{elseif $log->action === 'reminder_sent'}
+							<span style="background: #fffbeb; color: #b45309; font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px;">⏳ Odeslána denní upomínka</span>
 						{elseif $log->action === 'vote_cast'}
 							<span style="background: #f1f5f9; color: #334155; font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px;">🗳️ Hlas odevzdán</span>
 						{elseif $log->action === 'vote_changed'}

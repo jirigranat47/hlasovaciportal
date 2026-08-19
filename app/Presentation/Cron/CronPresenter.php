@@ -24,9 +24,11 @@ final class CronPresenter extends Presenter
 
 		try {
 			$this->cronManager->run();
-			$this->sendResponse(new \Nette\Application\Responses\TextResponse("Cron run completed successfully at " . date('Y-m-d H:i:s') . "\n"));
+			$message = "Cron run completed successfully at " . date('Y-m-d H:i:s') . "\n";
 		} catch (\Throwable $e) {
-			$this->sendResponse(new \Nette\Application\Responses\TextResponse("Cron run failed: " . $e->getMessage() . "\n"));
+			$message = "Cron run failed: " . $e->getMessage() . "\n";
 		}
+
+		$this->sendResponse(new \Nette\Application\Responses\TextResponse($message));
 	}
 }

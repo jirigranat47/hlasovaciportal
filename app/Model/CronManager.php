@@ -85,25 +85,18 @@ class CronManager
 		$body .= "<div style=\"background: #ffffff; padding: 24px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px;\">";
 		$body .= "<p style=\"font-size: 1rem; margin-top: 0;\">Ahoj,<br>byla vyhlášena nová hlasování k <strong>{$count} " . ($count === 1 ? 'usnesení' : ($count < 5 ? 'usnesením' : 'usnesením')) . "</strong> rady vaší jednotky:</p>";
 
-		$body .= "<div style=\"display: flex; flex-direction: column; gap: 14px; margin: 20px 0;\">";
+		$body .= "<div style=\"margin: 20px 0;\">";
 		foreach ($elections as $el) {
 			$link = rtrim($this->baseUrl, '/') . '/election/show/' . $el->id;
 			$endDateFormatted = $el->end_date ? $el->end_date->format('d. m. Y (23:59)') : 'neuvedeno';
 
-			$body .= "<div style=\"background: #f8fafc; border: 1px solid #cbd5e1; border-left: 4px solid #0055a5; padding: 14px 16px; border-radius: 6px; margin-bottom: 12px;\">";
-			$body .= "<div style=\"display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;\">";
+			$body .= "<div style=\"background: #f8fafc; border: 1px solid #cbd5e1; border-left: 5px solid #0055a5; padding: 14px 18px; border-radius: 6px; margin-bottom: 14px; display: block;\">";
+			$body .= "<div style=\"margin-bottom: 6px;\">";
 			$body .= "<strong style=\"color: #003366; font-size: 1.05rem;\">Usnesení č. " . htmlspecialchars($el->resolution_number) . "</strong>";
 			$body .= "</div>";
-			$body .= "<div style=\"font-weight: 600; color: #0f172a; margin-bottom: 6px;\">" . htmlspecialchars($el->title) . "</div>";
-			if (!empty($el->description)) {
-				$shortDesc = mb_substr((string)$el->description, 0, 160);
-				if (mb_strlen((string)$el->description) > 160) {
-					$shortDesc .= '...';
-				}
-				$body .= "<div style=\"font-size: 0.85rem; color: #64748b; margin-bottom: 8px;\">" . nl2br(htmlspecialchars($shortDesc)) . "</div>";
-			}
-			$body .= "<div style=\"font-size: 0.85rem; color: #475569; margin-bottom: 10px;\">⏳ Konec hlasování: <strong>{$endDateFormatted}</strong></div>";
-			$body .= "<a href=\"{$link}\" style=\"display: inline-block; background: #0055a5; color: #ffffff; text-decoration: none; padding: 6px 14px; border-radius: 4px; font-size: 0.85rem; font-weight: bold;\">Přejít k hlasování &rarr;</a>";
+			$body .= "<div style=\"font-weight: 600; color: #0f172a; font-size: 1rem; margin-bottom: 8px;\">" . htmlspecialchars($el->title) . "</div>";
+			$body .= "<div style=\"font-size: 0.85rem; color: #475569; margin-bottom: 12px;\">⏳ Konec hlasování: <strong>{$endDateFormatted}</strong></div>";
+			$body .= "<a href=\"{$link}\" style=\"display: inline-block; background: #0055a5; color: #ffffff; text-decoration: none; padding: 7px 16px; border-radius: 4px; font-size: 0.85rem; font-weight: bold;\">Přejít k hlasování &rarr;</a>";
 			$body .= "</div>";
 		}
 		$body .= "</div>";
@@ -214,6 +207,8 @@ class CronManager
 
 			$unitName = $smtp->from_name ?: "jednotka #$unitId";
 
+			$remindedMembersPerElection = [];
+
 			// Pro každého člena rady zjistíme neodhlasovaná usnesení z této dávky
 			foreach ($members as $m) {
 				if (empty($m->email)) {
@@ -229,6 +224,7 @@ class CronManager
 
 					if (!$hasVoted) {
 						$unvotedForMember[] = $el;
+						$remindedMembersPerElection[$el->id][] = "{$m->full_name} ({$m->email})";
 					}
 				}
 
@@ -246,13 +242,13 @@ class CronManager
 					$body .= "<div style=\"background: #ffffff; padding: 24px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px;\">";
 					$body .= "<p style=\"font-size: 1rem; margin-top: 0;\">Ahoj " . htmlspecialchars($m->full_name) . ",<br>připomínáme, že u následujících <strong>{$count}</strong> hlasování rady dosud <strong>neevidujeme váš hlas</strong> a termín brzy vyprší:</p>";
 
-					$body .= "<div style=\"display: flex; flex-direction: column; gap: 12px; margin: 18px 0;\">";
+					$body .= "<div style=\"margin: 18px 0;\">";
 					foreach ($unvotedForMember as $el) {
 						$link = rtrim($this->baseUrl, '/') . '/election/show/' . $el->id;
-						$body .= "<div style=\"background: #fffbeb; border: 1px solid #fde68a; border-left: 4px solid #d97706; padding: 12px 14px; border-radius: 6px; margin-bottom: 10px;\">";
-						$body .= "<div style=\"font-weight: bold; color: #92400e; margin-bottom: 4px;\">Usnesení č. " . htmlspecialchars($el->resolution_number) . ": " . htmlspecialchars($el->title) . "</div>";
-						$body .= "<div style=\"font-size: 0.85rem; color: #78350f; margin-bottom: 8px;\">Termín do: <strong>" . $el->end_date->format('d. m. Y (23:59)') . "</strong></div>";
-						$body .= "<a href=\"{$link}\" style=\"display: inline-block; background: #d97706; color: #ffffff; text-decoration: none; padding: 5px 12px; border-radius: 4px; font-size: 0.85rem; font-weight: bold;\">Odevzdat hlas &rarr;</a>";
+						$body .= "<div style=\"background: #fffbeb; border: 1px solid #fde68a; border-left: 4px solid #d97706; padding: 14px 16px; border-radius: 6px; margin-bottom: 14px; display: block;\">";
+						$body .= "<div style=\"font-weight: bold; color: #92400e; font-size: 1.05rem; margin-bottom: 6px;\">Usnesení č. " . htmlspecialchars($el->resolution_number) . ": " . htmlspecialchars($el->title) . "</div>";
+						$body .= "<div style=\"font-size: 0.85rem; color: #78350f; margin-bottom: 12px;\">Termín do: <strong>" . $el->end_date->format('d. m. Y (23:59)') . "</strong></div>";
+						$body .= "<a href=\"{$link}\" style=\"display: inline-block; background: #d97706; color: #ffffff; text-decoration: none; padding: 7px 16px; border-radius: 4px; font-size: 0.85rem; font-weight: bold;\">Odevzdat hlas &rarr;</a>";
 						$body .= "</div>";
 					}
 					$body .= "</div>";
@@ -270,9 +266,26 @@ class CronManager
 				}
 			}
 
-			// Označíme usnesení jako upomenutá
+			// Označíme usnesení jako upomenutá a zapíšeme záznam do auditu
 			$elIds = array_map(fn($r) => (int)$r->id, $unitElections);
 			$this->votingRepository->markElectionsReminderSent($elIds);
+
+			foreach ($unitElections as $el) {
+				$reminded = $remindedMembersPerElection[$el->id] ?? [];
+				$details = !empty($reminded)
+					? "Odeslána denní upomínka nehlasujícím členům rady (" . count($reminded) . "): " . implode(', ', $reminded)
+					: "Všichni členové rady již měli v době upomínky odhlasováno (e-mail nebylo nutné posílat).";
+
+				$this->votingRepository->logElectionAudit(
+					(int)$el->id,
+					0,
+					'Cron',
+					'Plánovač systému',
+					'reminder_sent',
+					$details
+				);
+			}
+
 			$processedElectionsCount += count($elIds);
 		}
 
@@ -337,7 +350,7 @@ class CronManager
 			$body .= "<div style=\"background: #ffffff; padding: 24px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px;\">";
 			$body .= "<p style=\"font-size: 1rem; margin-top: 0;\">Ahoj,<br>byla uzavřena a vyhodnocena následující hlasování rady jednotky:</p>";
 
-			$body .= "<div style=\"display: flex; flex-direction: column; gap: 14px; margin: 18px 0;\">";
+			$body .= "<div style=\"margin: 18px 0;\">";
 
 			foreach ($unitElections as $el) {
 				$results = $this->votingRepository->getElectionResults($el->id);
@@ -365,23 +378,23 @@ class CronManager
 				$statusBg = $isAdopted ? '#dcfce7' : '#fee2e2';
 				$statusText = $isAdopted ? '✓ PŘIJATO' : '✕ NEPŘIJATO';
 
-				$body .= "<div style=\"background: #f8fafc; border: 1px solid #e2e8f0; border-left: 5px solid {$statusColor}; padding: 14px 16px; border-radius: 6px; margin-bottom: 14px;\">";
-				$body .= "<div style=\"display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;\">";
-				$body .= "<strong style=\"font-size: 1.05rem; color: #0f172a;\">Usnesení č. " . htmlspecialchars($el->resolution_number) . "</strong>";
-				$body .= "<span style=\"background: {$statusBg}; color: {$statusColor}; font-weight: bold; font-size: 0.85rem; padding: 3px 8px; border-radius: 12px;\">{$statusText}</span>";
-				$body .= "</div>";
-				$body .= "<div style=\"font-weight: 600; color: #334155; margin-bottom: 8px;\">" . htmlspecialchars($el->title) . "</div>";
+				$body .= "<div style=\"background: #f8fafc; border: 1px solid #e2e8f0; border-left: 5px solid {$statusColor}; padding: 14px 18px; border-radius: 6px; margin-bottom: 16px; display: block;\">";
+				$body .= "<table style=\"width: 100%; border-collapse: collapse; margin-bottom: 6px;\"><tr>";
+				$body .= "<td style=\"vertical-align: middle;\"><strong style=\"font-size: 1.05rem; color: #0f172a;\">Usnesení č. " . htmlspecialchars($el->resolution_number) . "</strong></td>";
+				$body .= "<td style=\"text-align: right; vertical-align: middle;\"><span style=\"background: {$statusBg}; color: {$statusColor}; font-weight: bold; font-size: 0.85rem; padding: 4px 10px; border-radius: 12px; display: inline-block;\">{$statusText}</span></td>";
+				$body .= "</tr></table>";
+				$body .= "<div style=\"font-weight: 600; color: #334155; font-size: 1rem; margin-bottom: 10px;\">" . htmlspecialchars($el->title) . "</div>";
 
 				// Hlasovací statistika
-				$body .= "<div style=\"font-size: 0.85rem; background: #ffffff; padding: 8px 12px; border-radius: 4px; border: 1px solid #e2e8f0; margin-bottom: 10px; display: flex; gap: 12px; flex-wrap: wrap;\">";
-				$body .= "<span>Pro: <strong>{$proCount}</strong></span> | ";
-				$body .= "<span>Proti: <strong>" . ($votesCount['Proti'] ?? 0) . "</strong></span> | ";
-				$body .= "<span>Zdržel se: <strong>" . ($votesCount['Zdržel se'] ?? 0) . "</strong></span> | ";
+				$body .= "<div style=\"font-size: 0.85rem; background: #ffffff; padding: 8px 12px; border-radius: 4px; border: 1px solid #e2e8f0; margin-bottom: 12px;\">";
+				$body .= "<span>Pro: <strong>{$proCount}</strong></span> &bull; ";
+				$body .= "<span>Proti: <strong>" . ($votesCount['Proti'] ?? 0) . "</strong></span> &bull; ";
+				$body .= "<span>Zdržel se: <strong>" . ($votesCount['Zdržel se'] ?? 0) . "</strong></span> &bull; ";
 				$body .= "<span>Nehlasovalo: <strong>{$notVotedCount}</strong></span>";
 				$body .= "</div>";
 
 				$body .= "<div style=\"font-size: 0.85rem;\">";
-				$body .= "<a href=\"{$link}\" style=\"color: #0055a5; text-decoration: none; font-weight: bold; margin-right: 12px;\">Zobrazit detail usnesení &rarr;</a>";
+				$body .= "<a href=\"{$link}\" style=\"color: #0055a5; text-decoration: none; font-weight: bold; margin-right: 14px;\">Zobrazit detail usnesení &rarr;</a>";
 				$body .= "<a href=\"{$historyLink}\" style=\"color: #64748b; text-decoration: none;\">Historie změn</a>";
 				$body .= "</div>";
 				$body .= "</div>";
