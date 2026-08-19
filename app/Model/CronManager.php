@@ -16,60 +16,273 @@ class CronManager
 		private string $baseUrl = 'http://localhost:8000'
 	) {}
 
+	/**
+	 * Hlavní spouštěcí metoda pro plánovač (Cron)
+	 */
 	public function run(): void
 	{
-		$this->sendStartNotifications();
-		$this->sendEndResults();
+		$this->sendAllUnnotifiedNewElectionsDigest();
+		$this->sendDailyReminders();
+		$this->sendDailyResultsDigest();
 	}
 
-	private function sendStartNotifications(): void
+	/**
+	 * Odešle souhrnnou notifikaci o nově publikovaných usneseních pro danou jednotku
+	 * (volá se buď ručně správcem z administrace, nebo automaticky nočním cronem)
+	 *
+	 * @param int $unitId ID jednotky
+	 * @param int[]|null $electionIds Volitelný seznam konkrétních ID usnesení (pokud null, vezme všechna unnotified)
+	 * @param string|null $unitName Volitelný název jednotky
+	 * @return string[] Seznam e-mailů příjemců, na které byla zpráva odeslána
+	 */
+	public function sendBatchNewElectionsNotification(int $unitId, ?array $electionIds = null, ?string $unitName = null): array
 	{
-		$elections = $this->database->table('elections')
+		$query = $this->database->table('elections')
+			->where('unit_id', $unitId)
+			->where('status', 'published')
+			->where('notification_sent', 0);
+
+		if (!empty($electionIds)) {
+			$query->where('id', $electionIds);
+		}
+
+		$elections = $query->order('created_at ASC')->fetchAll();
+		if (empty($elections)) {
+			return [];
+		}
+
+		$smtp = $this->votingRepository->getSmtpSettings($unitId);
+		if (!$smtp) {
+			return [];
+		}
+
+		$members = $this->votingRepository->getCouncilMembers($unitId);
+		$recipients = [];
+		foreach ($members as $m) {
+			if (!empty($m->email)) {
+				$recipients[$m->email] = $m->full_name;
+			}
+		}
+
+		if (empty($recipients)) {
+			return [];
+		}
+
+		// Zjistíme název jednotky z SMTP nastavení, pokud není předán
+		$resolvedUnitName = $unitName ?: ($smtp->from_name ?: "jednotka #$unitId");
+
+		// Počet usnesení
+		$count = count($elections);
+		$subject = "Nová hlasování pro jednotku {$resolvedUnitName}";
+
+		// Sestavení přehledného HTML e-mailu
+		$body = "<div style=\"font-family: Arial, sans-serif; color: #1e293b; max-width: 640px; margin: 0 auto; line-height: 1.6;\">";
+		$body .= "<div style=\"background: linear-gradient(135deg, #003366 0%, #0055a5 100%); color: white; padding: 20px 24px; border-radius: 8px 8px 0 0;\">";
+		$body .= "<h2 style=\"margin: 0; font-size: 1.4rem; color: #ffffff;\">⚜ Nová hlasování rady</h2>";
+		$body .= "<p style=\"margin: 5px 0 0 0; font-size: 0.95rem; color: #e2e8f0;\">Jednotka: <strong>" . htmlspecialchars($resolvedUnitName) . "</strong></p>";
+		$body .= "</div>";
+
+		$body .= "<div style=\"background: #ffffff; padding: 24px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px;\">";
+		$body .= "<p style=\"font-size: 1rem; margin-top: 0;\">Ahoj,<br>byla vyhlášena nová hlasování k <strong>{$count} " . ($count === 1 ? 'usnesení' : ($count < 5 ? 'usnesením' : 'usnesením')) . "</strong> rady vaší jednotky:</p>";
+
+		$body .= "<div style=\"display: flex; flex-direction: column; gap: 14px; margin: 20px 0;\">";
+		foreach ($elections as $el) {
+			$link = rtrim($this->baseUrl, '/') . '/election/show/' . $el->id;
+			$endDateFormatted = $el->end_date ? $el->end_date->format('d. m. Y (23:59)') : 'neuvedeno';
+
+			$body .= "<div style=\"background: #f8fafc; border: 1px solid #cbd5e1; border-left: 4px solid #0055a5; padding: 14px 16px; border-radius: 6px; margin-bottom: 12px;\">";
+			$body .= "<div style=\"display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;\">";
+			$body .= "<strong style=\"color: #003366; font-size: 1.05rem;\">Usnesení č. " . htmlspecialchars($el->resolution_number) . "</strong>";
+			$body .= "</div>";
+			$body .= "<div style=\"font-weight: 600; color: #0f172a; margin-bottom: 6px;\">" . htmlspecialchars($el->title) . "</div>";
+			if (!empty($el->description)) {
+				$shortDesc = mb_substr((string)$el->description, 0, 160);
+				if (mb_strlen((string)$el->description) > 160) {
+					$shortDesc .= '...';
+				}
+				$body .= "<div style=\"font-size: 0.85rem; color: #64748b; margin-bottom: 8px;\">" . nl2br(htmlspecialchars($shortDesc)) . "</div>";
+			}
+			$body .= "<div style=\"font-size: 0.85rem; color: #475569; margin-bottom: 10px;\">⏳ Konec hlasování: <strong>{$endDateFormatted}</strong></div>";
+			$body .= "<a href=\"{$link}\" style=\"display: inline-block; background: #0055a5; color: #ffffff; text-decoration: none; padding: 6px 14px; border-radius: 4px; font-size: 0.85rem; font-weight: bold;\">Přejít k hlasování &rarr;</a>";
+			$body .= "</div>";
+		}
+		$body .= "</div>";
+
+		$portalLink = rtrim($this->baseUrl, '/');
+		$body .= "<p style=\"text-align: center; margin: 25px 0 10px 0;\">";
+		$body .= "<a href=\"{$portalLink}\" style=\"display: inline-block; background: #f4b400; color: #000000; text-decoration: none; padding: 10px 24px; border-radius: 6px; font-weight: bold; font-size: 1rem;\">Otevřít Hlasovací Portál</a>";
+		$body .= "</p>";
+
+		$body .= "<hr style=\"border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;\">";
+		$body .= "<p style=\"font-size: 0.8rem; color: #94a3b8; margin: 0; text-align: center;\">Toto je automatická zpráva z Hlasovacího Portálu skautských jednotek.</p>";
+		$body .= "</div></div>";
+
+		// Odeslání e-mailu
+		$this->mailSender->sendEmail($smtp, $recipients, $subject, $body);
+
+		return array_keys($recipients);
+	}
+
+	/**
+	 * Noční automatický fallback: odešle souhrnné výzvy pro všechny jednotky, kde zůstala neodeslaná nová usnesení.
+	 * Běží pouze po půlnoci (mezi 00:00 a 06:00), aby měl správce přes den čas na přípravu a ruční odeslání.
+	 */
+	public function sendAllUnnotifiedNewElectionsDigest(bool $forceTime = false): int
+	{
+		$currentHour = (int)date('G');
+		// Mimo noční hodiny (00:00 - 05:59) automatický fallback nespouštíme, pokud není vynuceno
+		if (!$forceTime && ($currentHour < 0 || $currentHour >= 6)) {
+			return 0;
+		}
+
+		$unitIds = $this->database->table('elections')
 			->where('status', 'published')
 			->where('notification_sent', 0)
-			->fetchAll();
+			->select('DISTINCT unit_id')
+			->fetchPairs(null, 'unit_id');
 
-		foreach ($elections as $el) {
-			$smtp = $this->votingRepository->getSmtpSettings($el->unit_id);
-			if (!$smtp) {
-				continue; // Není nakonfigurováno SMTP, přeskočíme
-			}
-
-			$members = $this->votingRepository->getCouncilMembers($el->unit_id);
-			$recipients = [];
-			foreach ($members as $m) {
-				if (!empty($m->email)) {
-					$recipients[$m->email] = $m->full_name;
-				}
-			}
-
-			if (empty($recipients)) {
-				// Žádní příjemci s e-mailem, označíme jako odeslané a pokračujeme
-				$el->update(['notification_sent' => 1]);
+		$totalProcessed = 0;
+		foreach ($unitIds as $uId) {
+			$uId = (int)$uId;
+			$unnotified = $this->votingRepository->getUnnotifiedPublishedElections($uId);
+			if (empty($unnotified)) {
 				continue;
 			}
 
-			$link = rtrim($this->baseUrl, '/') . '/election/show/' . $el->id;
-			$subject = 'Zahájeno hlasování č. ' . $el->resolution_number . ': ' . $el->title;
+			$sentEmails = $this->sendBatchNewElectionsNotification($uId);
+			$elIds = array_map(fn($r) => (int)$r->id, $unnotified);
 			
-			$body = "<h2>Zahájeno hlasování rady jednotky</h2>";
-			$body .= "<p><strong>Číslo usnesení:</strong> " . htmlspecialchars($el->resolution_number) . "</p>";
-			$body .= "<p>Bylo zahájeno nové vnitřní hlasování o návrhu: <strong>" . htmlspecialchars($el->title) . "</strong></p>";
-			if ($el->proposal_received_date) {
-				$body .= "<p>Datum přijetí návrhu: " . $el->proposal_received_date->format('d. m. Y') . "</p>";
-			}
-			$body .= "<p>Hlasovat můžete nejpozději do: <strong>" . $el->end_date->format('d. m. Y H:i') . "</strong></p>";
-			$body .= "<p>Pro zobrazení detailu a odevzdání hlasu klikněte na odkaz níže:<br>";
-			$body .= "<a href=\"" . $link . "\">" . $link . "</a></p>";
-			$body .= "<hr><p>Toto je automatický e-mail z Hlasovacího Portálu.</p>";
+			$this->votingRepository->markElectionsNotified(
+				$elIds,
+				$sentEmails,
+				0,
+				'Cron',
+				'Automatický noční souhrn'
+			);
 
-			$this->mailSender->sendEmail($smtp, $recipients, $subject, $body);
-
-			$el->update(['notification_sent' => 1]);
+			$totalProcessed += count($elIds);
 		}
+
+		return $totalProcessed;
 	}
 
-	private function sendEndResults(): void
+	/**
+	 * Denní upomínka v 18:00 pro nehlasující členy (den před vypršením termínu).
+	 * Spouští se pouze v 18:00 a později (mezi 18:00 a 23:59).
+	 */
+	public function sendDailyReminders(bool $forceTime = false): int
+	{
+		$currentHour = (int)date('G');
+		// Upomínky odesíláme až od 18:00 dále (aby měl uživatel přesně 24-30 hodin do zítřejší půlnoci)
+		if (!$forceTime && $currentHour < 18) {
+			return 0;
+		}
+
+		$now = new \DateTime();
+		// Hlasování končící do 30 hodin (tedy typicky následující den ve 23:59), která ještě nemají odeslanou upomínku
+		$limitDate = (new \DateTime())->modify('+30 hours');
+
+		$elections = $this->database->table('elections')
+			->where('status', 'published')
+			->where('reminder_sent', 0)
+			->where('end_date >', $now)
+			->where('end_date <=', $limitDate)
+			->fetchAll();
+
+		if (empty($elections)) {
+			return 0;
+		}
+
+		// Seskupíme usnesení podle unit_id
+		$byUnit = [];
+		foreach ($elections as $el) {
+			$byUnit[$el->unit_id][] = $el;
+		}
+
+		$processedElectionsCount = 0;
+
+		foreach ($byUnit as $unitId => $unitElections) {
+			$smtp = $this->votingRepository->getSmtpSettings((int)$unitId);
+			if (!$smtp) {
+				continue;
+			}
+
+			$members = $this->votingRepository->getCouncilMembers((int)$unitId);
+			if (empty($members)) {
+				continue;
+			}
+
+			$unitName = $smtp->from_name ?: "jednotka #$unitId";
+
+			// Pro každého člena rady zjistíme neodhlasovaná usnesení z této dávky
+			foreach ($members as $m) {
+				if (empty($m->email)) {
+					continue;
+				}
+
+				$unvotedForMember = [];
+				foreach ($unitElections as $el) {
+					$hasVoted = $this->database->table('votes')
+						->where('election_id', $el->id)
+						->where('person_id', $m->person_id)
+						->count() > 0;
+
+					if (!$hasVoted) {
+						$unvotedForMember[] = $el;
+					}
+				}
+
+				// Pokud má člen neodhlasovaná usnesení, pošleme mu 1 osobní souhrnnou upomínku
+				if (!empty($unvotedForMember)) {
+					$count = count($unvotedForMember);
+					$subject = "Připomenutí: Zbývá vám odhlasovat {$count} " . ($count === 1 ? 'usnesení' : ($count < 5 ? 'usnesení' : 'usnesení')) . " – {$unitName}";
+
+					$body = "<div style=\"font-family: Arial, sans-serif; color: #1e293b; max-width: 640px; margin: 0 auto; line-height: 1.6;\">";
+					$body .= "<div style=\"background: #d97706; color: white; padding: 18px 24px; border-radius: 8px 8px 0 0;\">";
+					$body .= "<h2 style=\"margin: 0; font-size: 1.3rem; color: #ffffff;\">⏳ Připomenutí konce hlasování</h2>";
+					$body .= "<p style=\"margin: 4px 0 0 0; font-size: 0.9rem; color: #fef3c7;\">Jednotka: <strong>" . htmlspecialchars($unitName) . "</strong></p>";
+					$body .= "</div>";
+
+					$body .= "<div style=\"background: #ffffff; padding: 24px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px;\">";
+					$body .= "<p style=\"font-size: 1rem; margin-top: 0;\">Ahoj " . htmlspecialchars($m->full_name) . ",<br>připomínáme, že u následujících <strong>{$count}</strong> hlasování rady dosud <strong>neevidujeme váš hlas</strong> a termín brzy vyprší:</p>";
+
+					$body .= "<div style=\"display: flex; flex-direction: column; gap: 12px; margin: 18px 0;\">";
+					foreach ($unvotedForMember as $el) {
+						$link = rtrim($this->baseUrl, '/') . '/election/show/' . $el->id;
+						$body .= "<div style=\"background: #fffbeb; border: 1px solid #fde68a; border-left: 4px solid #d97706; padding: 12px 14px; border-radius: 6px; margin-bottom: 10px;\">";
+						$body .= "<div style=\"font-weight: bold; color: #92400e; margin-bottom: 4px;\">Usnesení č. " . htmlspecialchars($el->resolution_number) . ": " . htmlspecialchars($el->title) . "</div>";
+						$body .= "<div style=\"font-size: 0.85rem; color: #78350f; margin-bottom: 8px;\">Termín do: <strong>" . $el->end_date->format('d. m. Y (23:59)') . "</strong></div>";
+						$body .= "<a href=\"{$link}\" style=\"display: inline-block; background: #d97706; color: #ffffff; text-decoration: none; padding: 5px 12px; border-radius: 4px; font-size: 0.85rem; font-weight: bold;\">Odevzdat hlas &rarr;</a>";
+						$body .= "</div>";
+					}
+					$body .= "</div>";
+
+					$portalLink = rtrim($this->baseUrl, '/');
+					$body .= "<p style=\"text-align: center; margin: 20px 0;\">";
+					$body .= "<a href=\"{$portalLink}\" style=\"display: inline-block; background: #003366; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: bold;\">Otevřít Hlasovací Portál</a>";
+					$body .= "</p>";
+
+					$body .= "<hr style=\"border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;\">";
+					$body .= "<p style=\"font-size: 0.8rem; color: #94a3b8; margin: 0; text-align: center;\">Toto je automatická upomínka z Hlasovacího Portálu.</p>";
+					$body .= "</div></div>";
+
+					$this->mailSender->sendEmail($smtp, [$m->email => $m->full_name], $subject, $body);
+				}
+			}
+
+			// Označíme usnesení jako upomenutá
+			$elIds = array_map(fn($r) => (int)$r->id, $unitElections);
+			$this->votingRepository->markElectionsReminderSent($elIds);
+			$processedElectionsCount += count($elIds);
+		}
+
+		return $processedElectionsCount;
+	}
+
+	/**
+	 * Noční souhrnné vyhodnocení výsledků (Po půlnoci v 00:05)
+	 */
+	public function sendDailyResultsDigest(): int
 	{
 		$now = new \DateTime();
 		$elections = $this->database->table('elections')
@@ -78,13 +291,25 @@ class CronManager
 			->where('results_sent', 0)
 			->fetchAll();
 
+		if (empty($elections)) {
+			return 0;
+		}
+
+		// Seskupíme podle unit_id
+		$byUnit = [];
 		foreach ($elections as $el) {
-			$smtp = $this->votingRepository->getSmtpSettings($el->unit_id);
+			$byUnit[$el->unit_id][] = $el;
+		}
+
+		$totalProcessed = 0;
+
+		foreach ($byUnit as $unitId => $unitElections) {
+			$smtp = $this->votingRepository->getSmtpSettings((int)$unitId);
 			if (!$smtp) {
 				continue;
 			}
 
-			$members = $this->votingRepository->getCouncilMembers($el->unit_id);
+			$members = $this->votingRepository->getCouncilMembers((int)$unitId);
 			$recipients = [];
 			foreach ($members as $m) {
 				if (!empty($m->email)) {
@@ -92,76 +317,104 @@ class CronManager
 				}
 			}
 
-			// Vyhodnocení výsledků
-			$results = $this->votingRepository->getElectionResults($el->id);
-			
+			if (empty($recipients)) {
+				continue;
+			}
+
 			$totalMembers = count($members);
-			$votesCount = [
-				'Pro' => 0,
-				'Proti' => 0,
-				'Zdržel se' => 0,
-			];
+			$unitName = $smtp->from_name ?: "jednotka #$unitId";
+			$count = count($unitElections);
 
-			foreach ($results['options'] as $opt) {
-				$votesCount[$opt->title] = $opt->votes_count;
+			$subject = "Výsledky hlasování rady – {$unitName}";
+
+			// Sestavení souhrnného e-mailu s výsledky
+			$body = "<div style=\"font-family: Arial, sans-serif; color: #1e293b; max-width: 640px; margin: 0 auto; line-height: 1.6;\">";
+			$body .= "<div style=\"background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 20px 24px; border-radius: 8px 8px 0 0;\">";
+			$body .= "<h2 style=\"margin: 0; font-size: 1.3rem; color: #ffffff;\">🏁 Výsledky hlasování rady</h2>";
+			$body .= "<p style=\"margin: 4px 0 0 0; font-size: 0.9rem; color: #94a3b8;\">Jednotka: <strong>" . htmlspecialchars($unitName) . "</strong> | Počet ukončených usnesení: {$count}</p>";
+			$body .= "</div>";
+
+			$body .= "<div style=\"background: #ffffff; padding: 24px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px;\">";
+			$body .= "<p style=\"font-size: 1rem; margin-top: 0;\">Ahoj,<br>byla uzavřena a vyhodnocena následující hlasování rady jednotky:</p>";
+
+			$body .= "<div style=\"display: flex; flex-direction: column; gap: 14px; margin: 18px 0;\">";
+
+			foreach ($unitElections as $el) {
+				$results = $this->votingRepository->getElectionResults($el->id);
+				$votesCount = [
+					'Pro' => 0,
+					'Proti' => 0,
+					'Zdržel se' => 0,
+				];
+
+				foreach ($results as $r) {
+					if (isset($votesCount[$r['title']])) {
+						$votesCount[$r['title']] = $r['votes_count'];
+					}
+				}
+
+				$proCount = $votesCount['Pro'];
+				// Schváleno nadpoloviční většinou všech členů rady
+				$isAdopted = $totalMembers > 0 && ($proCount > ($totalMembers / 2));
+				$notVotedCount = max(0, $totalMembers - array_sum($votesCount));
+
+				$link = rtrim($this->baseUrl, '/') . '/election/show/' . $el->id;
+				$historyLink = rtrim($this->baseUrl, '/') . '/election/history/' . $el->id;
+
+				$statusColor = $isAdopted ? '#16a34a' : '#dc2626';
+				$statusBg = $isAdopted ? '#dcfce7' : '#fee2e2';
+				$statusText = $isAdopted ? '✓ PŘIJATO' : '✕ NEPŘIJATO';
+
+				$body .= "<div style=\"background: #f8fafc; border: 1px solid #e2e8f0; border-left: 5px solid {$statusColor}; padding: 14px 16px; border-radius: 6px; margin-bottom: 14px;\">";
+				$body .= "<div style=\"display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;\">";
+				$body .= "<strong style=\"font-size: 1.05rem; color: #0f172a;\">Usnesení č. " . htmlspecialchars($el->resolution_number) . "</strong>";
+				$body .= "<span style=\"background: {$statusBg}; color: {$statusColor}; font-weight: bold; font-size: 0.85rem; padding: 3px 8px; border-radius: 12px;\">{$statusText}</span>";
+				$body .= "</div>";
+				$body .= "<div style=\"font-weight: 600; color: #334155; margin-bottom: 8px;\">" . htmlspecialchars($el->title) . "</div>";
+
+				// Hlasovací statistika
+				$body .= "<div style=\"font-size: 0.85rem; background: #ffffff; padding: 8px 12px; border-radius: 4px; border: 1px solid #e2e8f0; margin-bottom: 10px; display: flex; gap: 12px; flex-wrap: wrap;\">";
+				$body .= "<span>Pro: <strong>{$proCount}</strong></span> | ";
+				$body .= "<span>Proti: <strong>" . ($votesCount['Proti'] ?? 0) . "</strong></span> | ";
+				$body .= "<span>Zdržel se: <strong>" . ($votesCount['Zdržel se'] ?? 0) . "</strong></span> | ";
+				$body .= "<span>Nehlasovalo: <strong>{$notVotedCount}</strong></span>";
+				$body .= "</div>";
+
+				$body .= "<div style=\"font-size: 0.85rem;\">";
+				$body .= "<a href=\"{$link}\" style=\"color: #0055a5; text-decoration: none; font-weight: bold; margin-right: 12px;\">Zobrazit detail usnesení &rarr;</a>";
+				$body .= "<a href=\"{$historyLink}\" style=\"color: #64748b; text-decoration: none;\">Historie změn</a>";
+				$body .= "</div>";
+				$body .= "</div>";
+
+				// Záznam do auditu usnesení
+				$this->votingRepository->logElectionAudit(
+					(int)$el->id,
+					0,
+					'Cron',
+					'Plánovač systému',
+					'closed',
+					"Hlasování bylo uzavřeno. Výsledek: " . ($isAdopted ? 'PŘIJATO' : 'NEPŘIJATO') . " (Pro: {$proCount}, Proti: " . ($votesCount['Proti'] ?? 0) . ", Zdržel se: " . ($votesCount['Zdržel se'] ?? 0) . ", Celkem členů: {$totalMembers})."
+				);
+
+				$el->update(['results_sent' => 1]);
+				$totalProcessed++;
 			}
 
-			$proCount = $votesCount['Pro'] ?? 0;
-			$isAdopted = $proCount > ($totalMembers / 2);
+			$body .= "</div>";
 
-			$subject = 'Výsledky hlasování č. ' . $el->resolution_number . ': ' . $el->title;
+			$portalLink = rtrim($this->baseUrl, '/');
+			$body .= "<p style=\"text-align: center; margin: 25px 0 10px 0;\">";
+			$body .= "<a href=\"{$portalLink}\" style=\"display: inline-block; background: #003366; color: #ffffff; text-decoration: none; padding: 10px 24px; border-radius: 6px; font-weight: bold;\">Otevřít Hlasovací Portál</a>";
+			$body .= "</p>";
 
-			$body = "<h2>Výsledky hlasování rady jednotky</h2>";
-			$body .= "<p><strong>Číslo usnesení:</strong> " . htmlspecialchars($el->resolution_number) . "</p>";
-			$body .= "<p>Hlasování o návrhu <strong>" . htmlspecialchars($el->title) . "</strong> bylo ukončeno.</p>";
-			
-			if ($isAdopted) {
-				$body .= "<h3 style=\"color: green;\">Usnesení bylo PŘIJATO</h3>";
-			} else {
-				$body .= "<h3 style=\"color: red;\">Usnesení NEBYLO PŘIJATO</h3>";
-			}
+			$body .= "<hr style=\"border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;\">";
+			$body .= "<p style=\"font-size: 0.8rem; color: #94a3b8; margin: 0; text-align: center;\">Toto je automatické vyhodnocení výsledků z Hlasovacího Portálu.</p>";
+			$body .= "</div></div>";
 
-			$body .= "<p><strong>Statistika hlasování:</strong></p>";
-			$body .= "<ul>";
-			$body .= "<li>Celkový počet členů rady: " . $totalMembers . "</li>";
-			$body .= "<li>Hlasovalo PRO: " . $proCount . "</li>";
-			$body .= "<li>Hlasovalo PROTI: " . ($votesCount['Proti'] ?? 0) . "</li>";
-			$body .= "<li>Zdrželo se: " . ($votesCount['Zdržel se'] ?? 0) . "</li>";
-			$body .= "<li>Nehlasovalo: " . ($totalMembers - array_sum($votesCount)) . "</li>";
-			$body .= "</ul>";
-
-			$body .= "<p><strong>Jmenný přehled odevzdaných hlasů:</strong></p>";
-			$body .= "<table border=\"1\" cellpadding=\"5\" style=\"border-collapse: collapse;\">";
-			$body .= "<thead><tr><th>Jméno člena rady</th><th>Jak hlasoval</th></tr></thead>";
-			$body .= "<tbody>";
-			
-			foreach ($members as $m) {
-				$vote = $results['votes'][$m->person_id] ?? null;
-				$voteText = $vote ? $vote['option_title'] : 'Nehlasoval(a)';
-				$body .= "<tr><td>" . htmlspecialchars($m->full_name) . "</td><td>" . $voteText . "</td></tr>";
-			}
-			$body .= "</tbody></table>";
-
-			$link = rtrim($this->baseUrl, '/') . '/election/show/' . $el->id;
-			$body .= "<p>Detail hlasování naleznete zde: <a href=\"" . $link . "\">" . $link . "</a></p>";
-			$body .= "<hr><p>Toto je automatický e-mail z Hlasovacího Portálu.</p>";
-
-			if (!empty($recipients)) {
-				$this->mailSender->sendEmail($smtp, $recipients, $subject, $body);
-			}
-
-			$el->update(['results_sent' => 1]);
-
-			// Auditní log automatického uzavření
-			$this->votingRepository->logElectionAudit(
-				(int)$el->id,
-				0,
-				'Systém (Automatické vyhodnocení)',
-				'Cron',
-				'closed',
-				"Hlasování bylo uzavřeno. Výsledek: " . ($isAdopted ? 'PŘIJATO' : 'NEPŘIJATO') . " (Pro: {$proCount}, Proti: " . ($votesCount['Proti'] ?? 0) . ", Zdržel se: " . ($votesCount['Zdržel se'] ?? 0) . ")."
-			);
+			$this->mailSender->sendEmail($smtp, $recipients, $subject, $body);
 		}
+
+		return $totalProcessed;
 	}
 
 	/**

@@ -673,4 +673,65 @@ class VotingRepository
 	{
 		return $this->database->table('users')->where('skautis_person_id', $personId)->fetch();
 	}
+
+	/**
+	 * Získá všechna publikovaná usnesení jednotky, která dosud nemají odeslanou notifikaci
+	 */
+	public function getUnnotifiedPublishedElections(int $unitId): array
+	{
+		return $this->database->table('elections')
+			->where('unit_id', $unitId)
+			->where('status', 'published')
+			->where('notification_sent', 0)
+			->order('created_at ASC')
+			->fetchAll();
+	}
+
+	/**
+	 * Označí usnesení jako notifikovaná a zapíše auditní záznamy
+	 */
+	public function markElectionsNotified(
+		array $electionIds,
+		array $sentEmails,
+		int $personId,
+		string $personName,
+		?string $roleName = null
+	): void {
+		if (empty($electionIds)) {
+			return;
+		}
+
+		$this->database->table('elections')
+			->where('id', $electionIds)
+			->update(['notification_sent' => 1]);
+
+		$details = "Odeslána hromadná notifikace o vyhlášení hlasování.";
+		if (!empty($sentEmails)) {
+			$details .= " E-mail odeslán na adresy (" . count($sentEmails) . "): " . implode(', ', $sentEmails);
+		}
+
+		foreach ($electionIds as $elId) {
+			$this->logElectionAudit(
+				(int)$elId,
+				$personId,
+				$personName,
+				$roleName,
+				'notification_sent',
+				$details
+			);
+		}
+	}
+
+	/**
+	 * Označí usnesení jako upomenutá
+	 */
+	public function markElectionsReminderSent(array $electionIds): void
+	{
+		if (empty($electionIds)) {
+			return;
+		}
+		$this->database->table('elections')
+			->where('id', $electionIds)
+			->update(['reminder_sent' => 1]);
+	}
 }

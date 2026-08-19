@@ -293,7 +293,7 @@ final class ElectionPresenter extends BasePresenter
 		$personId = (int)$userData['personId'];
 
 		$this->votingRepository->publishElection($id, $personId, $userData['personName'], $userData['roleName'] ?? null);
-		$this->flashMessage('Hlasování bylo úspěšně publikováno. Členům rady bude odeslána notifikace na pozadí.', 'success');
+		$this->flashMessage('Hlasování bylo úspěšně publikováno. Notifikaci členům rady můžete odeslat souhrnně z hlavní stránky (nebo odejde automaticky v nočním souhrnu).', 'success');
 		$this->redirect('Home:default');
 	}
 

@@ -56,6 +56,13 @@ Podrobná bezpečnostní analýza a argumentace ohledně ochrany proti manipulac
 
 ---
 
-## ⏰ Nastavení Cronu bez CLI na webhostingu
+## ⏰ Nastavení a automatizace Cronu (Plánovače)
 
-Možnosti spouštění plánovaných úloh a volání webcronu (Cron-Job.org, Railway Docker, GitHub Actions) jsou popsané v souboru [`CRON.md`](CRON.md).
+Aplikace využívá plánovač úloh pro:
+* **Hromadné výzvy k novým hlasováním** (automatický noční fallback pro zapomenutá usnesení)
+* **Denní personalizované upomínky v 18:00** (den před ukončením hlasování pro nehlasující členy)
+* **Noční vyhodnocení výsledků po půlnoci** (souhrnný e-mail s výsledky PŘIJATO / NEPŘIJATO)
+
+Cron je navržen tak, aby jej bylo možné bezpečně volat **každých 15 minut** (např. přes službu [cron-job.org](https://cron-job.org) nebo systémový Linux crontab).
+
+Kompletní návod k nastavení, tabulku časování a příklady konfigurace naleznete v dokumentu **[`CRON.md`](CRON.md)**.
