@@ -176,6 +176,29 @@ header, .main-header {
   transform: translateY(-1px);
 }
 
+.btn-login {
+  background: var(--skaut-yellow);
+  color: var(--skaut-blue);
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.btn-login:hover {
+  background: #e0a300;
+  color: var(--skaut-blue);
+}
+
+.btn-login .icon-key,
+.btn-login .btn-icon {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 40, 80, 0.45));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 .btn-secondary {
   background: rgba(255,255,255,0.2);
   color: white;
@@ -657,6 +680,26 @@ footer {
   }
 
   .btn-header-icon .btn-icon {
+    margin: 0 !important;
+  }
+
+  /* Přihlašovací tlačítko na mobilních zařízeních zobrazuje celý text i bílou ikonu */
+  .btn-login.btn-header-icon {
+    width: auto !important;
+    height: auto !important;
+    min-width: auto !important;
+    flex: initial !important;
+    padding: 7px 14px !important;
+    font-size: 0.9rem !important;
+    gap: 7px !important;
+  }
+
+  .btn-login.btn-header-icon .btn-label {
+    display: inline !important;
+    font-weight: 700 !important;
+  }
+
+  .btn-login.btn-header-icon .btn-icon {
     margin: 0 !important;
   }
 
