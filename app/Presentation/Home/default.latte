@@ -4,14 +4,11 @@
 
 {if !$isLoggedIn}
 	<div class="hero-banner text-center" style="padding: 4rem 2rem;">
-		<h1 style="font-size: 2.5rem; margin-bottom: 1rem;">Vnitřní Hlasovací Portál Jednotek</h1>
+		<h1 style="font-size: 2.5rem; margin-bottom: 1rem;">Portál pro elektronické hlasování jednotek</h1>
 		<p style="font-size: 1.1rem; max-width: 800px; margin: 0 auto 2rem auto; color: var(--skaut-muted);">
 			Tento portál slouží k internímu, jmenovitému hlasování rad skautských jednotek (střediskových, okresních a krajských). 
 			Přihlaste se prosím prostřednictvím skautISu pro zobrazení hlasování vaší jednotky.
-		</p>
-		<a n:href="Sign:in" class="btn" style="font-size: 1.2rem; padding: 0.8rem 2rem; background: var(--skaut-yellow); color: #000; font-weight: bold; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-			Přihlásit se přes skautIS
-		</a>
+		</p>		
 	</div>
 {else}
 	<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-bottom: 2px solid #eee; padding-bottom: 1.5rem;">
@@ -277,6 +274,12 @@
 								<option value="all">Všechna usnesení ({count($closedElections)})</option>
 							</select>
 						</div>
+
+						{if $isAdmin || $isCouncilMember}
+							<a n:href="export" class="btn" style="background: #0284c7; color: white; font-size: 0.85rem; font-weight: bold; padding: 6px 12px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;" title="Stáhnout všechna uzavřená a stornovaná usnesení v souboru CSV (pro Excel)">
+								<span class="btn-icon">📥</span><span class="btn-label"> Exportovat (CSV)</span>
+							</a>
+						{/if}
 					</div>
 				{/if}
 			</div>

@@ -81,12 +81,37 @@ final class CouncilPresenter extends BasePresenter
 		}
 	}
 
-	public function actionAudit(): void
+	public function actionAudit(int $page = 1, int $limit = 50, ?string $q = null): void
 	{
 		$userData = $this->skautisAuthManager->getUserData();
 		$unitId = (int)$userData['unitId'];
 		$this->template->userData = $userData;
-		$this->template->loginLogs = $this->votingRepository->getLoginLogs($unitId, 100);
+
+		$allowedLimits = [50, 100, 500];
+		if (!in_array($limit, $allowedLimits, true)) {
+			$limit = 50;
+		}
+
+		$page = max(1, $page);
+		$searchTerm = $q ? trim($q) : null;
+
+		$totalCount = $this->votingRepository->getLoginLogsCount($unitId, $searchTerm);
+		$totalPages = max(1, (int)ceil($totalCount / $limit));
+		if ($page > $totalPages) {
+			$page = $totalPages;
+		}
+		$offset = ($page - 1) * $limit;
+
+		$loginLogs = $this->votingRepository->getLoginLogsFiltered($unitId, $searchTerm, $limit, $offset);
+
+		$this->template->loginLogs = $loginLogs;
+		$this->template->page = $page;
+		$this->template->limit = $limit;
+		$this->template->q = $searchTerm;
+		$this->template->totalCount = $totalCount;
+		$this->template->totalPages = $totalPages;
+		$this->template->fromIndex = $totalCount > 0 ? $offset + 1 : 0;
+		$this->template->toIndex = min($offset + $limit, $totalCount);
 	}
 
 	public function actionDebugMembers(?int $unitId = null): void

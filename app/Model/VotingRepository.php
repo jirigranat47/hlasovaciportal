@@ -591,7 +591,7 @@ class VotingRepository
 	}
 
 	/**
-	 * Vrátí historii přihlášení uživatelů
+	 * Vrátí historii přihlášení uživatelů (jednoduchý výpis)
 	 */
 	public function getLoginLogs(?int $unitId = null, int $limit = 100): array
 	{
@@ -604,6 +604,123 @@ class VotingRepository
 		}
 
 		return $query->fetchAll();
+	}
+
+	/**
+	 * Vrátí filtrovaný a stránkovaný seznam přihlášení
+	 */
+	public function getLoginLogsFiltered(?int $unitId = null, ?string $search = null, int $limit = 50, int $offset = 0): array
+	{
+		$query = $this->database->table('user_login_logs')
+			->order('logged_at DESC, id DESC')
+			->limit($limit, $offset);
+
+		if ($unitId !== null) {
+			$query->where('unit_id', $unitId);
+		}
+
+		if ($search !== null && trim($search) !== '') {
+			$term = '%' . trim($search) . '%';
+			$query->where('person_name LIKE ? OR user_name LIKE ? OR role_name LIKE ? OR action LIKE ? OR ip_address LIKE ?', $term, $term, $term, $term, $term);
+		}
+
+		return $query->fetchAll();
+	}
+
+	/**
+	 * Vrátí celkový počet záznamů pro zadaný filtr auditu přihlášení
+	 */
+	public function getLoginLogsCount(?int $unitId = null, ?string $search = null): int
+	{
+		$query = $this->database->table('user_login_logs');
+
+		if ($unitId !== null) {
+			$query->where('unit_id', $unitId);
+		}
+
+		if ($search !== null && trim($search) !== '') {
+			$term = '%' . trim($search) . '%';
+			$query->where('person_name LIKE ? OR user_name LIKE ? OR role_name LIKE ? OR action LIKE ? OR ip_address LIKE ?', $term, $term, $term, $term, $term);
+		}
+
+		return $query->count('*');
+	}
+
+	/**
+	 * Vrátí všechna uzavřená a stornovaná usnesení jednotky pro export (včetně výsledků a jmenného rozpadu hlasů)
+	 */
+	public function getClosedElectionsForExport(int $unitId): array
+	{
+		$now = new \DateTime();
+		$totalMembers = count($this->getCouncilMembers($unitId));
+
+		$elections = $this->database->table('elections')
+			->where('unit_id', $unitId)
+			->where('status IN (?) OR (status = ? AND end_date <= ?)', ['adopted', 'rejected', 'cancelled'], 'published', $now)
+			->order('created_at DESC, id DESC')
+			->fetchAll();
+
+		$result = [];
+		foreach ($elections as $el) {
+			$elId = (int)$el->id;
+			$options = $this->getOptions($elId);
+			$proCount = 0;
+			$againstCount = 0;
+			$abstainCount = 0;
+
+			foreach ($options as $opt) {
+				if ($opt->title === 'Pro') {
+					$proCount = (int)$opt->votes_count;
+				} elseif ($opt->title === 'Proti') {
+					$againstCount = (int)$opt->votes_count;
+				} elseif ($opt->title === 'Zdržel se') {
+					$abstainCount = (int)$opt->votes_count;
+				}
+			}
+
+			$isAdopted = ($el->status === 'adopted') || ($totalMembers > 0 && ($proCount > ($totalMembers / 2)));
+			$statusLabel = 'NEPŘIJATO';
+			if ($el->status === 'cancelled') {
+				$statusLabel = 'Stornováno';
+			} elseif ($isAdopted) {
+				$statusLabel = 'PŘIJATO';
+			}
+
+			// Jmenný seznam odevzdaných hlasů
+			$votes = $this->database->table('votes')
+				->where('election_id', $elId)
+				->order('created_at ASC, id ASC')
+				->fetchAll();
+
+			$votesDetails = [];
+			foreach ($votes as $v) {
+				$optTitle = $v->option ? $v->option->title : '–';
+				$vDate = $v->created_at ? $v->created_at->format('d. m. Y H:i') : '';
+				$votesDetails[] = "{$v->person_name}: {$optTitle}" . ($vDate ? " ({$vDate})" : '');
+			}
+
+			$result[] = [
+				'id' => $elId,
+				'resolution_number' => $el->resolution_number,
+				'title' => $el->title,
+				'description' => $el->description,
+				'status' => $el->status,
+				'statusLabel' => $statusLabel,
+				'isAdopted' => $isAdopted,
+				'proposal_received_date' => $el->proposal_received_date,
+				'end_date' => $el->end_date,
+				'cancelled_at' => $el->cancelled_at,
+				'cancellation_reason' => $el->cancellation_reason,
+				'created_at' => $el->created_at,
+				'pro' => $proCount,
+				'against' => $againstCount,
+				'abstain' => $abstainCount,
+				'totalMembers' => $totalMembers,
+				'votesDetails' => implode(' | ', $votesDetails),
+			];
+		}
+
+		return $result;
 	}
 
 	/**

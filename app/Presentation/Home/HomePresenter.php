@@ -114,4 +114,100 @@ final class HomePresenter extends BasePresenter
 		$this->flashMessage("Souhrnná notifikace k {$count} novým usnesením byla úspěšně odeslána na {$emailsCount} e-mailových adres členů rady.", 'success');
 		$this->redirect('this');
 	}
+
+	public function actionExport(): void
+	{
+		if (!$this->skautisAuthManager->isLoggedIn()) {
+			$this->flashMessage('Pro stažení exportu se musíte přihlásit.', 'warning');
+			$this->redirect('default');
+		}
+
+		$userData = $this->skautisAuthManager->getUserData();
+		$unitId = (int)$userData['unitId'];
+		$personId = (int)$userData['personId'];
+
+		$isAdmin = $this->skautisAuthManager->isAdmin();
+		$isCouncilMember = $this->votingRepository->isCouncilMember($unitId, $personId);
+
+		if (!$isAdmin && !$isCouncilMember) {
+			$this->flashMessage('Nemáte oprávnění k exportu usnesení této jednotky. Export mohou stahovat pouze administrátoři a členové rady.', 'danger');
+			$this->redirect('default');
+		}
+
+		$items = $this->votingRepository->getClosedElectionsForExport($unitId);
+		$unitName = $userData['unitName'] ?: "jednotka-{$unitId}";
+		
+		// Bezpečná transliterace bez nutnosti PHP intl rozšíření
+		$sanitizedUnit = strtolower(str_replace(
+			['á', 'č', 'ď', 'é', 'ě', 'í', 'ň', 'ó', 'ř', 'š', 'ť', 'ú', 'ů', 'ý', 'ž', 'Á', 'Č', 'Ď', 'É', 'Ě', 'Í', 'Ň', 'Ó', 'Ř', 'Š', 'Ť', 'Ú', 'Ů', 'Ý', 'Ž', ' '],
+			['a', 'c', 'd', 'e', 'e', 'i', 'n', 'o', 'r', 's', 't', 'u', 'u', 'y', 'z', 'a', 'c', 'd', 'e', 'e', 'i', 'n', 'o', 'r', 's', 't', 'u', 'u', 'y', 'z', '-'],
+			$unitName
+		));
+		$sanitizedUnit = preg_replace('/[^a-z0-9_-]+/', '-', $sanitizedUnit);
+		$sanitizedUnit = trim((string)$sanitizedUnit, '-');
+		if (empty($sanitizedUnit)) {
+			$sanitizedUnit = "jednotka-{$unitId}";
+		}
+
+		$filename = "export-usneseni-{$sanitizedUnit}-" . date('Ymd-Hi') . ".csv";
+
+		$response = new \Nette\Application\Responses\CallbackResponse(function ($httpRequest, $httpResponse) use ($items, $filename) {
+			$httpResponse->setHeader('Content-Type', 'text/csv; charset=utf-8');
+			$httpResponse->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"');
+			$httpResponse->setHeader('Pragma', 'public');
+			$httpResponse->setHeader('Expires', '0');
+			$httpResponse->setHeader('Cache-Control', 'must-revalidate, post-check=0, pre-check=0');
+
+			$output = fopen('php://output', 'w');
+			// UTF-8 BOM pro správné otevření v MS Excel bez rozbité diakritiky
+			fwrite($output, "\xEF\xBB\xBF");
+
+			// Hlavička CSV (v PHP 8.4 specifikujeme explicitně separator, enclosure i escape)
+			fputcsv($output, [
+				'Číslo usnesení',
+				'Znění usnesení',
+				'Doplňující informace / Poznámka',
+				'Výsledek / Stav',
+				'Datum doručení návrhu',
+				'Datum ukončení / stornování',
+				'Hlasy PRO',
+				'Hlasy PROTI',
+				'Hlasy ZDRŽEL SE',
+				'Celkem členů rady',
+				'Jmenovitý rozpad hlasů',
+				'Důvod případného storna',
+			], ';', '"', '\\');
+
+			foreach ($items as $item) {
+				// Vyčistíme HTML značky a normalizujeme mezery
+				$cleanDescription = trim(preg_replace('/\s+/', ' ', strip_tags($item['description'] ?? '')));
+
+				$endDateFormatted = '';
+				if ($item['status'] === 'cancelled' && $item['cancelled_at']) {
+					$endDateFormatted = $item['cancelled_at']->format('d. m. Y H:i');
+				} elseif ($item['end_date']) {
+					$endDateFormatted = $item['end_date']->format('d. m. Y');
+				}
+
+				fputcsv($output, [
+					$item['resolution_number'],
+					$item['title'],
+					$cleanDescription,
+					$item['statusLabel'],
+					$item['proposal_received_date'] ? $item['proposal_received_date']->format('d. m. Y') : '',
+					$endDateFormatted,
+					$item['pro'],
+					$item['against'],
+					$item['abstain'],
+					$item['totalMembers'],
+					$item['votesDetails'],
+					$item['cancellation_reason'] ?? '',
+				], ';', '"', '\\');
+			}
+
+			fclose($output);
+		});
+
+		$this->sendResponse($response);
+	}
 }

@@ -4,10 +4,12 @@ FROM php:8.4-apache
 RUN apt-get update && apt-get install -y \
     libxml2-dev \
     libzip-dev \
+    libicu-dev \
     zip \
     unzip \
     git \
-    && docker-php-ext-install soap pdo_mysql opcache zip \
+    && docker-php-ext-configure intl \
+    && docker-php-ext-install soap pdo_mysql opcache zip intl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Optimize OPcache for fast performance

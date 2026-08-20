@@ -11,50 +11,107 @@
 		</p>
 	</div>
 
-	<div style="display: flex; gap: 0.5rem;">
-		<a n:href="Council:default" class="btn" style="background: #555; color: white;">Správa Rady</a>
-		<a n:href="Council:smtp" class="btn" style="background: #777; color: white;">Nastavení SMTP</a>
+	<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+		<a n:href="Council:default" class="btn" style="background: #555; color: white;">👥 Správa Rady</a>
+		<a n:href="Council:smtp" class="btn" style="background: #777; color: white;">⚙️ Nastavení SMTP</a>
 	</div>
 </div>
 
 <div class="election-card">
-	<h2 style="color: var(--skaut-blue); margin-top: 0; margin-bottom: 1.2rem; font-size: 1.25rem;">
-		Historie přihlášení a změn rolí v jednotce
-	</h2>
+	<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+		<div>
+			<h2 style="color: var(--skaut-blue); margin: 0; font-size: 1.25rem;">
+				Historie přihlášení a změn rolí v jednotce
+			</h2>
+			<div style="color: var(--skaut-muted); font-size: 0.88rem; margin-top: 4px;">
+				{if $totalCount > 0}
+					Zobrazeno <strong>{$fromIndex}–{$toIndex}</strong> z celkem <strong>{$totalCount}</strong> záznamů
+					{if !empty($q)}
+						(odpovídající hledání „<strong>{$q}</strong>“)
+					{/if}
+				{else}
+					{if !empty($q)}
+						Nebyly nalezeny žádné záznamy odpovídající hledání „<strong>{$q}</strong>“
+					{else}
+						Zatím nejsou zaznamenána žádná přihlášení.
+					{/if}
+				{/if}
+			</div>
+		</div>
+
+		{* VYHLEDÁVACÍ A FILTROVACÍ FORMULÁŘ *}
+		<form method="get" action="{link audit}" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+			<div style="position: relative;">
+				<input type="text" name="q" value="{$q}" placeholder="🔍 Hledat jméno, účet, roli, IP..." class="form-control" style="padding: 7px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; width: 230px;">
+			</div>
+
+			<div style="display: flex; align-items: center; gap: 5px;">
+				<label for="limit-select" style="font-size: 0.85rem; color: #475569; font-weight: bold;">Na stránku:</label>
+				<select name="limit" id="limit-select" onchange="this.form.submit()" style="padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; background: white; cursor: pointer;">
+					<option value="50" {if $limit == 50}selected{/if}>50</option>
+					<option value="100" {if $limit == 100}selected{/if}>100</option>
+					<option value="500" {if $limit == 500}selected{/if}>500</option>
+				</select>
+			</div>
+
+			<button type="submit" class="btn" style="background: var(--skaut-blue); color: white; padding: 7px 14px; font-size: 0.9rem; border-radius: 6px;">
+				Hledat
+			</button>
+
+			{if !empty($q)}
+				<a n:href="audit, page => 1, limit => $limit, q => null" class="btn" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 7px 12px; font-size: 0.88rem; border-radius: 6px; text-decoration: none;" title="Zrušit filtr vyhledávání">
+					✕ 
+				</a>
+			{/if}
+		</form>
+	</div>
 
 	{if empty($loginLogs)}
-		<p style="color: var(--skaut-muted); margin: 0;">Zatím nejsou zaznamenána žádná přihlášení.</p>
+		<div style="text-align: center; padding: 2.5rem 1.5rem; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px;">
+			<p style="color: var(--skaut-muted); margin: 0 0 0.75rem 0;">
+				{if !empty($q)}
+					Pro hledaný výraz „<strong>{$q}</strong>“ nebyly nalezeny žádné auditní záznamy.
+				{else}
+					V databázi zatím nejsou zaznamenána žádná přihlášení uživatelů.
+				{/if}
+			</p>
+			{if !empty($q)}
+				<a n:href="audit, page => 1, limit => $limit, q => null" class="btn" style="background: var(--skaut-blue); color: white; font-size: 0.85rem; padding: 6px 14px; border-radius: 6px; text-decoration: none;">
+					Zobrazit všechny záznamy &rarr;
+				</a>
+			{/if}
+		</div>
 	{else}
-		<div style="overflow-x: auto;">
+		<div class="table-responsive">
 			<table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
 				<thead>
 					<tr style="border-bottom: 2px solid #e2e8f0; background: #f8fafc; color: #475569;">
-						<th style="padding: 10px;">Datum a čas</th>
-						<th style="padding: 10px;">Osoba</th>
-						<th style="padding: 10px;">SkautIS Účet</th>
-						<th style="padding: 10px;">Aktivní Role</th>
-						<th style="padding: 10px;">Akce</th>
-						<th style="padding: 10px;">IP Adresa</th>
+						<th style="padding: 10px 12px;">Datum a čas</th>
+						<th style="padding: 10px 12px;">Osoba</th>
+						<th style="padding: 10px 12px;">SkautIS Účet</th>
+						<th style="padding: 10px 12px;">Aktivní Role</th>
+						<th style="padding: 10px 12px;">Provedená akce</th>
+						<th style="padding: 10px 12px;">IP Adresa</th>
 					</tr>
 				</thead>
 				<tbody>
 					<tr n:foreach="$loginLogs as $log" style="border-bottom: 1px solid #f1f5f9;">
-						<td style="padding: 10px; font-weight: 500; color: #334155; white-space: nowrap;">
+						<td style="padding: 10px 12px; font-weight: 500; color: #334155; white-space: nowrap;">
 							{$log->logged_at|date:'d. m. Y H:i:s'}
 						</td>
-						<td style="padding: 10px; font-weight: bold; color: var(--skaut-blue);">
+						<td style="padding: 10px 12px; font-weight: bold; color: var(--skaut-blue);">
 							{$log->person_name}
 							<span style="font-size: 0.75rem; color: #94a3b8; font-weight: normal;">(#{$log->person_id})</span>
 						</td>
-						<td style="padding: 10px; color: #475569;">
+						<td style="padding: 10px 12px; color: #475569;">
 							{$log->user_name}
 						</td>
-						<td style="padding: 10px;">
+						<td style="padding: 10px 12px;">
 							<span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; font-weight: 500;">
 								{$log->role_name ?? 'Nespecifikována'}
 							</span>
 						</td>
-						<td style="padding: 10px;">
+						<td style="padding: 10px 12px;">
 							{if $log->action === 'login'}
 								<span style="background: #dcfce7; color: #15803d; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; font-weight: bold;">
 									Přihlášení
@@ -69,13 +126,57 @@
 								</span>
 							{/if}
 						</td>
-						<td style="padding: 10px; font-family: monospace; font-size: 0.8rem; color: #64748b;">
+						<td style="padding: 10px 12px; font-family: monospace; font-size: 0.8rem; color: #64748b;">
 							{$log->ip_address ?? '–'}
 						</td>
 					</tr>
 				</tbody>
 			</table>
 		</div>
+
+		{* STRÁNKOVÁNÍ (PAGINACE) *}
+		{if $totalPages > 1}
+			<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+				<div style="font-size: 0.88rem; color: var(--skaut-muted);">
+					Stránka <strong>{$page}</strong> z <strong>{$totalPages}</strong>
+				</div>
+
+				<div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
+					{if $page > 1}
+						<a n:href="audit, page => 1, limit => $limit, q => $q" class="btn" style="background: #f1f5f9; color: #334155; padding: 5px 10px; font-size: 0.85rem; border: 1px solid #cbd5e1; border-radius: 4px; text-decoration: none;" title="První stránka">&laquo;</a>
+						<a n:href="audit, page => $page - 1, limit => $limit, q => $q" class="btn" style="background: #f1f5f9; color: #334155; padding: 5px 10px; font-size: 0.85rem; border: 1px solid #cbd5e1; border-radius: 4px; text-decoration: none;" title="Předchozí stránka">&lsaquo; Předchozí</a>
+					{/if}
+
+					{var $startPage = max(1, $page - 3)}
+					{var $endPage = min($totalPages, $page + 3)}
+
+					{if $startPage > 1}
+						<span style="padding: 5px 6px; color: #94a3b8;">...</span>
+					{/if}
+
+					{for $p = $startPage; $p <= $endPage; $p++}
+						{if $p == $page}
+							<span style="background: var(--skaut-blue); color: white; padding: 5px 11px; font-size: 0.85rem; font-weight: bold; border-radius: 4px; border: 1px solid var(--skaut-blue);">
+								{$p}
+							</span>
+						{else}
+							<a n:href="audit, page => $p, limit => $limit, q => $q" class="btn" style="background: #ffffff; color: #334155; padding: 5px 11px; font-size: 0.85rem; border: 1px solid #cbd5e1; border-radius: 4px; text-decoration: none;">
+								{$p}
+							</a>
+						{/if}
+					{/for}
+
+					{if $endPage < $totalPages}
+						<span style="padding: 5px 6px; color: #94a3b8;">...</span>
+					{/if}
+
+					{if $page < $totalPages}
+						<a n:href="audit, page => $page + 1, limit => $limit, q => $q" class="btn" style="background: #f1f5f9; color: #334155; padding: 5px 10px; font-size: 0.85rem; border: 1px solid #cbd5e1; border-radius: 4px; text-decoration: none;" title="Další stránka">Další &rsaquo;</a>
+						<a n:href="audit, page => $totalPages, limit => $limit, q => $q" class="btn" style="background: #f1f5f9; color: #334155; padding: 5px 10px; font-size: 0.85rem; border: 1px solid #cbd5e1; border-radius: 4px; text-decoration: none;" title="Poslední stránka">&raquo;</a>
+					{/if}
+				</div>
+			</div>
+		{/if}
 	{/if}
 </div>
 
