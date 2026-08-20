@@ -151,16 +151,26 @@ final class ElectionPresenter extends BasePresenter
 		$options = $this->votingRepository->getOptions($id);
 		$userVote = $this->votingRepository->getUserVote($id, $personId);
 
+		$hasVoted = ($userVote !== null);
+		$canVote = $isCouncilMember && !$isClosed && $election->status === 'published';
+		$canRevertToDraft = $isAdmin && $this->votingRepository->canRevertToDraft($id);
+		$showVoterList = $isAdmin || $isCouncilMember;
+
 		$this->template->election = $election;
 		$this->template->options = $options;
 		$this->template->userVote = $userVote;
+		$this->template->hasVoted = $hasVoted;
+		$this->template->userVoteOptionId = $userVote ? (int)$userVote->option_id : null;
+		$this->template->canVote = $canVote;
+		$this->template->canRevertToDraft = $canRevertToDraft;
+		$this->template->showVoterList = $showVoterList;
 		$this->template->isAdmin = $isAdmin;
 		$this->template->isCouncilMember = $isCouncilMember;
 		$this->template->isCreator = $isCreator;
 		$this->template->isClosed = $isClosed;
 
 		// Pouze členové rady a admin vidí jmenovité hlasy a průběžné/konečné výsledky
-		if ($isAdmin || $isCouncilMember) {
+		if ($showVoterList) {
 			$results = $this->votingRepository->getElectionResults($id);
 			$councilMembers = $this->votingRepository->getCouncilMembers((int)$election->unit_id);
 			$councilMembersCount = count($councilMembers);
@@ -172,12 +182,23 @@ final class ElectionPresenter extends BasePresenter
 			];
 
 			$votedPersonIds = [];
+			$voterList = [];
 			foreach ($results['votes'] as $pId => $vote) {
 				$votedPersonIds[] = $pId;
 				$optTitle = $vote['option_title'] ?? '';
 				if (isset($votesCount[$optTitle])) {
 					$votesCount[$optTitle]++;
 				}
+			}
+
+			foreach ($councilMembers as $m) {
+				$vote = $results['votes'][$m->person_id] ?? null;
+				$voterList[] = [
+					'name' => $m->full_name,
+					'voted' => $vote !== null,
+					'choice' => $vote ? $vote['option_title'] : null,
+					'votedAt' => $vote ? $vote['created_at'] : null,
+				];
 			}
 
 			$notVotedMembers = [];
@@ -191,6 +212,7 @@ final class ElectionPresenter extends BasePresenter
 			$isAdopted = $proCount > ($councilMembersCount / 2);
 
 			$this->template->results = $results;
+			$this->template->voterList = $voterList;
 			$this->template->votesCount = $votesCount;
 			$this->template->totalMembers = $councilMembersCount;
 			$this->template->notVotedMembers = $notVotedMembers;
@@ -207,6 +229,7 @@ final class ElectionPresenter extends BasePresenter
 				$votesCount[$opt->title] = $opt->votes_count;
 			}
 			$this->template->votesCount = $votesCount;
+			$this->template->voterList = [];
 			
 			$councilMembersCount = count($this->votingRepository->getCouncilMembers((int)$election->unit_id));
 			$proCount = $votesCount['Pro'] ?? 0;
