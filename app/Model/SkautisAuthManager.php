@@ -366,16 +366,26 @@ class SkautisAuthManager
 
 	/**
 	 * Získá seznam osob v aktivní jednotce ze skautISu přes MembershipAll pro naplnění Rady jednotky
+	 * (výsledky jsou cachovány v session na 10 minut pro bleskovou odezvu)
 	 */
-	public function getUnitMembers(): array
+	public function getUnitMembers(bool $forceRefresh = false): array
 	{
 		$this->lastError = null;
 		if (!$this->isLoggedIn() || empty($this->session->unitId)) {
 			return [];
 		}
 
+		$unitId = (int)$this->session->unitId;
+		$cacheKey = 'members_' . $unitId;
+		$now = time();
+
+		// Pokud máme data v mezipaměti a nevypršela (10 minut / 600 s)
+		if (!$forceRefresh && !empty($this->session->$cacheKey) && !empty($this->session->{$cacheKey . '_time'}) && ($now - $this->session->{$cacheKey . '_time'}) < 600) {
+			return $this->session->$cacheKey;
+		}
+
 		// Obnovíme / ověříme přihlašovací relaci před voláním
-		if (!$this->keepAlive(true) || !$this->isLoggedIn()) {
+		if (!$this->keepAlive(false) || !$this->isLoggedIn()) {
 			return [];
 		}
 
@@ -383,7 +393,7 @@ class SkautisAuthManager
 
 		try {
 			$mList = $this->skautis->org->MembershipAll([
-				'ID_Unit' => (int)$this->session->unitId,
+				'ID_Unit' => $unitId,
 				'IsValid' => true,
 			]);
 
@@ -427,6 +437,12 @@ class SkautisAuthManager
 		$result = array_values($members);
 		// Setřídíme abecedně podle jména
 		usort($result, fn($a, $b) => strcmp($a['fullName'], $b['fullName']));
+
+		// Uložíme do session cache
+		if (!empty($result)) {
+			$this->session->$cacheKey = $result;
+			$this->session->{$cacheKey . '_time'} = $now;
+		}
 
 		return $result;
 	}

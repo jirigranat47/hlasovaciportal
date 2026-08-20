@@ -10,6 +10,16 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install soap pdo_mysql opcache zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Optimize OPcache for fast performance
+RUN { \
+    echo 'opcache.enable=1'; \
+    echo 'opcache.memory_consumption=128'; \
+    echo 'opcache.interned_strings_buffer=16'; \
+    echo 'opcache.max_accelerated_files=10000'; \
+    echo 'opcache.revalidate_freq=10'; \
+    echo 'opcache.validate_timestamps=1'; \
+} > /usr/local/etc/php/conf.d/opcache-recommended.ini
+
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
 

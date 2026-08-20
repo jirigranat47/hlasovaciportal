@@ -54,10 +54,15 @@ final class HomePresenter extends BasePresenter
 
 			if ($isAdmin) {
 				$unnotifiedElections = $this->votingRepository->getUnnotifiedPublishedElections((int)$userData['unitId']);
+				$smtp = $this->votingRepository->getSmtpSettings((int)$userData['unitId']);
+				$this->template->hasSmtpConfigured = ($smtp !== null && !empty($smtp->host) && !empty($smtp->username) && !empty($smtp->password));
+			} else {
+				$this->template->hasSmtpConfigured = true;
 			}
 
 			$this->template->closedOutcomes = $this->votingRepository->getElectionsOutcomes($closed, (int)$userData['unitId']);
 		} else {
+			$this->template->hasSmtpConfigured = true;
 			$this->template->closedOutcomes = [];
 		}
 

@@ -49,6 +49,26 @@
 		{/if}
 	</div>
 
+	{* VAROVÁNÍ: NEKONFIGUROVANÉ SMTP PRO ODESÍLÁNÍ E-MAILŮ *}
+	{if $isAdmin && !$hasSmtpConfigured}
+		<div style="margin-bottom: 2rem; background: #fef2f2; border: 1px solid #fecaca; border-left: 6px solid #dc2626; border-radius: 8px; padding: 1.1rem 1.4rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; box-shadow: 0 2px 6px rgba(220, 38, 38, 0.08);">
+			<div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 260px;">
+				<span style="font-size: 1.6rem; line-height: 1;">⚠️</span>
+				<div>
+					<strong style="color: #991b1b; font-size: 1rem; display: block;">Jednotka nemá nastaveno SMTP odesílání e-mailů</strong>
+					<p style="margin: 3px 0 0 0; color: #b91c1c; font-size: 0.9rem; line-height: 1.4;">
+						Dokud nenastavíte e-mailovou schránku jednotky, <strong>nebudou členům rady odcházet e-maily</strong> s výzvami k hlasování, denními upomínkami ani výsledky usnesení.
+					</p>
+				</div>
+			</div>
+			<div style="flex-shrink: 0;">
+				<a n:href="Council:smtp" class="btn" style="background: #dc2626; color: white; font-weight: bold; padding: 0.65rem 1.2rem; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+					✉️ Nastavit SMTP odesílání &rarr;
+				</a>
+			</div>
+		</div>
+	{/if}
+
 	{* LIŠTA PRO ODESLÁNÍ HROMADNÉ VÝZVY K PUBLIKOVANÝM USNESENÍM *}
 	{if $isAdmin && $unnotifiedElectionsCount > 0}
 		<div style="margin-bottom: 2rem; background: #eff6ff; border: 1px solid #bfdbfe; border-left: 5px solid var(--skaut-blue); border-radius: 8px; padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
