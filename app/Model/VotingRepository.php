@@ -10,7 +10,8 @@ use Nette\Database\Table\ActiveRow;
 class VotingRepository
 {
 	public function __construct(
-		private Explorer $database
+		private Explorer $database,
+		private string $encryptionKey = 'skaut_hlasovaci_portal_default_secret_key_v1'
 	) {}
 
 	/**
@@ -60,8 +61,6 @@ class VotingRepository
 			->delete();
 	}
 
-	private string $encryptionKey = 'skaut_hlasovaci_portal_smtp_secret_key_v1';
-
 	public function encryptPassword(string $plain): string
 	{
 		if (empty($plain)) {
@@ -83,7 +82,7 @@ class VotingRepository
 			return '';
 		}
 		if (!str_starts_with($encoded, 'ENC:')) {
-			// Pro zpětnou kompatibilitu s plain textem
+			// Pro zpětnou kompatibilitu s nezašifrovaným plain textem
 			return $encoded;
 		}
 		$raw = substr($encoded, 4);
@@ -92,9 +91,28 @@ class VotingRepository
 			return $encoded;
 		}
 		[$iv, $encrypted] = explode('::', $decoded, 2);
+
+		// 1. Zkusíme dešifrovat aktuálně nastaveným klíčem
 		$key = hash('sha256', $this->encryptionKey, true);
 		$decrypted = openssl_decrypt($encrypted, 'AES-256-CBC', $key, 0, $iv);
-		return $decrypted !== false ? $decrypted : '';
+		if ($decrypted !== false) {
+			return $decrypted;
+		}
+
+		// 2. Zpětná kompatibilita pro hesla uložená před zavedením konfigurovatelného klíče
+		$legacyKeys = [
+			hash('sha256', '', true),
+			hash('sha256', 'skaut_hlasovaci_portal_default_secret_key_v1', true),
+			hash('sha256', 'skaut_hlasovaci_portal_smtp_secret_key_v1', true),
+		];
+		foreach ($legacyKeys as $legacyKey) {
+			$legacyDecrypted = openssl_decrypt($encrypted, 'AES-256-CBC', $legacyKey, 0, $iv);
+			if ($legacyDecrypted !== false) {
+				return $legacyDecrypted;
+			}
+		}
+
+		return '';
 	}
 
 	/**

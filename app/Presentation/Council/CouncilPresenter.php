@@ -116,8 +116,19 @@ final class CouncilPresenter extends BasePresenter
 
 	public function actionDebugMembers(?int $unitId = null): void
 	{
+		// Z bezpečnostních důvodů zcela zablokováno na produkci
+		if (!$this->skautisAuthManager->isTest() && !$this->skautisAuthManager->isDebugRoles()) {
+			$this->error('Diagnostický režim je na produkčním prostředí z bezpečnostních důvodů zakázán.', 403);
+		}
+
 		$userData = $this->skautisAuthManager->getUserData();
-		$targetUnitId = $unitId ?: (int)($userData['unitId'] ?? 0);
+		$userUnitId = (int)($userData['unitId'] ?? 0);
+		$targetUnitId = $unitId ?: $userUnitId;
+
+		// Ani ve vývoji nedovolíme zobrazit cizí jednotku, pokud není zapnut debugRoles
+		if ($targetUnitId !== $userUnitId && !$this->skautisAuthManager->isDebugRoles()) {
+			$this->error('Nemáte oprávnění k diagnostice cizí jednotky.', 403);
+		}
 
 		$this->template->userData = $userData;
 		$this->template->targetUnitId = $targetUnitId;

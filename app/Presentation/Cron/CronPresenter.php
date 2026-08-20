@@ -18,7 +18,7 @@ final class CronPresenter extends Presenter
 
 	public function actionRun(string $token): void
 	{
-		if ($token !== $this->cronToken) {
+		if (!hash_equals($this->cronToken, $token)) {
 			$this->error('Neplatný bezpečnostní token.', 403);
 		}
 

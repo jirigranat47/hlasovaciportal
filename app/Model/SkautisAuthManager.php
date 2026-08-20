@@ -15,14 +15,14 @@ class SkautisAuthManager
 
 	public function __construct(
 		private Skautis $skautis,
-		Session $session,
+		private Session $sessionManager,
 		private VotingRepository $votingRepository,
 		private Request $httpRequest,
 		private string $appId,
 		private bool $isTest = true,
 		private bool $debugRoles = false
 	) {
-		$this->session = $session->getSection('skautis_auth');
+		$this->session = $sessionManager->getSection('skautis_auth');
 	}
 
 	/**
@@ -136,6 +136,9 @@ class SkautisAuthManager
 			} catch (\Throwable $e) {
 				\Tracy\Debugger::log($e, \Tracy\ILogger::WARNING);
 			}
+
+			// Ochrana proti Session Fixation – vygenerujeme nové ID relace po přihlášení
+			$this->sessionManager->regenerateId();
 
 			return true;
 		}
@@ -608,5 +611,6 @@ class SkautisAuthManager
 	public function logout(): void
 	{
 		$this->session->remove();
+		$this->sessionManager->regenerateId();
 	}
 }

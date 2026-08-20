@@ -5,6 +5,8 @@ parameters:
 		debugRoles: false
 	cron:
 		token: 'vložte-silné-tajné-heslo-pro-cron'
+	security:
+		encryptionKey: 'vložte-vlastní-tajný-šifrovací-klíč-pro-smtp-hesla'
 
 database:
 	dsn: 'mysql:host=localhost;dbname=hlasovaciportal;charset=utf8mb4'
