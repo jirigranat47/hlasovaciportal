@@ -155,6 +155,19 @@ header, .main-header {
 
 .btn-help {
   background: rgba(255,255,255,0.18);
+  color: #ffffff;
+}
+
+.btn-help .icon-help,
+.btn-help .btn-icon {
+  width: 22px;
+  height: 22px;
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .btn-logout {
