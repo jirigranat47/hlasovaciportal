@@ -459,7 +459,9 @@ class CronManager
 			return [];
 		}
 
-		$subject = 'STORNO hlasování č. ' . $election->resolution_number . ': ' . $election->title;
+		$subject = !empty($election->resolution_number)
+			? ('STORNO hlasování č. ' . $election->resolution_number)
+			: ('STORNO hlasování #' . $election->id);
 
 		$body = "<h2 style=\"color: #dc3545;\">Hlasování bylo stornováno</h2>";
 		$body .= "<p>Hlasování o usnesení č. <strong>" . htmlspecialchars($election->resolution_number) . "</strong> (" . htmlspecialchars($election->title) . ") bylo správcem stornováno a ukončeno.</p>";

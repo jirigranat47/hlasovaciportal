@@ -181,6 +181,24 @@ try {
             }
         }
 
+        # Promazani cache na serveru (temp/cache)
+        Write-Host ""
+        Write-Host "Promazavam docasnou mezipamet (temp/cache) na serveru..." -ForegroundColor Cyan
+        $remoteCachePath = ($config.remotePath.TrimEnd('/') + "/temp/cache")
+        try {
+            if ($session.FileExists($remoteCachePath)) {
+                $session.RemoveFiles($remoteCachePath + "/*").Check()
+                Write-Host "      Cache na serveru byla uspesne promazana." -ForegroundColor Green
+            }
+            else {
+                $session.CreateDirectory($remoteCachePath)
+                Write-Host "      Adresar temp/cache na serveru byl vytvoren." -ForegroundColor Green
+            }
+        }
+        catch {
+            Write-Host "      Upozorneni k temp/cache: $($_.Exception.Message)" -ForegroundColor Yellow
+        }
+
         Write-Host ""
         Write-Host "Deployment dokoncen!" -ForegroundColor Green
     }

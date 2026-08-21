@@ -163,8 +163,8 @@
 			</div>
 		{/if}
 
-		{* VYHODNOCENÍ - Zobrazí se pokud je hlasování ukončeno *}
-		{if $isClosed}
+		{* VYHODNOCENÍ - Zobrazí se pokud je hlasování ukončeno (a nebylo stornováno) *}
+		{if $isClosed && $election->status !== 'cancelled'}
 			<div class="election-card" style="padding: 0; overflow: hidden; border: 2px solid {if $isAdopted}#28a745{else}#dc3545{/if};">
 				<div style="background: {if $isAdopted}#28a745{else}#dc3545{/if}; color: white; padding: 1rem 1.5rem; font-weight: bold; font-size: 1.3rem; display: flex; align-items: center; gap: 10px;">
 					{if $isAdopted}
@@ -191,7 +191,7 @@
 		
 		{* AGREGAVANÉ VÝSLEDKY / STATISTIKA *}
 		<div class="election-card">
-			<h2 style="color: var(--skaut-blue); margin-top: 0; font-size: 1.2rem; margin-bottom: 1rem;">Průběžný stav hlasování</h2>
+			<h2 style="color: var(--skaut-blue); margin-top: 0; font-size: 1.2rem; margin-bottom: 1rem;">{if $election->status === 'cancelled'}Stav hlasů před stornem{elseif $isClosed}Konečné výsledky hlasování{else}Průběžný stav hlasování{/if}</h2>
 			
 			<div style="display: flex; flex-direction: column; gap: 0.8rem;">
 				<div>
