@@ -4,26 +4,19 @@ Tento návod popisuje postup nasazení **Hlasovacího Portálu skautských jedno
 
 ---
 
-## 1. Jak zabalit Nette pro nahrání na hosting
+## ⚡ 1. Nasazení na hosting přes FTP skript (`deploy.bat`)
 
-Nette aplikace obsahuje tisíce souborů ve složce `vendor/`, proto je **vždy nejlepší nahrávat 1 komprimovaný ZIP archiv** (nahrávání tisíců malých souborů přes FTP by trvalo desítky minut a mohlo by selhat).
+Pro rychlé a bezpečné nasazení na server použijte připravený skript:
 
-### Vytvoření produkčního balíčku:
+1. V kořenovém adresáři vytvořte soubor **`deploy-config.json`** s údaji k FTP/SFTP (podle šablony `deploy-config.example.json`).
+2. Dvakrát klikněte na soubor **`deploy.bat`** (nebo v PowerShellu spusťte `.\deploy.ps1`).
 
-Pokud používáte **Docker**, spusťte v terminálu (PowerShell / CMD):
-```bash
-docker exec hlasovaciportal_web php /var/www/html/bin/build-release.php
-```
-nebo na Windows jednoduše **dvakrát klikněte** na soubor:
-```text
-bin/build-release.bat
-```
-*(Pokud máte PHP nainstalováno i přímo v systému, funguje také standardní `php bin/build-release.php`)*.
-
-Tento skript:
-1. Optimalizuje Composer knihovny (`--no-dev --optimize-autoloader`) – zmenší velikost a zrychlí načítání tříd.
-2. Vyčistí dočasnou mezipaměť (`temp/cache`).
-3. Vytvoří čistý soubor **`hlasovaci-portal-release.zip`** (cca 1,2 MB) v kořenovém adresáři, který obsahuje jen potřebné produkční soubory a vynechává vývojové nástroje a lokální hesla.
+**Co skript automaticky dělá:**
+- Zkopíruje čistou produkční verzi (`app`, `vendor`, `www`, `config`, `composer.json`) do dočasné složky.
+- Automaticky **vynechá lokální vývojový `config/local.neon`** (aby nepřepsal produkční hesla a nastavení na serveru). Pokud chcete nasadit novou produkční konfiguraci z lokálu, stačí ji připravit jako `config/local.production.neon`.
+- Vynechá složku `bin/`, vývojové nástroje, testy i dokumentaci.
+- Připojí se přes WinSCP (FTP/SFTP) a nahraje/aktualizuje pouze **nové a upravené soubory**.
+- Po dokončení automaticky uklidí a smaže dočasnou složku.
 
 ---
 
@@ -34,14 +27,7 @@ Tento skript:
 
 ---
 
-## 3. Nahrání a rozbalení na serveru
-
-1. Nahrajte soubor `hlasovaci-portal-release.zip` na hosting (přes FTP, SFTP nebo správce souborů v administraci hostingu).
-2. **Rozbalte ZIP archiv** přímo na hostingu (většina administrací hostingu nabízí tlačítko *Rozbalit / Unzip*).
-
----
-
-## 4. Důležité: Nastavení kořenového adresáře (DocumentRoot)
+## 3. Důležité: Nastavení kořenového adresáře (DocumentRoot)
 
 Z bezpečnostních důvodů musí webový server směřovat do podsložky **`/www/`**!
 
@@ -61,7 +47,7 @@ Složky `app/`, `config/`, `log/`, `temp/` a `vendor/` obsahují zdrojové kódy
 
 ---
 
-## 5. Konfigurace aplikace (`config/local.neon`)
+## 4. Konfigurace aplikace (`config/local.neon`)
 
 Na produkčním serveru ve složce `config/` vytvořte soubor **`local.neon`** podle šablony `config/local.neon.template`:
 
@@ -86,7 +72,7 @@ database:
 
 ---
 
-## 6. Oprávnění pro zápis (Práva souborů)
+## 5. Oprávnění pro zápis (Práva souborů)
 
 Zkontrolujte, zda webový server může zapisovat do adresářů:
 * `temp/` (a `temp/cache/`)
@@ -96,7 +82,7 @@ Zkontrolujte, zda webový server může zapisovat do adresářů:
 
 ---
 
-## 7. Nastavení plánovače (Cron)
+## 6. Nastavení plánovače (Cron)
 
 Nastavte pravidelné volání cronu každých 15 minut:
 ```text
@@ -107,7 +93,7 @@ Podrobnosti k nastavení naleznete v [CRON.md](file:///c:/__VYVOJ_SOUKR__/skaut_
 
 ---
 
-## 8. Kontrolní seznam před spuštěním pro uživatele
+## 7. Kontrolní seznam před spuštěním pro uživatele
 
 - [ ] Databáze byla vytvořena a naimportována z `sql/structure.sql`
 - [ ] V `config/local.neon` jsou vyplněny přístupy k DB a produkční `appId`

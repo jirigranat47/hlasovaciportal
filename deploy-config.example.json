@@ -1,0 +1,14 @@
+{
+  "ftpHost": "ftp.vase-domena.cz",
+  "ftpUsername": "vas-uzivatel",
+  "ftpPassword": "vase-heslo",
+  "ftpPort": 21,
+  "protocol": "FTP",
+  "remotePath": "/public_html/",
+  "_comments": {
+    "protocol": "Použijte 'FTP' nebo 'SFTP'",
+    "ftpPort": "21 pro FTP, 22 pro SFTP (0 = výchozí port)",
+    "remotePath": "Cílová složka na FTP serveru (musí končit /)",
+    "setup": "Zkopírujte tento soubor na 'deploy-config.json' a vyplňte skutečné údaje"
+  }
+}

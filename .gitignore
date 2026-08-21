@@ -11,3 +11,8 @@
 Thumbs.db
 hlasovaci-portal-release.zip
 *.zip
+
+# Deployment
+deploy-config.json
+_deploy_temp/
+.deploy_temp/
