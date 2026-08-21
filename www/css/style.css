@@ -138,6 +138,17 @@ header, .main-header {
   white-space: nowrap;
 }
 
+.btn i,
+.btn svg,
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
 .btn-header-icon {
   background: rgba(255,255,255,0.18);
   color: #ffffff;
@@ -153,21 +164,15 @@ header, .main-header {
   border-color: rgba(255,255,255,0.5);
 }
 
+.btn-header-icon i,
+.btn-header-icon .btn-icon {
+  color: #ffffff !important;
+  font-size: 1.1rem;
+}
+
 .btn-help {
   background: rgba(255,255,255,0.18);
   color: #ffffff;
-}
-
-.btn-help .icon-help,
-.btn-help .btn-icon {
-  width: 22px;
-  height: 22px;
-  color: #ffffff !important;
-  stroke: #ffffff !important;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
 }
 
 .btn-logout {
@@ -201,15 +206,18 @@ header, .main-header {
   color: var(--skaut-blue);
 }
 
-.btn-login .icon-key,
+.btn-login i,
 .btn-login .btn-icon {
   color: #ffffff !important;
-  stroke: #ffffff !important;
+  font-size: 1.05rem;
   filter: drop-shadow(0 1px 2px rgba(0, 40, 80, 0.45));
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+}
+
+/* Všechna tlačítka akcí s tmavým/barevným pozadím mají bílé ikony */
+.btn-vote i,
+.admin-quick-actions .btn i,
+.btn-secondary i {
+  color: #ffffff;
 }
 
 .btn-secondary {

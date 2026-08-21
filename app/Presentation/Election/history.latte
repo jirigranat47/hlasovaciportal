@@ -5,8 +5,8 @@
 <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
 	<div>
 		<a n:href="Home:default" style="color: var(--skaut-muted); text-decoration: none;">&larr; Zpět na přehled</a>
-		<h1 style="color: var(--skaut-blue); margin-top: 0.5rem; margin-bottom: 0.2rem;">
-			📜 Historie a audit usnesení č. {$election->resolution_number}
+		<h1 style="color: var(--skaut-blue); margin-top: 0.5rem; margin-bottom: 0.2rem; display: flex; align-items: center; gap: 8px;">
+			<i class="fa-solid fa-clock-rotate-left"></i> Historie a audit usnesení č. {$election->resolution_number}
 		</h1>
 		<div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-top: 0.4rem;">
 			{if $election->status === 'draft'}
@@ -14,9 +14,9 @@
 			{elseif $election->status === 'cancelled'}
 				<span class="election-status" style="background: #f8d7da; color: #721c24; font-weight: bold;">● Stornováno</span>
 			{elseif $election->status === 'adopted'}
-				<span class="election-status badge-status-adopted" style="font-weight: bold;">✓ Ukončeno – Přijato</span>
+				<span class="election-status badge-status-adopted" style="font-weight: bold;"><i class="fa-solid fa-check"></i> Ukončeno – Přijato</span>
 			{elseif $election->status === 'rejected'}
-				<span class="election-status badge-status-rejected" style="font-weight: bold;">✕ Ukončeno – Nepřijato</span>
+				<span class="election-status badge-status-rejected" style="font-weight: bold;"><i class="fa-solid fa-xmark"></i> Ukončeno – Nepřijato</span>
 			{elseif $isClosed}
 				<span class="election-status" style="background: #f8d7da; color: #721c24;">● Ukončeno</span>
 			{else}
@@ -29,7 +29,9 @@
 	</div>
 
 	<div style="display: flex; gap: 0.5rem;">
-		<a n:href="show, $election->id" class="btn" style="background: var(--skaut-blue); color: white;">Přejít na hlasování</a>
+		<a n:href="show, $election->id" class="btn" style="background: var(--skaut-blue); color: white; display: inline-flex; align-items: center; gap: 6px;">
+			<i class="fa-solid fa-arrow-left"></i> Přejít na hlasování
+		</a>
 	</div>
 </div>
 
@@ -47,7 +49,9 @@
 
 	{if empty($auditLogs)}
 		<div style="background: #fff8e6; border: 1px solid #ffe58f; padding: 1.5rem; border-radius: 8px; color: #873800;">
-			<h4 style="margin-top: 0; margin-bottom: 0.5rem;">ℹ Žádné auditní záznamy v databázi</h4>
+			<h4 style="margin-top: 0; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 6px;">
+				<i class="fa-solid fa-circle-info"></i> Žádné auditní záznamy v databázi
+			</h4>
 			<p style="margin: 0 0 1rem 0; font-size: 0.95rem; line-height: 1.5;">
 				Pro toto usnesení nebyly zaznamenány žádné podrobné auditní události, protože bylo vytvořeno před zavedením rozšířeného auditního logování.
 			</p>
@@ -64,7 +68,7 @@
 				<div n:foreach="$voteHistory as $h" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
 					<div>
 						<span style="background: #e2e8f0; color: #334155; font-weight: bold; font-size: 0.75rem; padding: 2px 6px; border-radius: 3px; margin-right: 6px;">
-							{if $h->action === 'voted'}🗳️ Hlas odevzdán{else}🔄 Hlas změněn{/if}
+							{if $h->action === 'voted'}<i class="fa-solid fa-check-to-slot"></i> Hlas odevzdán{else}<i class="fa-solid fa-pen-to-square"></i> Hlas změněn{/if}
 						</span>
 						<strong>{$h->person_name}</strong>
 						<span style="color: #64748b;">({if $h->action === 'voted'}hlasoval(a){else}změnil(a) hlas na{/if}: <strong>{$h->option_title}</strong>)</span>
@@ -81,25 +85,25 @@
 				<div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-bottom: 6px;">
 					<div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
 						{if $log->action === 'created_draft'}
-							<span style="background: #e0f2fe; color: #0369a1; font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px;">📝 Vytvořen návrh (Draft)</span>
+							<span style="background: #e0f2fe; color: #0369a1; font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px;"><i class="fa-solid fa-file-circle-plus"></i> Vytvořen návrh (Draft)</span>
 						{elseif $log->action === 'updated_draft'}
-							<span style="background: #fef3c7; color: #b45309; font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px;">✏️ Úprava údajů</span>
+							<span style="background: #fef3c7; color: #b45309; font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px;"><i class="fa-solid fa-pen"></i> Úprava údajů</span>
 						{elseif $log->action === 'published'}
-							<span style="background: #dcfce7; color: #15803d; font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px;">🚀 Publikováno</span>
+							<span style="background: #dcfce7; color: #15803d; font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px;"><i class="fa-solid fa-bullhorn"></i> Publikováno</span>
 						{elseif $log->action === 'reverted_to_draft'}
-							<span style="background: #fed7aa; color: #9a3412; font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px;">↩ Vráceno do návrhu</span>
+							<span style="background: #fed7aa; color: #9a3412; font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px;"><i class="fa-solid fa-rotate-left"></i> Vráceno do návrhu</span>
 						{elseif $log->action === 'notification_sent'}
-							<span style="background: #eff6ff; color: #1e40af; font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px;">✉️ Odeslána výzva k hlasování</span>
+							<span style="background: #eff6ff; color: #1e40af; font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px;"><i class="fa-solid fa-envelope"></i> Odeslána výzva k hlasování</span>
 						{elseif $log->action === 'reminder_sent'}
-							<span style="background: #fffbeb; color: #b45309; font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px;">⏳ Odeslána denní upomínka</span>
+							<span style="background: #fffbeb; color: #b45309; font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px;"><i class="fa-solid fa-bell"></i> Odeslána denní upomínka</span>
 						{elseif $log->action === 'vote_cast'}
-							<span style="background: #f1f5f9; color: #334155; font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px;">🗳️ Hlas odevzdán</span>
+							<span style="background: #f1f5f9; color: #334155; font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px;"><i class="fa-solid fa-check-to-slot"></i> Hlas odevzdán</span>
 						{elseif $log->action === 'vote_changed'}
-							<span style="background: #fef9c3; color: #854d0e; font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px;">🔄 Hlas změněn</span>
+							<span style="background: #fef9c3; color: #854d0e; font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px;"><i class="fa-solid fa-pen-to-square"></i> Hlas změněn</span>
 						{elseif $log->action === 'cancelled'}
-							<span style="background: #fee2e2; color: #b91c1c; font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px;">🚫 Stornováno</span>
+							<span style="background: #fee2e2; color: #b91c1c; font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px;"><i class="fa-solid fa-ban"></i> Stornováno</span>
 						{elseif $log->action === 'closed'}
-							<span style="background: #f8fafc; color: #475569; font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px; border: 1px solid #cbd5e1;">🏁 Uzavřeno</span>
+							<span style="background: #f8fafc; color: #475569; font-weight: bold; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px; border: 1px solid #cbd5e1;"><i class="fa-solid fa-flag-checkered"></i> Uzavřeno</span>
 						{else}
 							<span style="background: #f1f5f9; color: #475569; font-size: 0.8rem; padding: 3px 8px; border-radius: 4px;">{$log->action}</span>
 						{/if}
@@ -113,7 +117,7 @@
 						{/if}
 					</div>
 					<div style="font-size: 0.85rem; color: #64748b; font-family: monospace; white-space: nowrap;">
-						📅 {$log->created_at|date:'d. m. Y H:i:s'}
+						{$log->created_at|date:'d. m. Y H:i:s'}
 					</div>
 				</div>
 

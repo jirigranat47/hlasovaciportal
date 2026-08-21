@@ -5,15 +5,17 @@
 <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
 	<div>
 		<a n:href="Home:default" style="color: var(--skaut-muted); text-decoration: none;">&larr; Zpět na přehled</a>
-		<h1 style="color: var(--skaut-blue); margin-top: 0.5rem; margin-bottom: 0.2rem;">📜 Audit přihlášení uživatelů</h1>
+		<h1 style="color: var(--skaut-blue); margin-top: 0.5rem; margin-bottom: 0.2rem; display: flex; align-items: center; gap: 8px;">
+			<i class="fa-solid fa-shield-halved"></i> Audit přihlášení uživatelů
+		</h1>
 		<p style="color: var(--skaut-muted); margin: 0;">
 			Jednotka: <strong>{$userData['unitName'] ?: $userData['unitId']}</strong> (ID: {$userData['unitId']})
 		</p>
 	</div>
 
 	<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-		<a n:href="Council:default" class="btn" style="background: #555; color: white;">👥 Správa Rady</a>
-		<a n:href="Council:smtp" class="btn" style="background: #777; color: white;">⚙️ Nastavení SMTP</a>
+		<a n:href="Council:default" class="btn" style="background: #555; color: white; display: inline-flex; align-items: center; gap: 6px;"><i class="fa-solid fa-users"></i> Správa Rady</a>
+		<a n:href="Council:smtp" class="btn" style="background: #777; color: white; display: inline-flex; align-items: center; gap: 6px;"><i class="fa-solid fa-envelope"></i> Nastavení SMTP</a>
 	</div>
 </div>
 

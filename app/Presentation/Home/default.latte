@@ -31,16 +31,16 @@
 		{if $isAdmin}
 			<div class="admin-quick-actions" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
 				<a n:href="Election:create" class="btn btn-vote" style="background: var(--skaut-blue);" title="Založit nové hlasování">
-					<span class="btn-icon">➕</span><span class="btn-label"> Nové hlasování</span>
+					<i class="fa-solid fa-plus btn-icon"></i><span class="btn-label"> Nové hlasování</span>
 				</a>
 				<a n:href="Council:default" class="btn" style="background: #555; color: white;" title="Správa členů Rady jednotky">
-					<span class="btn-icon">👥</span><span class="btn-label"> Správa Rady</span>
+					<i class="fa-solid fa-users btn-icon"></i><span class="btn-label"> Správa Rady</span>
 				</a>
 				<a n:href="Council:smtp" class="btn" style="background: #777; color: white;" title="Nastavení e-mailového serveru SMTP">
-					<span class="btn-icon">✉️</span><span class="btn-label"> Nastavení SMTP</span>
+					<i class="fa-solid fa-envelope btn-icon"></i><span class="btn-label"> Nastavení SMTP</span>
 				</a>
 				<a n:href="Council:audit" class="btn" style="background: #475569; color: white;" title="Audit a historie přihlášení">
-					<span class="btn-icon">📜</span><span class="btn-label"> Audit přihlášení</span>
+					<i class="fa-solid fa-shield-halved btn-icon"></i><span class="btn-label"> Audit přihlášení</span>
 				</a>
 			</div>
 		{/if}
@@ -50,7 +50,7 @@
 	{if $isAdmin && !$hasSmtpConfigured}
 		<div style="margin-bottom: 2rem; background: #fef2f2; border: 1px solid #fecaca; border-left: 6px solid #dc2626; border-radius: 8px; padding: 1.1rem 1.4rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; box-shadow: 0 2px 6px rgba(220, 38, 38, 0.08);">
 			<div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 260px;">
-				<span style="font-size: 1.6rem; line-height: 1;">⚠️</span>
+				<i class="fa-solid fa-triangle-exclamation" style="font-size: 1.6rem; color: #dc2626;"></i>
 				<div>
 					<strong style="color: #991b1b; font-size: 1rem; display: block;">Jednotka nemá nastaveno SMTP odesílání e-mailů</strong>
 					<p style="margin: 3px 0 0 0; color: #b91c1c; font-size: 0.9rem; line-height: 1.4;">
@@ -59,8 +59,8 @@
 				</div>
 			</div>
 			<div style="flex-shrink: 0;">
-				<a n:href="Council:smtp" class="btn" style="background: #dc2626; color: white; font-weight: bold; padding: 0.65rem 1.2rem; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
-					✉️ Nastavit SMTP odesílání &rarr;
+				<a n:href="Council:smtp" class="btn" style="background: #dc2626; color: white; font-weight: bold; padding: 0.65rem 1.2rem; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+					<i class="fa-solid fa-envelope"></i> Nastavit SMTP odesílání &rarr;
 				</a>
 			</div>
 		</div>
@@ -71,7 +71,7 @@
 		<div style="margin-bottom: 2rem; background: #eff6ff; border: 1px solid #bfdbfe; border-left: 5px solid var(--skaut-blue); border-radius: 8px; padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
 			<div>
 				<div style="font-weight: bold; color: #1e3a8a; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
-					<span>📬</span>
+					<i class="fa-solid fa-bullhorn" style="color: var(--skaut-blue-light);"></i>
 					<span>Máte {$unnotifiedElectionsCount} nově publikovaných usnesení bez odeslané notifikace</span>
 				</div>
 				<div style="font-size: 0.88rem; color: #1d4ed8; margin-top: 4px;">
@@ -84,8 +84,8 @@
 			</div>
 
 			<div>
-				<a n:href="sendBatchNotification!" class="btn" style="background: var(--skaut-yellow); color: #000; font-weight: bold; padding: 0.6rem 1.2rem; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); text-decoration: none; display: inline-flex; align-items: center; gap: 6px;" onclick="return confirm('Opravdu chcete členům rady odeslat souhrnný e-mail s {$unnotifiedElectionsCount} novými usneseními?')">
-					✉ Odeslat radě souhrnnou výzvu ({$unnotifiedElectionsCount})
+				<a n:href="sendBatchNotification!" class="btn" style="background: var(--skaut-yellow); color: var(--skaut-blue); font-weight: bold; padding: 0.6rem 1.2rem; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); text-decoration: none; display: inline-flex; align-items: center; gap: 8px;" onclick="return confirm('Opravdu chcete členům rady odeslat souhrnný e-mail s {$unnotifiedElectionsCount} novými usneseními?')">
+					<i class="fa-solid fa-paper-plane" style="color: white; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.4));"></i> Odeslat radě souhrnnou výzvu ({$unnotifiedElectionsCount})
 				</a>
 			</div>
 		</div>
@@ -240,9 +240,15 @@
 							</p>
 						</div>
 						<div style="display: flex; gap: 0.5rem; flex-shrink: 0; white-space: nowrap;">
-							<a n:href="Election:publish, $el->id" class="btn btn-vote" style="background: #28a745; font-size: 0.85rem; white-space: nowrap;" onclick="return confirm('Opravdu chcete toto hlasování publikovat? Všem členům rady bude odeslána notifikace a hlasování již nepůjde upravovat ani smazat.')">Publikovat</a>
-							<a n:href="Election:edit, $el->id" class="btn btn-vote" style="background: var(--skaut-blue); font-size: 0.85rem; white-space: nowrap;">Upravit</a>
-							<a n:href="Election:delete, $el->id" class="btn btn-vote" style="background: #dc3545; font-size: 0.85rem; white-space: nowrap;" onclick="return confirm('Opravdu chcete tento návrh smazat?')">Smazat</a>
+							<a n:href="Election:publish, $el->id" class="btn btn-vote" style="background: #28a745; font-size: 0.85rem; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;" onclick="return confirm('Opravdu chcete toto hlasování publikovat? Všem členům rady bude odeslána notifikace a hlasování již nepůjde upravovat ani smazat.')">
+								<i class="fa-solid fa-check"></i> Publikovat
+							</a>
+							<a n:href="Election:edit, $el->id" class="btn btn-vote" style="background: var(--skaut-blue); font-size: 0.85rem; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;">
+								<i class="fa-solid fa-pen-to-square"></i> Upravit
+							</a>
+							<a n:href="Election:delete, $el->id" class="btn btn-vote" style="background: #dc3545; font-size: 0.85rem; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;" onclick="return confirm('Opravdu chcete tento návrh smazat?')">
+								<i class="fa-solid fa-trash"></i> Smazat
+							</a>
 						</div>
 					</div>
 				</div>
@@ -262,7 +268,7 @@
 				{if !empty($closedElections)}
 					<div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
 						<div style="position: relative;">
-							<input type="text" id="closedSearchInput" placeholder="🔍 Hledat usnesení..." style="padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; width: 180px;">
+							<input type="text" id="closedSearchInput" placeholder="Hledat usnesení..." style="padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; width: 180px;">
 						</div>
 
 						<div style="display: flex; align-items: center; gap: 6px;">
@@ -277,7 +283,7 @@
 
 						{if $isAdmin || $isCouncilMember}
 							<a n:href="export" class="btn" style="background: #0284c7; color: white; font-size: 0.85rem; font-weight: bold; padding: 6px 12px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;" title="Stáhnout všechna uzavřená a stornovaná usnesení v souboru CSV (pro Excel)">
-								<span class="btn-icon">📥</span><span class="btn-label"> Exportovat (CSV)</span>
+								<i class="fa-solid fa-file-csv btn-icon"></i><span class="btn-label"> Exportovat (CSV)</span>
 							</a>
 						{/if}
 					</div>
