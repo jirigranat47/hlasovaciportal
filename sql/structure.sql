@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS `council_members` (
 CREATE TABLE IF NOT EXISTS `unit_settings` (
   `unit_id` INT PRIMARY KEY COMMENT 'ID jednotky',
   `allow_custom_end_time` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '1 = povoleno zadavat cas konce hlasovani',
+  `min_voting_duration_hours` INT NULL DEFAULT NULL COMMENT 'Minimalni delka trvani hlasovani v hodinach (NULL = vychozi)',
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

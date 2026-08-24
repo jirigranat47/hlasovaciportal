@@ -33,6 +33,32 @@
 
 	<form n:name="unitSettingsForm" style="display: flex; flex-direction: column; gap: 1.5rem;">
 
+		{* ZOBRAZENÍ CHYB VALIDACE FORMULÁŘE *}
+		<div n:if="$form->hasErrors()" style="background: #fef2f2; border: 1px solid #fecaca; border-left: 5px solid #dc2626; border-radius: 6px; padding: 0.9rem 1.2rem; color: #991b1b; font-size: 0.95rem;">
+			<div style="font-weight: bold; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+				<i class="fa-solid fa-circle-exclamation" style="color: #dc2626;"></i> Formulář obsahuje chyby k opravě:
+			</div>
+			<ul style="margin: 0; padding-left: 1.4rem;">
+				<li n:foreach="$form->errors as $error">{$error}</li>
+			</ul>
+		</div>
+
+		{* MINIMÁLNÍ DOBA TRVÁNÍ HLASOVÁNÍ *}
+		<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid var(--skaut-blue); border-radius: 8px; padding: 1.25rem;">
+			<label n:name="min_voting_duration_hours" style="cursor: pointer; display: block;">
+				<strong style="color: #0f172a; font-size: 1.05rem; display: block; margin-bottom: 4px;">
+					⏱ Minimální doba trvání hlasování (v hodinách)
+				</strong>
+				<span style="color: #475569; font-size: 0.9rem; line-height: 1.5; display: block; margin-bottom: 0.8rem;">
+					Stanovte nejkratší přípustnou délku trvání hlasování od okamžiku jeho vytvoření či úpravy. Výchozí hodnota je <strong>{$defaultMinHours} hodin</strong> (minimálně lze nastavit 1 hodinu).
+				</span>
+			</label>
+			<div style="display: flex; align-items: center; gap: 10px; max-width: 250px;">
+				<input n:name="min_voting_duration_hours" class="form-control" type="number" min="1" step="1" style="padding: 0.6rem 0.8rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 1rem; font-weight: bold; width: 100px; text-align: center;">
+				<span style="color: #475569; font-weight: bold;">hodin</span>
+			</div>
+		</div>
+
 		{* VOLBA ČASU UKONČENÍ HLASOVÁNÍ *}
 		<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid var(--skaut-blue); border-radius: 8px; padding: 1.25rem;">
 			<div style="display: flex; align-items: flex-start; gap: 12px;">

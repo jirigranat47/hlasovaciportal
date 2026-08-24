@@ -6,10 +6,11 @@ namespace App\Presentation\Sign;
 
 use App\Presentation\BasePresenter;
 use App\Model\SkautisAuthManager;
+use Nette\Application\Attributes\Persistent;
 
 final class SignPresenter extends BasePresenter
 {
-	/** @persistent */
+	#[Persistent]
 	public ?string $backlink = null;
 
 	public function __construct(

@@ -34,6 +34,7 @@
 		<div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
 			<a href="#pro-cleny-rady" class="btn" style="background: #e0f2fe; color: #0369a1; text-decoration: none; font-size: 0.9rem; font-weight: bold; padding: 6px 12px; border-radius: 6px;">👤 1. Pro členy rady (Hlasování)</a>
 			<a href="#pro-spravce" class="btn" style="background: #fef3c7; color: #92400e; text-decoration: none; font-size: 0.9rem; font-weight: bold; padding: 6px 12px; border-radius: 6px;">⚙️ 2. Pro administrátory jednotky</a>
+			<a href="#nastaveni-jednotky" class="btn" style="background: #fdf4ff; color: #86198f; text-decoration: none; font-size: 0.9rem; font-weight: bold; padding: 6px 12px; border-radius: 6px;">⚙️ Pravidla a nastavení jednotky</a>
 			<a href="#zivotni-cyklus" class="btn" style="background: #f1f5f9; color: #334155; text-decoration: none; font-size: 0.9rem; font-weight: bold; padding: 6px 12px; border-radius: 6px;">🔄 Životní cyklus usnesení</a>
 			<a href="#automaticke-emaily" class="btn" style="background: #dcfce7; color: #166534; text-decoration: none; font-size: 0.9rem; font-weight: bold; padding: 6px 12px; border-radius: 6px;">📬 3. Automatické e-maily</a>
 		</div>
@@ -160,6 +161,39 @@
 					</tr>
 				</tbody>
 			</table>
+		</div>
+
+		<!-- NASTAVENÍ JEDNOTKY -->
+		<h3 id="nastaveni-jednotky" style="color: #1e293b; font-size: 1.15rem; margin-top: 2rem; border-left: 4px solid var(--skaut-blue); padding-left: 10px;">
+			⚙️ Nastavení jednotky (Pravidla hlasování)
+		</h3>
+		<p>
+			V kartě <strong>Nastavení jednotky</strong> v horní liště mohou administrátoři přizpůsobit pravidla pro zakládání a průběh hlasování pro svoji konkrétní jednotku:
+		</p>
+
+		<div style="display: flex; flex-direction: column; gap: 14px; margin: 1.25rem 0;">
+			<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid var(--skaut-blue); padding: 14px 16px; border-radius: 6px;">
+				<strong style="color: #0f172a; font-size: 1.05rem;">⏱ 1. Minimální doba trvání hlasování (v hodinách)</strong>
+				<p style="margin: 6px 0 0 0; font-size: 0.95rem; color: #334155; line-height: 1.5;">
+					Určuje nejkratší přípustný časový interval, po který musí hlasování běžet od okamžiku vytvoření či publikace.
+				</p>
+				<ul style="margin: 8px 0 0 0; padding-left: 1.25rem; font-size: 0.9rem; color: #475569; line-height: 1.6;">
+					<li><strong>Výchozí hodnota:</strong> 48 hodin (minimálně lze nastavit 1 hodinu).</li>
+					<li><strong>Bezpečnostní kontrola:</strong> Systém automaticky brání nastavení příliš krátkého termínu při vytváření, úpravě i publikaci usnesení, aby členové rady měli vždy garantován dostatečný čas na prostudování a odevzdání hlasu.</li>
+				</ul>
+			</div>
+
+			<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid var(--skaut-blue); padding: 14px 16px; border-radius: 6px;">
+				<strong style="color: #0f172a; font-size: 1.05rem;">⏰ 2. Zadávání konkrétního času konce hlasování</strong>
+				<p style="margin: 6px 0 0 0; font-size: 0.95rem; color: #334155; line-height: 1.5;">
+					Umožňuje volit, zda hlasování končí vždy o půlnoci, nebo v přesně stanovenou hodinu a minutu.
+				</p>
+				<ul style="margin: 8px 0 0 0; padding-left: 1.25rem; font-size: 0.9rem; color: #475569; line-height: 1.6;">
+					<li><strong>Výchozí stav (vypnuto):</strong> Formulář nabízí pouze výběr data a hlasování vždy končí o půlnoci ve <strong>23:59</strong>.</li>
+					<li><strong>Aktivní volba (zapnuto):</strong> Ve formuláři usnesení se zpřístupní pole pro zadání přesného času (např. 14:00, 18:30).</li>
+					<li><strong>Automatické vyhodnocení:</strong> Plánovač hlasování spouštěný každých 15 minut po uplynutí zadaného termínu hlasování automaticky uzavře, spočítá hlasy a odešle notifikaci o výsledku.</li>
+				</ul>
+			</div>
 		</div>
 
 		<!-- SPRÁVA RADY A SMTP -->

@@ -11,8 +11,29 @@ class VotingRepository
 {
 	public function __construct(
 		private Explorer $database,
-		private string $encryptionKey = 'skaut_hlasovaci_portal_default_secret_key_v1'
+		private string $encryptionKey = 'skaut_hlasovaci_portal_default_secret_key_v1',
+		private int $defaultMinVotingDurationHours = 48
 	) {}
+
+	/**
+	 * Vrátí výchozí minimální počet hodin trvání hlasování ze systémové konfigurace
+	 */
+	public function getDefaultMinVotingDuration(): int
+	{
+		return max(1, $this->defaultMinVotingDurationHours);
+	}
+
+	/**
+	 * Vrátí minimální počet hodin trvání hlasování pro konkrétní jednotku
+	 */
+	public function getUnitMinVotingDuration(int $unitId): int
+	{
+		$settings = $this->getUnitSettings($unitId);
+		if ($settings && !empty($settings->min_voting_duration_hours)) {
+			return max(1, (int)$settings->min_voting_duration_hours);
+		}
+		return $this->getDefaultMinVotingDuration();
+	}
 
 	/**
 	 * Zkontroluje, zda je osoba členem rady jednotky
@@ -120,7 +141,21 @@ class VotingRepository
 	 */
 	public function getSmtpSettings(int $unitId): ?ActiveRow
 	{
-		return $this->database->table('smtp_settings')->get($unitId);
+		$row = $this->database->table('smtp_settings')->get($unitId);
+		if (!$row) {
+			return null;
+		}
+
+		if (!empty($row->password)) {
+			try {
+				$decrypted = $this->decryptPassword($row->password);
+				$row->offsetSet('password', $decrypted);
+			} catch (\Throwable $e) {
+				// Pokud dešifrování selže, ponecháme původní
+			}
+		}
+
+		return $row;
 	}
 
 	/**
@@ -129,20 +164,19 @@ class VotingRepository
 	public function saveSmtpSettings(int $unitId, array $values): void
 	{
 		$row = $this->database->table('smtp_settings')->get($unitId);
-		$password = trim((string)($values['password'] ?? ''));
 
-		if (empty($password) && $row) {
-			// Ponecháme původní uložené heslo
-			$encryptedPassword = $row->password;
+		$password = $values['password'] ?? '';
+		if ($password === '' && $row) {
+			$password = $row->password;
 		} else {
-			$encryptedPassword = $this->encryptPassword($password);
+			$password = $this->encryptPassword($password);
 		}
 
 		$data = [
 			'host' => $values['host'],
 			'port' => (int)$values['port'],
 			'username' => $values['username'],
-			'password' => $encryptedPassword,
+			'password' => $password,
 			'secure' => $values['secure'],
 			'from_email' => $values['from_email'],
 			'from_name' => $values['from_name'],
@@ -170,8 +204,10 @@ class VotingRepository
 	public function saveUnitSettings(int $unitId, array $values): void
 	{
 		$row = $this->database->table('unit_settings')->get($unitId);
+		$minHours = !empty($values['min_voting_duration_hours']) ? max(1, (int)$values['min_voting_duration_hours']) : null;
 		$data = [
 			'allow_custom_end_time' => !empty($values['allow_custom_end_time']) ? 1 : 0,
+			'min_voting_duration_hours' => $minHours,
 		];
 
 		if ($row) {

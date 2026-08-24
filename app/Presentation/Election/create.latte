@@ -87,6 +87,8 @@ document.addEventListener('DOMContentLoaded', function () {
 	const dateInput = document.querySelector('input[name="end_date"]');
 	const timeInput = document.querySelector('input[name="end_time"]');
 
+	const minDurationHours = {$minDurationHours ?? 48};
+
 	function validateEndDateTime() {
 		if (!dateInput) return true;
 		const dateVal = dateInput.value;
@@ -99,9 +101,11 @@ document.addEventListener('DOMContentLoaded', function () {
 		const timeVal = (timeInput && timeInput.value) ? timeInput.value : '23:59';
 		const endDateTime = new Date(dateVal + 'T' + timeVal + ':00');
 		const now = new Date();
+		const minEndDateTime = new Date(now.getTime() + minDurationHours * 3600 * 1000);
 
-		if (isNaN(endDateTime.getTime()) || endDateTime <= now) {
-			const msg = 'Datum a čas konce hlasování musí být v budoucnosti. Nelze zadat termín v minulosti.';
+		if (isNaN(endDateTime.getTime()) || endDateTime < minEndDateTime) {
+			const hoursWord = minDurationHours === 1 ? 'hodinu' : (minDurationHours < 5 ? 'hodiny' : 'hodin');
+			const msg = 'Termín konce hlasování musí být minimálně ' + minDurationHours + ' ' + hoursWord + ' od nynějška.';
 			if (timeInput) {
 				timeInput.setCustomValidity(msg);
 			} else {

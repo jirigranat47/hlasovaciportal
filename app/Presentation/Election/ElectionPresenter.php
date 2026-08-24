@@ -306,8 +306,10 @@ final class ElectionPresenter extends BasePresenter
 	{
 		$this->checkAdmin();
 		$userData = $this->skautisAuthManager->getUserData();
-		$unitSettings = $this->votingRepository->getUnitSettings((int)($userData['unitId'] ?? 0));
+		$unitId = (int)($userData['unitId'] ?? 0);
+		$unitSettings = $this->votingRepository->getUnitSettings($unitId);
 		$this->template->allowCustomEndTime = (bool)($unitSettings->allow_custom_end_time ?? false);
+		$this->template->minDurationHours = $this->votingRepository->getUnitMinVotingDuration($unitId);
 	}
 
 	public function actionDuplicate(int $id): void
@@ -319,6 +321,7 @@ final class ElectionPresenter extends BasePresenter
 		$unitSettings = $this->votingRepository->getUnitSettings($unitId);
 		$allowCustomEndTime = (bool)($unitSettings->allow_custom_end_time ?? false);
 		$this->template->allowCustomEndTime = $allowCustomEndTime;
+		$this->template->minDurationHours = $this->votingRepository->getUnitMinVotingDuration($unitId);
 
 		$newResNum = $election->resolution_number . '-oprava';
 		if ($this->votingRepository->isResolutionNumberExists($unitId, $newResNum)) {
@@ -353,6 +356,7 @@ final class ElectionPresenter extends BasePresenter
 		$unitSettings = $this->votingRepository->getUnitSettings($unitId);
 		$allowCustomEndTime = (bool)($unitSettings->allow_custom_end_time ?? false);
 		$this->template->allowCustomEndTime = $allowCustomEndTime;
+		$this->template->minDurationHours = $this->votingRepository->getUnitMinVotingDuration($unitId);
 
 		$this['electionForm']->setDefaults([
 			'resolution_number' => $election->resolution_number,
@@ -375,7 +379,17 @@ final class ElectionPresenter extends BasePresenter
 		}
 
 		$userData = $this->skautisAuthManager->getUserData();
+		$unitId = (int)$userData['unitId'];
 		$personId = (int)$userData['personId'];
+
+		$minDurationHours = $this->votingRepository->getUnitMinVotingDuration($unitId);
+		$minEndDateTime = (new \DateTime())->modify("+{$minDurationHours} hours");
+
+		if ($election->end_date < $minEndDateTime) {
+			$hoursWord = $minDurationHours === 1 ? 'hodina' : ($minDurationHours < 5 ? 'hodiny' : 'hodin');
+			$this->flashMessage("Hlasování nelze publikovat, protože do jeho konce nezbývá minimální požadovaný čas ({$minDurationHours} {$hoursWord}). Upravte prosím termín konce a poté hlasování publikujte.", 'danger');
+			$this->redirect('edit', $id);
+		}
 
 		$this->votingRepository->publishElection($id, $personId, $userData['personName'], $userData['roleName'] ?? null);
 		$this->flashMessage('Hlasování bylo úspěšně publikováno. Notifikaci členům rady můžete odeslat souhrnně z hlavní stránky (nebo odejde automaticky v nočním souhrnu).', 'success');
@@ -415,6 +429,7 @@ final class ElectionPresenter extends BasePresenter
 		$unitId = (int)($userData['unitId'] ?? 0);
 		$unitSettings = $this->votingRepository->getUnitSettings($unitId);
 		$allowCustomEndTime = (bool)($unitSettings->allow_custom_end_time ?? false);
+		$minDurationHours = $this->votingRepository->getUnitMinVotingDuration($unitId);
 
 		$form->addText('resolution_number', 'Číslo usnesení:')
 			->setRequired('Zadejte číslo usnesení.')
@@ -436,12 +451,12 @@ final class ElectionPresenter extends BasePresenter
 			->setHtmlType('date')
 			->setNullable();
 
-		$todayStr = (new \DateTime())->format('Y-m-d');
+		$minDateStr = (new \DateTime())->modify("+{$minDurationHours} hours")->format('Y-m-d');
 
 		$dateLabel = $allowCustomEndTime ? 'Datum konce hlasování:' : 'Datum konce hlasování (do 23:59):';
 		$form->addText('end_date', $dateLabel)
 			->setHtmlType('date')
-			->setHtmlAttribute('min', $todayStr)
+			->setHtmlAttribute('min', $minDateStr)
 			->setRequired('Zadejte datum konce hlasování.');
 
 		if ($allowCustomEndTime) {
@@ -451,7 +466,7 @@ final class ElectionPresenter extends BasePresenter
 				->setRequired('Zadejte čas konce hlasování.');
 		}
 
-		$form['end_date']->addRule(function ($control) use ($form, $allowCustomEndTime) {
+		$form['end_date']->addRule(function ($control) use ($form, $allowCustomEndTime, $minDurationHours) {
 			$dateVal = trim((string)$control->getValue());
 			if (!$dateVal) {
 				return true;
@@ -465,8 +480,9 @@ final class ElectionPresenter extends BasePresenter
 			} catch (\Throwable $e) {
 				return false;
 			}
-			return $endDateTime > new \DateTime();
-		}, 'Datum a čas konce hlasování musí být v budoucnosti. Nelze zadat termín v minulosti.');
+			$minEndDateTime = (new \DateTime())->modify("+{$minDurationHours} hours");
+			return $endDateTime >= $minEndDateTime;
+		}, "Termín konce hlasování musí být minimálně {$minDurationHours} " . ($minDurationHours === 1 ? 'hodinu' : ($minDurationHours < 5 ? 'hodiny' : 'hodin')) . ' od nynějška.');
 
 		$form->addSubmit('submit', 'Uložit hlasování');
 

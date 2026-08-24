@@ -88,9 +88,18 @@ final class CouncilPresenter extends BasePresenter
 		$this->template->userData = $userData;
 
 		$settings = $this->votingRepository->getUnitSettings($unitId);
+		$defaultMinHours = $this->votingRepository->getDefaultMinVotingDuration();
+		$this->template->defaultMinHours = $defaultMinHours;
+
 		if ($settings) {
 			$this['unitSettingsForm']->setDefaults([
 				'allow_custom_end_time' => (bool)$settings->allow_custom_end_time,
+				'min_voting_duration_hours' => $settings->min_voting_duration_hours ? (int)$settings->min_voting_duration_hours : $defaultMinHours,
+			]);
+		} else {
+			$this['unitSettingsForm']->setDefaults([
+				'allow_custom_end_time' => false,
+				'min_voting_duration_hours' => $defaultMinHours,
 			]);
 		}
 	}
@@ -331,9 +340,15 @@ final class CouncilPresenter extends BasePresenter
 	protected function createComponentUnitSettingsForm(): Form
 	{
 		$form = new Form();
+		$defaultMinHours = $this->votingRepository->getDefaultMinVotingDuration();
 
 		$form->addCheckbox('allow_custom_end_time', 'Povolit zadávání konkrétního času konce hlasování (např. 14:00, 18:00)')
 			->setDefaultValue(false);
+
+		$form->addInteger('min_voting_duration_hours', 'Minimální počet hodin trvání hlasování:')
+			->setRequired('Zadejte minimální počet hodin trvání hlasování.')
+			->setDefaultValue($defaultMinHours)
+			->addRule(Form::Min, 'Minimální povolená délka trvání hlasování je 1 hodina.', 1);
 
 		$form->addSubmit('submit', '💾 Uložit nastavení jednotky');
 

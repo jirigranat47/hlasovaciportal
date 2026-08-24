@@ -6,10 +6,11 @@ namespace App\Presentation;
 
 use Nette\Application\UI\Presenter;
 use App\Model\SkautisAuthManager;
+use Nette\DI\Attributes\Inject;
 
 abstract class BasePresenter extends Presenter
 {
-	/** @inject */
+	#[Inject]
 	public SkautisAuthManager $baseAuthManager;
 
 	protected function startup(): void

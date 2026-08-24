@@ -9,6 +9,8 @@ parameters:
 	baseUrl: 'http://localhost:8000'
 	cron:
 		token: 'zmente_v_local_neon'
+	voting:
+		minDurationHoursDefault: 48
 	security:
 		encryptionKey: 'skaut_hlasovaci_portal_default_secret_key_v1'
 

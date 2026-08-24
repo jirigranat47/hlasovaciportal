@@ -2,7 +2,7 @@ services:
 	router: App\Core\RouterFactory::createRouter
 	skautis: App\Model\SkautisFactory::create(%skautis.appId%, %skautis.isTest%)
 	skautisAuthManager: App\Model\SkautisAuthManager(appId: %skautis.appId%, isTest: %skautis.isTest%, debugRoles: %skautis.debugRoles%)
-	- App\Model\VotingRepository(encryptionKey: %security.encryptionKey%)
+	- App\Model\VotingRepository(encryptionKey: %security.encryptionKey%, defaultMinVotingDurationHours: %voting.minDurationHoursDefault%)
 	- App\Model\MailSender
 	- App\Model\CronManager(baseUrl: %baseUrl%)
 	- App\Presentation\Cron\CronPresenter(cronToken: %cron.token%)
