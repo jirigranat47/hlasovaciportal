@@ -9,6 +9,9 @@ use App\Model\SkautisAuthManager;
 
 final class SignPresenter extends BasePresenter
 {
+	/** @persistent */
+	public ?string $backlink = null;
+
 	public function __construct(
 		private SkautisAuthManager $skautisAuthManager
 	) {
@@ -18,9 +21,14 @@ final class SignPresenter extends BasePresenter
 	/**
 	 * Přesměrování na přihlašovací stránku SkautISu
 	 */
-	public function actionIn(): void
+	public function actionIn(?string $backlink = null): void
 	{
-		$backUrl = $this->link('//Sign:callback');
+		$bl = $backlink ?? $this->backlink;
+		if ($bl) {
+			$this->getSession('auth')->backlink = $bl;
+		}
+
+		$backUrl = $this->link('//Sign:callback', $bl ? ['backlink' => $bl] : []);
 		$loginUrl = $this->skautisAuthManager->getLoginUrl($backUrl);
 		$this->redirectUrl($loginUrl);
 	}
@@ -28,14 +36,33 @@ final class SignPresenter extends BasePresenter
 	/**
 	 * Zpracování callbacku po přihlášení ze SkautISu
 	 */
-	public function actionCallback(): void
+	public function actionCallback(?string $backlink = null): void
 	{
 		$params = array_merge($this->getHttpRequest()->getQuery(), $this->getHttpRequest()->getPost());
 		
+		$authSession = $this->getSession('auth');
+		$bl = $backlink ?? $params['backlink'] ?? $authSession->backlink ?? $this->backlink;
+		unset($authSession->backlink);
+
+		// Pokud SkautIS vrátil parametr zabalený v ReturnUrl, vytáhneme původní backlink token
+		if (!$bl && !empty($params['ReturnUrl'])) {
+			$rawReturnUrl = urldecode(urldecode((string)$params['ReturnUrl']));
+			$parsedUrl = parse_url($rawReturnUrl);
+			if (!empty($parsedUrl['query'])) {
+				parse_str($parsedUrl['query'], $queryParts);
+				if (!empty($queryParts['backlink'])) {
+					$bl = (string)$queryParts['backlink'];
+				}
+			}
+		}
+
 		if ($this->skautisAuthManager->processLoginToken($params)) {
 			$this->flashMessage('Úspěšně jste se přihlásili přes SkautIS!', 'success');
+			if ($bl) {
+				$this->restoreRequest($bl);
+			}
 		} else {
-			$this->flashMessage('Přihlášení přes SkautIS selhalo nebo vypršelo platné relaci.', 'danger');
+			$this->flashMessage('Přihlášení přes SkautIS selhalo nebo vypršela platnost relace.', 'danger');
 		}
 
 		$this->redirect('Home:default');
@@ -74,10 +101,20 @@ final class SignPresenter extends BasePresenter
 		string $personName = 'Admin Testovací',
 		string $roleKey = 'vedouciStredisko',
 		string $roleName = 'Vedoucí střediska',
-		string $unitName = 'Testovací středisko'
+		string $unitName = 'Testovací středisko',
+		?string $backlink = null
 	): void {
 		$this->skautisAuthManager->simulateLogin($unitId, $personId, $personName, $roleKey, $roleName, $unitName);
 		$this->flashMessage("Simulované přihlášení jako administrátor: $personName (Jednotka: $unitName #$unitId, Role: $roleName)", 'success');
+
+		$authSession = $this->getSession('auth');
+		$bl = $backlink ?? $authSession->backlink ?? $this->backlink;
+		unset($authSession->backlink);
+
+		if ($bl) {
+			$this->restoreRequest($bl);
+		}
+
 		$this->redirect('Home:default');
 	}
 }

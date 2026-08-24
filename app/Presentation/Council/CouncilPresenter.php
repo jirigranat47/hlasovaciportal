@@ -26,7 +26,7 @@ final class CouncilPresenter extends BasePresenter
 		parent::startup();
 		if (!$this->skautisAuthManager->isLoggedIn()) {
 			$this->flashMessage('Pro přístup do správy se musíte přihlásit.', 'warning');
-			$this->redirect('Home:default');
+			$this->redirect('Sign:in', ['backlink' => $this->storeRequest()]);
 		}
 		if (!$this->skautisAuthManager->isAdmin()) {
 			$this->flashMessage('Nemáte oprávnění ke správě této sekce.', 'danger');

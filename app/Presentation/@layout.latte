@@ -55,7 +55,7 @@
 						<span class="btn-label">Nápověda</span>
 					</a>
 
-					<a n:href="Sign:in" class="btn btn-primary btn-header-icon btn-login" title="Přihlásit se přes SkautIS">
+					<a n:href="Sign:in, backlink => ($presenter->isLinkCurrent('Home:default') ? null : $presenter->storeRequest())" class="btn btn-primary btn-header-icon btn-login" title="Přihlásit se přes SkautIS">
 						<i class="fa-solid fa-key btn-icon"></i>
 						<span class="btn-label">Přihlásit se</span>
 					</a>

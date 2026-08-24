@@ -20,7 +20,7 @@ abstract class BasePresenter extends Presenter
 			if ($this->baseAuthManager->hasSessionJustExpired()) {
 				$this->flashMessage('Vaše přihlášení do SkautISu vypršelo. Přihlaste se prosím znovu.', 'warning');
 				if (!$this->isLinkCurrent('Home:default') && !$this->isLinkCurrent('Sign:*')) {
-					$this->redirect('Home:default');
+					$this->redirect('Sign:in', ['backlink' => $this->storeRequest()]);
 				}
 			}
 		}

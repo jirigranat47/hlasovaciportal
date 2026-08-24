@@ -24,7 +24,7 @@ final class ElectionPresenter extends BasePresenter
 		parent::startup();
 		if (!$this->skautisAuthManager->isLoggedIn()) {
 			$this->flashMessage('Pro přístup k hlasováním se musíte nejprve přihlásit přes SkautIS.', 'warning');
-			$this->redirect('Sign:in');
+			$this->redirect('Sign:in', ['backlink' => $this->storeRequest()]);
 		}
 	}
 

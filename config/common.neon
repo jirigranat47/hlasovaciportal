@@ -20,7 +20,7 @@ session:
 	autoStart: true
 	cookieHttponly: true
 	cookieSecure: auto
-	cookieSamesite: Lax
+	cookieSamesite: None
 
 database:
 	dsn: 'mysql:host=db;dbname=hlasovaciportal;charset=utf8mb4'
