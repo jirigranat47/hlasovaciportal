@@ -2,12 +2,28 @@
 
 {block content}
 
-<div style="margin-bottom: 2rem; max-width: 680px; margin-left: auto; margin-right: auto;">
-	<a n:href="Home:default" style="color: var(--skaut-muted); text-decoration: none;">&larr; Zpět na přehled</a>
-	<h1 style="color: var(--skaut-blue); margin-top: 0.5rem; margin-bottom: 0.3rem;">✉ Konfigurace e-mailů jednotky</h1>
-	<p style="color: var(--skaut-muted); margin: 0;">
-		Jednotka: <strong>{$userData['unitName'] ?: $userData['unitId']}</strong> | Zadejte e-mailovou schránku, ze které budou odcházet notifikace o spuštění hlasování a výsledcích usnesení.
-	</p>
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+	<div>
+		<a n:href="Home:default" style="color: var(--skaut-muted); text-decoration: none;">&larr; Zpět na přehled</a>
+		<h1 style="color: var(--skaut-blue); margin-top: 0.5rem; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 8px;">
+			<i class="fa-solid fa-envelope"></i> Konfigurace e-mailů jednotky
+		</h1>
+		<p style="color: var(--skaut-muted); margin: 0;">
+			Jednotka: <strong>{$userData['unitName'] ?: $userData['unitId']}</strong> | Zadejte e-mailovou schránku, ze které budou odcházet notifikace o spuštění hlasování a výsledcích usnesení.
+		</p>
+	</div>
+
+	<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+		<a n:href="Council:default" class="btn" style="background: #555; color: white; display: inline-flex; align-items: center; gap: 6px;">
+			<i class="fa-solid fa-users"></i> Správa Rady
+		</a>
+		<a n:href="Council:settings" class="btn" style="background: #0284c7; color: white; display: inline-flex; align-items: center; gap: 6px;">
+			<i class="fa-solid fa-sliders"></i> Nastavení jednotky
+		</a>
+		<a n:href="Council:audit" class="btn" style="background: #475569; color: white; display: inline-flex; align-items: center; gap: 6px;">
+			<i class="fa-solid fa-shield-halved"></i> Audit přihlášení
+		</a>
+	</div>
 </div>
 
 <div class="election-card" style="max-width: 680px; margin: 0 auto 3rem auto; padding: 2rem;">
@@ -43,6 +59,16 @@
 
 	<form n:name="smtpForm" style="display: flex; flex-direction: column; gap: 1.2rem;">
 		
+		{* ZOBRAZENÍ CHYB VALIDACE FORMULÁŘE *}
+		<div n:if="$form->hasErrors()" style="background: #fef2f2; border: 1px solid #fecaca; border-left: 5px solid #dc2626; border-radius: 6px; padding: 0.9rem 1.2rem; color: #991b1b; font-size: 0.95rem;">
+			<div style="font-weight: bold; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+				<i class="fa-solid fa-circle-exclamation" style="color: #dc2626;"></i> Formulář obsahuje chyby k opravě:
+			</div>
+			<ul style="margin: 0; padding-left: 1.4rem;">
+				<li n:foreach="$form->errors as $error">{$error}</li>
+			</ul>
+		</div>
+
 		{* ZÁKLADNÍ ÚDAJE (E-MAIL A HESLO) *}
 		<div style="display: flex; gap: 1rem; flex-wrap: wrap;">
 			<div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 5px;">

@@ -60,6 +60,12 @@ CREATE TABLE IF NOT EXISTS `council_members` (
   UNIQUE KEY `unique_member_per_unit` (`unit_id`, `person_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `unit_settings` (
+  `unit_id` INT PRIMARY KEY COMMENT 'ID jednotky',
+  `allow_custom_end_time` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '1 = povoleno zadavat cas konce hlasovani',
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `smtp_settings` (
   `unit_id` INT PRIMARY KEY COMMENT 'ID jednotky',
   `host` VARCHAR(100) NOT NULL,

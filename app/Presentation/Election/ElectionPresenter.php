@@ -305,6 +305,9 @@ final class ElectionPresenter extends BasePresenter
 	public function actionCreate(): void
 	{
 		$this->checkAdmin();
+		$userData = $this->skautisAuthManager->getUserData();
+		$unitSettings = $this->votingRepository->getUnitSettings((int)($userData['unitId'] ?? 0));
+		$this->template->allowCustomEndTime = (bool)($unitSettings->allow_custom_end_time ?? false);
 	}
 
 	public function actionDuplicate(int $id): void
@@ -313,6 +316,9 @@ final class ElectionPresenter extends BasePresenter
 
 		$userData = $this->skautisAuthManager->getUserData();
 		$unitId = (int)($userData['unitId'] ?? 0);
+		$unitSettings = $this->votingRepository->getUnitSettings($unitId);
+		$allowCustomEndTime = (bool)($unitSettings->allow_custom_end_time ?? false);
+		$this->template->allowCustomEndTime = $allowCustomEndTime;
 
 		$newResNum = $election->resolution_number . '-oprava';
 		if ($this->votingRepository->isResolutionNumberExists($unitId, $newResNum)) {
@@ -325,6 +331,7 @@ final class ElectionPresenter extends BasePresenter
 			'description' => $election->description,
 			'proposal_received_date' => $election->proposal_received_date ? $election->proposal_received_date->format('Y-m-d') : null,
 			'end_date' => (new \DateTime('+7 days'))->format('Y-m-d'),
+			'end_time' => $election->end_date ? $election->end_date->format('H:i') : '23:59',
 		]);
 
 		$this->template->isDuplicate = true;
@@ -341,12 +348,19 @@ final class ElectionPresenter extends BasePresenter
 			$this->redirect('show', $id);
 		}
 
+		$userData = $this->skautisAuthManager->getUserData();
+		$unitId = (int)($userData['unitId'] ?? 0);
+		$unitSettings = $this->votingRepository->getUnitSettings($unitId);
+		$allowCustomEndTime = (bool)($unitSettings->allow_custom_end_time ?? false);
+		$this->template->allowCustomEndTime = $allowCustomEndTime;
+
 		$this['electionForm']->setDefaults([
 			'resolution_number' => $election->resolution_number,
 			'title' => $election->title,
 			'description' => $election->description,
 			'proposal_received_date' => $election->proposal_received_date ? $election->proposal_received_date->format('Y-m-d') : null,
 			'end_date' => $election->end_date->format('Y-m-d'),
+			'end_time' => $election->end_date->format('H:i'),
 		]);
 		$this->template->id = $id;
 	}
@@ -397,6 +411,11 @@ final class ElectionPresenter extends BasePresenter
 	{
 		$form = new Form();
 
+		$userData = $this->skautisAuthManager->getUserData();
+		$unitId = (int)($userData['unitId'] ?? 0);
+		$unitSettings = $this->votingRepository->getUnitSettings($unitId);
+		$allowCustomEndTime = (bool)($unitSettings->allow_custom_end_time ?? false);
+
 		$form->addText('resolution_number', 'Číslo usnesení:')
 			->setRequired('Zadejte číslo usnesení.')
 			->addRule(function ($control) use ($form) {
@@ -419,19 +438,35 @@ final class ElectionPresenter extends BasePresenter
 
 		$todayStr = (new \DateTime())->format('Y-m-d');
 
-		$form->addText('end_date', 'Datum konce hlasování (do 23:59):')
+		$dateLabel = $allowCustomEndTime ? 'Datum konce hlasování:' : 'Datum konce hlasování (do 23:59):';
+		$form->addText('end_date', $dateLabel)
 			->setHtmlType('date')
 			->setHtmlAttribute('min', $todayStr)
-			->setRequired('Zadejte datum konce hlasování.')
-			->addRule(function ($control) {
-				$val = $control->getValue();
-				if (!$val) {
-					return true;
-				}
-				$endDate = new \DateTime($val);
-				$endDate->setTime(23, 59, 59);
-				return $endDate > new \DateTime();
-			}, 'Datum konce hlasování musí být v budoucnosti. Nelze zadat datum v minulosti.');
+			->setRequired('Zadejte datum konce hlasování.');
+
+		if ($allowCustomEndTime) {
+			$form->addText('end_time', 'Čas konce:')
+				->setHtmlType('time')
+				->setDefaultValue('23:59')
+				->setRequired('Zadejte čas konce hlasování.');
+		}
+
+		$form['end_date']->addRule(function ($control) use ($form, $allowCustomEndTime) {
+			$dateVal = trim((string)$control->getValue());
+			if (!$dateVal) {
+				return true;
+			}
+			$timeVal = ($allowCustomEndTime && isset($form['end_time'])) ? trim((string)$form['end_time']->getValue()) : '23:59';
+			if ($timeVal === '') {
+				$timeVal = '23:59';
+			}
+			try {
+				$endDateTime = new \DateTime($dateVal . ' ' . $timeVal);
+			} catch (\Throwable $e) {
+				return false;
+			}
+			return $endDateTime > new \DateTime();
+		}, 'Datum a čas konce hlasování musí být v budoucnosti. Nelze zadat termín v minulosti.');
 
 		$form->addSubmit('submit', 'Uložit hlasování');
 

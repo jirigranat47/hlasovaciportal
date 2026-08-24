@@ -2,10 +2,26 @@
 
 {block content}
 
-<div style="margin-bottom: 2rem;">
-	<a n:href="Home:default" style="color: var(--skaut-muted); text-decoration: none;">&larr; Zpět na přehled</a>
-	<h1 style="color: var(--skaut-blue); margin-top: 0.5rem;">Správa Členů Rady jednotky</h1>
-	<p style="color: var(--skaut-muted);">Zde spravujete seznam osob, které tvoří radu vaší jednotky. Pouze tito členové budou mít oprávnění hlasovat a uvidí aktivní hlasování.</p>
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+	<div>
+		<a n:href="Home:default" style="color: var(--skaut-muted); text-decoration: none;">&larr; Zpět na přehled</a>
+		<h1 style="color: var(--skaut-blue); margin-top: 0.5rem; margin-bottom: 0.2rem; display: flex; align-items: center; gap: 8px;">
+			<i class="fa-solid fa-users"></i> Správa Členů Rady jednotky
+		</h1>
+		<p style="color: var(--skaut-muted); margin: 0;">Zde spravujete seznam osob, které tvoří radu vaší jednotky. Pouze tito členové budou mít oprávnění hlasovat a uvidí aktivní hlasování.</p>
+	</div>
+
+	<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+		<a n:href="Council:settings" class="btn" style="background: #0284c7; color: white; display: inline-flex; align-items: center; gap: 6px;">
+			<i class="fa-solid fa-sliders"></i> Nastavení jednotky
+		</a>
+		<a n:href="Council:smtp" class="btn" style="background: #777; color: white; display: inline-flex; align-items: center; gap: 6px;">
+			<i class="fa-solid fa-envelope"></i> Nastavení SMTP
+		</a>
+		<a n:href="Council:audit" class="btn" style="background: #475569; color: white; display: inline-flex; align-items: center; gap: 6px;">
+			<i class="fa-solid fa-shield-halved"></i> Audit přihlášení
+		</a>
+	</div>
 </div>
 
 <div style="display: flex; gap: 2rem; flex-wrap: wrap;">

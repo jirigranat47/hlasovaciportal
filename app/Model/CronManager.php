@@ -89,7 +89,7 @@ class CronManager
 		$body .= "<div style=\"margin: 20px 0;\">";
 		foreach ($elections as $el) {
 			$link = rtrim($this->baseUrl, '/') . '/election/show/' . $el->id;
-			$endDateFormatted = $el->end_date ? $el->end_date->format('d. m. Y (23:59)') : 'neuvedeno';
+			$endDateFormatted = $el->end_date ? ($el->end_date->format('H:i') === '23:59' ? $el->end_date->format('d. m. Y (23:59)') : $el->end_date->format('d. m. Y H:i')) : 'neuvedeno';
 
 			$body .= "<div style=\"background: #f8fafc; border: 1px solid #cbd5e1; border-left: 5px solid #0055a5; padding: 14px 18px; border-radius: 6px; margin-bottom: 14px; display: block;\">";
 			$body .= "<div style=\"margin-bottom: 6px;\">";
@@ -247,9 +247,10 @@ class CronManager
 					$body .= "<div style=\"margin: 18px 0;\">";
 					foreach ($unvotedForMember as $el) {
 						$link = rtrim($this->baseUrl, '/') . '/election/show/' . $el->id;
+						$endDateFormatted = $el->end_date ? ($el->end_date->format('H:i') === '23:59' ? $el->end_date->format('d. m. Y (23:59)') : $el->end_date->format('d. m. Y H:i')) : 'neuvedeno';
 						$body .= "<div style=\"background: #fffbeb; border: 1px solid #fde68a; border-left: 4px solid #d97706; padding: 14px 16px; border-radius: 6px; margin-bottom: 14px; display: block;\">";
 						$body .= "<div style=\"font-weight: bold; color: #92400e; font-size: 1.05rem; margin-bottom: 6px;\">Usnesení č. " . htmlspecialchars($el->resolution_number) . ": " . htmlspecialchars($el->title) . "</div>";
-						$body .= "<div style=\"font-size: 0.85rem; color: #78350f; margin-bottom: 12px;\">Termín do: <strong>" . $el->end_date->format('d. m. Y (23:59)') . "</strong></div>";
+						$body .= "<div style=\"font-size: 0.85rem; color: #78350f; margin-bottom: 12px;\">Termín do: <strong>{$endDateFormatted}</strong></div>";
 						$body .= "<a href=\"{$link}\" style=\"display: inline-block; background: #d97706; color: #ffffff; text-decoration: none; padding: 7px 16px; border-radius: 4px; font-size: 0.85rem; font-weight: bold;\">Odevzdat hlas &rarr;</a>";
 						$body .= "</div>";
 					}

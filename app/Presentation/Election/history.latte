@@ -23,7 +23,7 @@
 				<span class="election-status status-active">● Probíhá</span>
 			{/if}
 			
-			<span style="color: var(--skaut-muted); font-size: 0.9rem;">| Konec hlasování: <strong>{$election->end_date|date:'d. m. Y (23:59)'}</strong></span>
+			<span style="color: var(--skaut-muted); font-size: 0.9rem;">| Konec hlasování: <strong>{if $election->end_date->format('H:i') === '23:59'}{$election->end_date|date:'d. m. Y (23:59)'}{else}{$election->end_date|date:'d. m. Y H:i'}{/if}</strong></span>
 			<span style="color: var(--skaut-muted); font-size: 0.9rem;">| Založeno: <strong>{$election->created_at|date:'d. m. Y H:i'}</strong></span>
 		</div>
 	</div>

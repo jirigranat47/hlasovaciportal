@@ -11,6 +11,16 @@
 <div class="election-card" style="max-width: 650px; margin: 0 auto 3rem auto; padding: 2rem;">
 	<form n:name="electionForm" style="display: flex; flex-direction: column; gap: 1.2rem;">
 		
+		{* ZOBRAZENÍ CHYB VALIDACE FORMULÁŘE *}
+		<div n:if="$form->hasErrors()" style="background: #fef2f2; border: 1px solid #fecaca; border-left: 5px solid #dc2626; border-radius: 6px; padding: 0.9rem 1.2rem; color: #991b1b; font-size: 0.95rem;">
+			<div style="font-weight: bold; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+				<i class="fa-solid fa-circle-exclamation" style="color: #dc2626;"></i> Formulář obsahuje chyby k opravě:
+			</div>
+			<ul style="margin: 0; padding-left: 1.4rem;">
+				<li n:foreach="$form->errors as $error">{$error}</li>
+			</ul>
+		</div>
+
 		<div style="display: flex; flex-direction: column; gap: 5px;">
 			<label n:name="resolution_number" style="font-weight: bold;">Číslo usnesení (musí být jedinečné v rámci jednotky):</label>
 			<input n:name="resolution_number" class="form-control" placeholder="např. 2026/01 nebo 12/2026-SR" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem;">
@@ -39,15 +49,22 @@
 		</div>
 
 		<div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-			<div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 5px;">
+			<div style="flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 5px;">
 				<label n:name="proposal_received_date" style="font-weight: bold;">Datum obdržení návrhu:</label>
 				<input n:name="proposal_received_date" class="form-control" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; width: 100%;">
 			</div>
 			
-			<div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 5px;">
-				<label n:name="end_date" style="font-weight: bold;">Datum konce hlasování (do 23:59):</label>
+			<div style="flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 5px;">
+				<label n:name="end_date" style="font-weight: bold;">{if !empty($allowCustomEndTime)}Datum konce hlasování:{else}Datum konce hlasování (do 23:59):{/if}</label>
 				<input n:name="end_date" class="form-control" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; width: 100%;">
 			</div>
+
+			{if !empty($allowCustomEndTime)}
+				<div style="width: 140px; min-width: 120px; display: flex; flex-direction: column; gap: 5px;">
+					<label n:name="end_time" style="font-weight: bold;">Čas konce:</label>
+					<input n:name="end_time" class="form-control" style="padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; width: 100%;">
+				</div>
+			{/if}
 		</div>
 
 		<button n:name="submit" class="btn" style="background: var(--skaut-yellow); color: #000; font-weight: bold; padding: 0.8rem; border: none; border-radius: 4px; cursor: pointer; font-size: 1.1rem; margin-top: 1rem;">Vytvořit návrh hlasování</button>
@@ -58,18 +75,70 @@
 document.addEventListener('DOMContentLoaded', function () {
 	const editor = document.getElementById('wysiwygEditor');
 	const hiddenField = document.getElementById('noteField');
-	if (!editor || !hiddenField) return;
-
-	if (hiddenField.value) {
+	if (editor && hiddenField && hiddenField.value) {
 		editor.innerHTML = hiddenField.value;
 	}
 
-	editor.addEventListener('input', syncField);
-	editor.addEventListener('blur', syncField);
+	if (editor) {
+		editor.addEventListener('input', syncField);
+		editor.addEventListener('blur', syncField);
+	}
 
-	const form = editor.closest('form');
+	const dateInput = document.querySelector('input[name="end_date"]');
+	const timeInput = document.querySelector('input[name="end_time"]');
+
+	function validateEndDateTime() {
+		if (!dateInput) return true;
+		const dateVal = dateInput.value;
+		if (!dateVal) {
+			dateInput.setCustomValidity('');
+			if (timeInput) timeInput.setCustomValidity('');
+			return true;
+		}
+
+		const timeVal = (timeInput && timeInput.value) ? timeInput.value : '23:59';
+		const endDateTime = new Date(dateVal + 'T' + timeVal + ':00');
+		const now = new Date();
+
+		if (isNaN(endDateTime.getTime()) || endDateTime <= now) {
+			const msg = 'Datum a čas konce hlasování musí být v budoucnosti. Nelze zadat termín v minulosti.';
+			if (timeInput) {
+				timeInput.setCustomValidity(msg);
+			} else {
+				dateInput.setCustomValidity(msg);
+			}
+			return false;
+		} else {
+			dateInput.setCustomValidity('');
+			if (timeInput) timeInput.setCustomValidity('');
+			return true;
+		}
+	}
+
+	if (dateInput) {
+		dateInput.addEventListener('change', validateEndDateTime);
+		dateInput.addEventListener('input', validateEndDateTime);
+	}
+	if (timeInput) {
+		timeInput.addEventListener('change', validateEndDateTime);
+		timeInput.addEventListener('input', validateEndDateTime);
+	}
+
+	const form = document.querySelector('form');
 	if (form) {
-		form.addEventListener('submit', syncField);
+		form.addEventListener('submit', function (e) {
+			syncField();
+			if (!validateEndDateTime()) {
+				e.preventDefault();
+				e.stopPropagation();
+				if (timeInput && timeInput.value) {
+					timeInput.reportValidity();
+				} else if (dateInput) {
+					dateInput.reportValidity();
+				}
+				return false;
+			}
+		});
 	}
 });
 

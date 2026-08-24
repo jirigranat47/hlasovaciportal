@@ -36,6 +36,9 @@
 				<a n:href="Council:default" class="btn" style="background: #555; color: white;" title="Správa členů Rady jednotky">
 					<i class="fa-solid fa-users btn-icon"></i><span class="btn-label"> Správa Rady</span>
 				</a>
+				<a n:href="Council:settings" class="btn" style="background: #0284c7; color: white;" title="Nastavení parametrů a pravidel jednotky">
+					<i class="fa-solid fa-sliders btn-icon"></i><span class="btn-label"> Nastavení jednotky</span>
+				</a>
 				<a n:href="Council:smtp" class="btn" style="background: #777; color: white;" title="Nastavení e-mailového serveru SMTP">
 					<i class="fa-solid fa-envelope btn-icon"></i><span class="btn-label"> Nastavení SMTP</span>
 				</a>
@@ -202,7 +205,7 @@
 							</div>
 							<h3 style="margin: 0; font-size: 1.15rem; line-height: 1.5;"><a n:href="Election:show, $el->id" style="color: var(--skaut-blue); text-decoration: none; font-weight: bold;">{$el->title}</a></h3>
 							<p style="color: var(--skaut-muted); margin: 5px 0 0 0; font-size: 0.9rem;">
-								Termín ukončení: <strong>{$el->end_date|date:'d. m. Y'} (23:59)</strong>
+								Termín ukončení: <strong>{if $el->end_date->format('H:i') === '23:59'}{$el->end_date|date:'d. m. Y'} (23:59){else}{$el->end_date|date:'d. m. Y H:i'}{/if}</strong>
 								{if $el->proposal_received_date}
 									| Návrh obdržen: <strong>{$el->proposal_received_date|date:'d. m. Y'}</strong>
 								{/if}
@@ -236,7 +239,7 @@
 							</div>
 							<h3 style="margin: 0; font-size: 1.15rem; line-height: 1.5; color: #555;">{$el->title}</h3>
 							<p style="color: var(--skaut-muted); margin: 5px 0 0 0; font-size: 0.9rem;">
-								Nastavený termín konce: <strong>{$el->end_date|date:'d. m. Y'} (23:59)</strong>
+								Nastavený termín konce: <strong>{if $el->end_date->format('H:i') === '23:59'}{$el->end_date|date:'d. m. Y'} (23:59){else}{$el->end_date|date:'d. m. Y H:i'}{/if}</strong>
 							</p>
 						</div>
 						<div style="display: flex; gap: 0.5rem; flex-shrink: 0; white-space: nowrap;">

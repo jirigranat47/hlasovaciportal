@@ -81,6 +81,20 @@ final class CouncilPresenter extends BasePresenter
 		}
 	}
 
+	public function actionSettings(): void
+	{
+		$userData = $this->skautisAuthManager->getUserData();
+		$unitId = (int)$userData['unitId'];
+		$this->template->userData = $userData;
+
+		$settings = $this->votingRepository->getUnitSettings($unitId);
+		if ($settings) {
+			$this['unitSettingsForm']->setDefaults([
+				'allow_custom_end_time' => (bool)$settings->allow_custom_end_time,
+			]);
+		}
+	}
+
 	public function actionAudit(int $page = 1, int $limit = 50, ?string $q = null): void
 	{
 		$userData = $this->skautisAuthManager->getUserData();
@@ -309,6 +323,33 @@ final class CouncilPresenter extends BasePresenter
 			}
 
 			$this->redirect('Home:default');
+		};
+
+		return $form;
+	}
+
+	protected function createComponentUnitSettingsForm(): Form
+	{
+		$form = new Form();
+
+		$form->addCheckbox('allow_custom_end_time', 'Povolit zadávání konkrétního času konce hlasování (např. 14:00, 18:00)')
+			->setDefaultValue(false);
+
+		$form->addSubmit('submit', '💾 Uložit nastavení jednotky');
+
+		$form->onSuccess[] = function (Form $form, array $values): void {
+			$userData = $this->skautisAuthManager->getUserData();
+			$unitId = (int)$userData['unitId'];
+
+			try {
+				$this->votingRepository->saveUnitSettings($unitId, $values);
+				$this->flashMessage('Nastavení jednotky bylo úspěšně uloženo.', 'success');
+			} catch (\Throwable $e) {
+				$this->flashMessage('Chyba při ukládání: ' . $e->getMessage(), 'danger');
+				return;
+			}
+
+			$this->redirect('this');
 		};
 
 		return $form;

@@ -591,18 +591,37 @@ class SkautisAuthManager
 	}
 
 	/**
-	 * Simuluje přihlášení pro vývoj a testování
+	 * Simuluje přihlášení pro vývoj a testování (výchozí jako administrátor / vedoucí střediska)
 	 */
-	public function simulateLogin(int $unitId, int $personId, string $personName, string $roleKey, string $roleName): void
-	{
+	public function simulateLogin(
+		int $unitId = 10001,
+		int $personId = 1,
+		string $personName = 'Admin Testovací',
+		string $roleKey = 'vedouciStredisko',
+		string $roleName = 'Vedoucí střediska',
+		string $unitName = 'Testovací středisko',
+		?array $roles = null
+	): void {
 		$this->session->token = 'mock_token';
 		$this->session->roleId = 12345;
 		$this->session->unitId = $unitId;
+		$this->session->unitName = $unitName;
 		$this->session->personId = $personId;
-		$this->session->userName = 'mock_user';
+		$this->session->userName = 'admin_mock';
 		$this->session->personName = $personName;
 		$this->session->roleKey = $roleKey;
 		$this->session->roleName = $roleName;
+		$this->session->allRoles = $roles ?? [
+			[
+				'ID' => 12345,
+				'ID_Role' => 12345,
+				'ID_Unit' => $unitId,
+				'Key' => $roleKey,
+				'Role' => $roleName,
+				'DisplayName' => $roleName,
+				'Unit' => $unitName,
+			]
+		];
 	}
 
 	/**

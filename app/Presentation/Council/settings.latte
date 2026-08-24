@@ -1,0 +1,65 @@
+{block title}Nastavení jednotky{/block}
+
+{block content}
+
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+	<div>
+		<a n:href="Home:default" style="color: var(--skaut-muted); text-decoration: none;">&larr; Zpět na přehled</a>
+		<h1 style="color: var(--skaut-blue); margin-top: 0.5rem; margin-bottom: 0.2rem; display: flex; align-items: center; gap: 8px;">
+			<i class="fa-solid fa-sliders"></i> Nastavení jednotky
+		</h1>
+		<p style="color: var(--skaut-muted); margin: 0;">
+			Jednotka: <strong>{$userData['unitName'] ?: $userData['unitId']}</strong> (ID: {$userData['unitId']})
+		</p>
+	</div>
+
+	<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+		<a n:href="Council:default" class="btn" style="background: #555; color: white; display: inline-flex; align-items: center; gap: 6px;">
+			<i class="fa-solid fa-users"></i> Správa Rady
+		</a>
+		<a n:href="Council:smtp" class="btn" style="background: #777; color: white; display: inline-flex; align-items: center; gap: 6px;">
+			<i class="fa-solid fa-envelope"></i> Nastavení SMTP
+		</a>
+		<a n:href="Council:audit" class="btn" style="background: #475569; color: white; display: inline-flex; align-items: center; gap: 6px;">
+			<i class="fa-solid fa-shield-halved"></i> Audit přihlášení
+		</a>
+	</div>
+</div>
+
+<div class="election-card" style="max-width: 720px; margin: 0 auto 3rem auto; padding: 2rem;">
+	<h2 style="color: var(--skaut-blue); margin-top: 0; margin-bottom: 1.2rem; font-size: 1.3rem;">
+		Pravidla a chování hlasování pro jednotku
+	</h2>
+
+	<form n:name="unitSettingsForm" style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+		{* VOLBA ČASU UKONČENÍ HLASOVÁNÍ *}
+		<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid var(--skaut-blue); border-radius: 8px; padding: 1.25rem;">
+			<div style="display: flex; align-items: flex-start; gap: 12px;">
+				<input n:name="allow_custom_end_time" id="allow_custom_end_time" style="width: 20px; height: 20px; margin-top: 3px; cursor: pointer;">
+				<label for="allow_custom_end_time" style="cursor: pointer;">
+					<strong style="color: #0f172a; font-size: 1.05rem; display: block; margin-bottom: 4px;">
+						Povolit zadávání konkrétního času konce hlasování
+					</strong>
+					<span style="color: #475569; font-size: 0.9rem; line-height: 1.5; display: block;">
+						Ve výchozím stavu všechna hlasování končí vždy o půlnoci ve <strong>23:59</strong> a formulář nabízí pouze výběr data.<br>
+						Pokud tuto volbu aktivujete, formulář pro vytvoření i úpravu hlasování umožní zadat přesnou hodinu a minutu (např. 14:00, 18:30 apod.).
+					</span>
+				</label>
+			</div>
+
+			<div style="margin-top: 1rem; padding-top: 0.8rem; border-top: 1px solid #cbd5e1; font-size: 0.85rem; color: #64748b;">
+				<strong style="color: #334155;">ℹ Jak funguje vyhodnocení výsledků:</strong><br>
+				Po vypršení stanoveného termínu (ať už během dne nebo o půlnoci) systém automaticky v nejbližším běhu plánovače (každých 15 minut) spočítá hlasy, uzavře usnesení a odešle členům rady e-mail s konečným výsledkem.
+			</div>
+		</div>
+
+		<div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
+			<button n:name="submit" class="btn" style="background: var(--skaut-yellow); color: #000; font-weight: bold; padding: 0.8rem 1.6rem; border: none; border-radius: 6px; cursor: pointer; font-size: 1.05rem; display: inline-flex; align-items: center; gap: 8px;">
+				<i class="fa-solid fa-floppy-disk"></i> Uložit nastavení jednotky
+			</button>
+		</div>
+
+	</form>
+</div>
+{/block}

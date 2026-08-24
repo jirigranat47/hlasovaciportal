@@ -66,12 +66,18 @@ final class SignPresenter extends BasePresenter
 	}
 
 	/**
-	 * Vývojový login pro simulaci uživatele
+	 * Vývojový login pro simulaci uživatele (výchozí jako administrátor / vedoucí střediska)
 	 */
-	public function actionDevLogin(int $unitId, int $personId, string $personName, string $roleKey = 'clened', string $roleName = 'Člen'): void
-	{
-		$this->skautisAuthManager->simulateLogin($unitId, $personId, $personName, $roleKey, $roleName);
-		$this->flashMessage("Simulované přihlášení jako $personName (Unit: $unitId, Person: $personId, Role: $roleKey)", 'success');
+	public function actionDevLogin(
+		int $unitId = 10001,
+		int $personId = 1,
+		string $personName = 'Admin Testovací',
+		string $roleKey = 'vedouciStredisko',
+		string $roleName = 'Vedoucí střediska',
+		string $unitName = 'Testovací středisko'
+	): void {
+		$this->skautisAuthManager->simulateLogin($unitId, $personId, $personName, $roleKey, $roleName, $unitName);
+		$this->flashMessage("Simulované přihlášení jako administrátor: $personName (Jednotka: $unitName #$unitId, Role: $roleName)", 'success');
 		$this->redirect('Home:default');
 	}
 }

@@ -157,6 +157,32 @@ class VotingRepository
 	}
 
 	/**
+	 * Získá obecné nastavení pro danou jednotku
+	 */
+	public function getUnitSettings(int $unitId): ?ActiveRow
+	{
+		return $this->database->table('unit_settings')->get($unitId);
+	}
+
+	/**
+	 * Uloží obecné nastavení pro jednotku
+	 */
+	public function saveUnitSettings(int $unitId, array $values): void
+	{
+		$row = $this->database->table('unit_settings')->get($unitId);
+		$data = [
+			'allow_custom_end_time' => !empty($values['allow_custom_end_time']) ? 1 : 0,
+		];
+
+		if ($row) {
+			$row->update($data);
+		} else {
+			$data['unit_id'] = $unitId;
+			$this->database->table('unit_settings')->insert($data);
+		}
+	}
+
+	/**
 	 * Získá název jednotky (z historie přihlášení uživatelů)
 	 */
 	public function getUnitName(int $unitId): ?string
@@ -355,7 +381,11 @@ class VotingRepository
 		$this->database->beginTransaction();
 		try {
 			$endDate = new \DateTime($values['end_date']);
-			$endDate->setTime(23, 59, 59);
+			if (!empty($values['end_time']) && preg_match('/^(\d{1,2}):(\d{2})$/', trim($values['end_time']), $m)) {
+				$endDate->setTime((int)$m[1], (int)$m[2], 0);
+			} elseif (!str_contains($values['end_date'], ' ') && !str_contains($values['end_date'], 'T')) {
+				$endDate->setTime(23, 59, 59);
+			}
 
 			$election = $this->database->table('elections')->insert([
 				'resolution_number' => trim($values['resolution_number']),
@@ -377,13 +407,14 @@ class VotingRepository
 			]);
 
 			// Auditní záznam
+			$formattedTime = $endDate->format('H:i') === '23:59' ? $endDate->format('d. m. Y (23:59)') : $endDate->format('d. m. Y H:i');
 			$this->logElectionAudit(
 				(int)$election->id,
 				$createdByPersonId,
 				$personName ?? "Osoba #$createdByPersonId",
 				$roleName,
 				'created_draft',
-				"Vytvořen návrh usnesení č. {$values['resolution_number']} (Draft). Termín hlasování nastaven do {$endDate->format('d. m. Y H:i')}."
+				"Vytvořen návrh usnesení č. {$values['resolution_number']} (Draft). Termín hlasování nastaven do {$formattedTime}."
 			);
 
 			$this->database->commit();
@@ -407,7 +438,11 @@ class VotingRepository
 		$election = $this->getElection($id);
 		if ($election && $election->status === 'draft') {
 			$endDate = new \DateTime($values['end_date']);
-			$endDate->setTime(23, 59, 59);
+			if (!empty($values['end_time']) && preg_match('/^(\d{1,2}):(\d{2})$/', trim($values['end_time']), $m)) {
+				$endDate->setTime((int)$m[1], (int)$m[2], 0);
+			} elseif (!str_contains($values['end_date'], ' ') && !str_contains($values['end_date'], 'T')) {
+				$endDate->setTime(23, 59, 59);
+			}
 
 			$changes = [];
 			if ($election->resolution_number !== trim($values['resolution_number'])) {
@@ -416,8 +451,9 @@ class VotingRepository
 			if ($election->title !== $values['title']) {
 				$changes[] = "text usnesení";
 			}
-			if ($election->end_date->format('Y-m-d') !== $endDate->format('Y-m-d')) {
-				$changes[] = "termín konce na " . $endDate->format('d. m. Y');
+			if ($election->end_date->format('Y-m-d H:i') !== $endDate->format('Y-m-d H:i')) {
+				$formattedTime = $endDate->format('H:i') === '23:59' ? $endDate->format('d. m. Y (23:59)') : $endDate->format('d. m. Y H:i');
+				$changes[] = "termín konce na " . $formattedTime;
 			}
 
 			$election->update([
