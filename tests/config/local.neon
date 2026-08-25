@@ -1,0 +1,4 @@
+database:
+    dsn: 'mysql:host=db;dbname=skautis_voting_test;charset=utf8mb4'
+    user: 'root'
+    password: 'root_secret_pass'

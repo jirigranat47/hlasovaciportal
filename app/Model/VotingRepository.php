@@ -429,7 +429,7 @@ class VotingRepository
 				'description' => $values['description'] ?? null,
 				'unit_id' => $unitId,
 				'status' => 'draft',
-				'proposal_received_date' => $values['proposal_received_date'] ? new \DateTime($values['proposal_received_date']) : null,
+				'proposal_received_date' => !empty($values['proposal_received_date']) ? new \DateTime($values['proposal_received_date']) : null,
 				'end_date' => $endDate,
 				'created_by_person_id' => $createdByPersonId,
 				'created_at' => new \DateTime(),
@@ -496,7 +496,7 @@ class VotingRepository
 				'resolution_number' => trim($values['resolution_number']),
 				'title' => $values['title'],
 				'description' => $values['description'] ?? null,
-				'proposal_received_date' => $values['proposal_received_date'] ? new \DateTime($values['proposal_received_date']) : null,
+				'proposal_received_date' => !empty($values['proposal_received_date']) ? new \DateTime($values['proposal_received_date']) : null,
 				'end_date' => $endDate,
 			]);
 

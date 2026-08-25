@@ -88,3 +88,31 @@ Aplikace využívá plánovač úloh pro:
 Cron je navržen tak, aby jej bylo možné bezpečně volat **každých 15 minut** (např. přes službu [cron-job.org](https://cron-job.org) nebo systémový Linux crontab).
 
 Kompletní návod k nastavení, tabulku časování a příklady konfigurace naleznete v dokumentu **[`CRON.md`](CRON.md)**.
+
+---
+
+## 🧪 Automatizované testy (Nette Tester)
+
+Aplikace využívá pro testování integrační testy postavené na **[Nette Tester](https://tester.nette.org/)** s oddělenou testovací databází.
+
+### ⚙ Příprava testovacího prostředí
+1. V databázovém serveru (MySQL) musí existovat testovací databáze (výchozí název `skautis_voting_test`) s naimportovanou strukturou ze souboru `sql/structure.sql`.
+2. V souboru `tests/config/local.neon` je nakonfigurováno připojení pro testy:
+   ```neon
+   database:
+       dsn: 'mysql:host=db;dbname=skautis_voting_test;charset=utf8mb4'
+       user: 'root'
+       password: 'root_secret_pass'
+   ```
+
+### ▶ Spuštění testů
+Testy se spouštějí uvnitř běžícího webového Docker kontejneru:
+```bash
+docker compose exec web composer test
+```
+*(případně `docker exec -t hlasovaciportal_web composer test`)*
+
+### ⚠️ Zásada pro další vývoj (Pravidlo testování)
+> **DŮLEŽITÉ:** Veškeré budoucí změny a nové funkce v aplikaci (zejména práce s databází, změny v `VotingRepository`, logika oprávnění, validace a pravidel hlasování) **musí být pokryty a ověřeny automatizovanými testy**.
+> Před commitem nebo nasazením do produkce musí vždy projít celá sada testů (`OK`).
+
