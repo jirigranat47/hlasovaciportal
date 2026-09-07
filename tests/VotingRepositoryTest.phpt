@@ -116,6 +116,59 @@ class VotingRepositoryTest extends BaseTestCase
 		Assert::notNull($userVote);
 		Assert::same($proOption->id, $userVote->option_id);
 	}
+
+	public function testUnnotifiedPublishedElectionsAndReminder(): void
+	{
+		$unitId = 99904;
+		$personId = 88803;
+
+		// 1. Vytvoření aktivního usnesení v budoucnu
+		$futureDate = (new \DateTime())->modify('+48 hours')->format('Y-m-d H:i:s');
+		$el = $this->repository->createElection(
+			values: [
+				'resolution_number' => '2/2027',
+				'title' => 'Test notifikací',
+				'end_date' => $futureDate,
+			],
+			unitId: $unitId,
+			createdByPersonId: $personId,
+			personName: 'Admin Notif'
+		);
+		$elId = (int)$el->id;
+		$this->repository->publishElection($elId, $personId, 'Admin Notif');
+
+		// Po publikaci musí být v seznamu neodeslaných
+		$unnotified = $this->repository->getUnnotifiedPublishedElections($unitId);
+		Assert::count(1, $unnotified);
+		Assert::same($elId, (int)$unnotified[0]->id);
+
+		// 2. Po odeslání upomínky se nastaví reminder_sent i notification_sent a tlačítko/výběr zmizí
+		$this->repository->markElectionsReminderSent([$elId]);
+		$reloaded = $this->repository->getElection($elId);
+		Assert::same(1, (int)$reloaded->reminder_sent);
+		Assert::same(1, (int)$reloaded->notification_sent);
+
+		$unnotifiedAfterReminder = $this->repository->getUnnotifiedPublishedElections($unitId);
+		Assert::count(0, $unnotifiedAfterReminder);
+
+		// 3. Usnesení s vypršeným termínem se také nenabízí
+		$pastDate = (new \DateTime())->modify('-2 hours')->format('Y-m-d H:i:s');
+		$elPast = $this->repository->createElection(
+			values: [
+				'resolution_number' => '3/2027',
+				'title' => 'Prošlé usnesení',
+				'end_date' => $pastDate,
+			],
+			unitId: $unitId,
+			createdByPersonId: $personId,
+			personName: 'Admin Notif'
+		);
+		$elPastId = (int)$elPast->id;
+		$this->repository->publishElection($elPastId, $personId, 'Admin Notif');
+
+		$unnotifiedPast = $this->repository->getUnnotifiedPublishedElections($unitId);
+		Assert::count(0, $unnotifiedPast);
+	}
 }
 
 (new VotingRepositoryTest($container))->run();

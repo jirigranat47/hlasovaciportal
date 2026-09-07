@@ -1017,10 +1017,13 @@ class VotingRepository
 	 */
 	public function getUnnotifiedPublishedElections(int $unitId): array
 	{
+		$now = new \DateTime();
 		return $this->database->table('elections')
 			->where('unit_id', $unitId)
 			->where('status', 'published')
 			->where('notification_sent', 0)
+			->where('reminder_sent', 0)
+			->where('end_date >', $now)
 			->order('created_at ASC')
 			->fetchAll();
 	}
@@ -1061,7 +1064,7 @@ class VotingRepository
 	}
 
 	/**
-	 * Označí usnesení jako upomenutá
+	 * Označí usnesení jako upomenutá (a pokud dosud nebyla odeslána prvotní výzva, označí i tu jako vyřízenou)
 	 */
 	public function markElectionsReminderSent(array $electionIds): void
 	{
@@ -1070,6 +1073,9 @@ class VotingRepository
 		}
 		$this->database->table('elections')
 			->where('id', $electionIds)
-			->update(['reminder_sent' => 1]);
+			->update([
+				'reminder_sent' => 1,
+				'notification_sent' => 1,
+			]);
 	}
 }

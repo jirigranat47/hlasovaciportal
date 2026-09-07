@@ -40,7 +40,9 @@ class CronManager
 		$query = $this->database->table('elections')
 			->where('unit_id', $unitId)
 			->where('status', 'published')
-			->where('notification_sent', 0);
+			->where('notification_sent', 0)
+			->where('reminder_sent', 0)
+			->where('end_date >', new \DateTime());
 
 		if (!empty($electionIds)) {
 			$query->where('id', $electionIds);
@@ -129,9 +131,12 @@ class CronManager
 			return 0;
 		}
 
+		$now = new \DateTime();
 		$unitIds = $this->database->table('elections')
 			->where('status', 'published')
 			->where('notification_sent', 0)
+			->where('reminder_sent', 0)
+			->where('end_date >', $now)
 			->select('DISTINCT unit_id')
 			->fetchPairs(null, 'unit_id');
 
