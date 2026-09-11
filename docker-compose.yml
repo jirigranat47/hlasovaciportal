@@ -6,7 +6,7 @@ services:
     container_name: hlasovaciportal_web
     restart: unless-stopped
     ports:
-      - "8000:80"
+      - "8089:80"
     volumes:
       - ./:/var/www/html
     environment:

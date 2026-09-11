@@ -72,6 +72,18 @@ try {
         }
     }
 
+    # Odstraneni vyvojovych a testovacich balicku z vendor (nette/tester)
+    $devVendorPaths = @(
+        (Join-Path $stagingPath "vendor\nette\tester"),
+        (Join-Path $stagingPath "vendor\bin\tester"),
+        (Join-Path $stagingPath "vendor\bin\tester.bat")
+    )
+    foreach ($devPath in $devVendorPaths) {
+        if (Test-Path $devPath) {
+            Remove-Item $devPath -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
     # 2. Slozka config (kopirujeme vse krome lokalniho dev local.neon)
     $configSrc = Join-Path $PSScriptRoot "config"
     $configDest = Join-Path $stagingPath "config"
@@ -136,7 +148,7 @@ try {
         
         # Ignorovat soubory, ktere by se nikdy nemely nahrat
         $transferOptions.FileMask = @"
-| .git/; .idea/; .vscode/; *.md; .gitignore; .gitattributes; deploy.ps1; deploy.bat; deploy-config.json; deploy-config.example.json; *.zip; *.log; Thumbs.db; .DS_Store; temp/cache/*
+| .git/; .idea/; .vscode/; tests/; vendor/nette/tester/; vendor/bin/tester*; *.md; .gitignore; .gitattributes; deploy.ps1; deploy.bat; deploy-config.json; deploy-config.example.json; *.zip; *.log; Thumbs.db; .DS_Store; temp/cache/*
 "@
 
         Write-Host "Synchronizuji soubory (nahravaji se pouze nove a zmenene soubory)..." -ForegroundColor Cyan

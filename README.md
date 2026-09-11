@@ -15,7 +15,7 @@ Aplikace pro online hlasování v prostředí Junák - český skaut, postavená
    ```
 
 3. **Prístup k aplikaci:**
-   * Webová aplikace: [http://localhost:8000](http://localhost:8000)
+   * Webová aplikace: [http://localhost:8089](http://localhost:8089)
    * Správce databáze Adminer: [http://localhost:8080](http://localhost:8080)
 
 ## 🔑 Konfigurace SkautISu
@@ -56,19 +56,19 @@ Při vyplňování žádosti o nové / produkční **AppID** na [ws.skautis.cz](
 Pro usnadnění lokálního vývoje bez nutnosti přihlašování přes reálný SkautIS můžete simulovat přihlášení různých rolí pomocí následujících URL adres:
 
 * **Zakladatel / Administrátor jednotky** (zakládá hlasování, není v radě):
-  [http://localhost:8000/sign/dev-login?unitId=123&personId=9999&personName=Admin+Zakladatel&roleKey=administrator&roleName=Administrátor](http://localhost:8000/sign/dev-login?unitId=123&personId=9999&personName=Admin+Zakladatel&roleKey=administrator&roleName=Administrátor)
+  [http://localhost:8089/sign/dev-login?unitId=123&personId=9999&personName=Admin+Zakladatel&roleKey=administrator&roleName=Administrátor](http://localhost:8089/sign/dev-login?unitId=123&personId=9999&personName=Admin+Zakladatel&roleKey=administrator&roleName=Administrátor)
 * **Člen rady č. 1 (Jan Novak)**:
-  [http://localhost:8000/sign/dev-login?unitId=123&personId=1001&personName=Jan+Novak&roleKey=clened&roleName=Člen](http://localhost:8000/sign/dev-login?unitId=123&personId=1001&personName=Jan+Novak&roleKey=clened&roleName=Člen)
+  [http://localhost:8089/sign/dev-login?unitId=123&personId=1001&personName=Jan+Novak&roleKey=clened&roleName=Člen](http://localhost:8089/sign/dev-login?unitId=123&personId=1001&personName=Jan+Novak&roleKey=clened&roleName=Člen)
 * **Člen rady č. 2 (Petr Svoboda)**:
-  [http://localhost:8000/sign/dev-login?unitId=123&personId=1002&personName=Petr+Svoboda&roleKey=clened&roleName=Člen](http://localhost:8000/sign/dev-login?unitId=123&personId=1002&personName=Petr+Svoboda&roleKey=clened&roleName=Člen)
+  [http://localhost:8089/sign/dev-login?unitId=123&personId=1002&personName=Petr+Svoboda&roleKey=clened&roleName=Člen](http://localhost:8089/sign/dev-login?unitId=123&personId=1002&personName=Petr+Svoboda&roleKey=clened&roleName=Člen)
 * **Člen rady č. 3 (Marie Dvořáková)**:
-  [http://localhost:8000/sign/dev-login?unitId=123&personId=1003&personName=Marie+Dvořáková&roleKey=clened&roleName=Člen](http://localhost:8000/sign/dev-login?unitId=123&personId=1003&personName=Marie+Dvo%C5%99%C3%A1kov%C3%A1&roleKey=clened&roleName=%C4%8Clen)
+  [http://localhost:8089/sign/dev-login?unitId=123&personId=1003&personName=Marie+Dvořáková&roleKey=clened&roleName=Člen](http://localhost:8089/sign/dev-login?unitId=123&personId=1003&personName=Marie+Dvo%C5%99%C3%A1kov%C3%A1&roleKey=clened&roleName=%C4%8Clen)
 * **Člen rady č. 4 (Tomáš Kučera)**:
-  [http://localhost:8000/sign/dev-login?unitId=123&personId=1004&personName=Tomáš+Kučera&roleKey=clened&roleName=Člen](http://localhost:8000/sign/dev-login?unitId=123&personId=1004&personName=Tom%C3%A1%C5%A1+Ku%C4%8Dera&roleKey=clened&roleName=%C4%8Clen)
+  [http://localhost:8089/sign/dev-login?unitId=123&personId=1004&personName=Tomáš+Kučera&roleKey=clened&roleName=Člen](http://localhost:8089/sign/dev-login?unitId=123&personId=1004&personName=Tom%C3%A1%C5%A1+Ku%C4%8Dera&roleKey=clened&roleName=%C4%8Clen)
 * **Člen rady č. 5 (Lucie Černá)**:
-  [http://localhost:8000/sign/dev-login?unitId=123&personId=1005&personName=Lucie+Černá&roleKey=clened&roleName=Člen](http://localhost:8000/sign/dev-login?unitId=123&personId=1005&personName=Lucie+%C4%8Cern%C3%A1&roleKey=clened&roleName=%C4%8Clen)
+  [http://localhost:8089/sign/dev-login?unitId=123&personId=1005&personName=Lucie+Černá&roleKey=clened&roleName=Člen](http://localhost:8089/sign/dev-login?unitId=123&personId=1005&personName=Lucie+%C4%8Cern%C3%A1&roleKey=clened&roleName=%C4%8Clen)
 * **Host / Běžný člen** (není v radě, nezaložil hlasování):
-  [http://localhost:8000/sign/dev-login?unitId=123&personId=5555&personName=Host+Skaut&roleKey=clened&roleName=Člen](http://localhost:8000/sign/dev-login?unitId=123&personId=5555&personName=Host+Skaut&roleKey=clened&roleName=Člen)
+  [http://localhost:8089/sign/dev-login?unitId=123&personId=5555&personName=Host+Skaut&roleKey=clened&roleName=Člen](http://localhost:8089/sign/dev-login?unitId=123&personId=5555&personName=Host+Skaut&roleKey=clened&roleName=Člen)
 
 ---
 

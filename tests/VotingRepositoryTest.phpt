@@ -138,7 +138,7 @@ class VotingRepositoryTest extends BaseTestCase
 		$this->repository->publishElection($elId, $personId, 'Admin Notif');
 
 		// Po publikaci musí být v seznamu neodeslaných
-		$unnotified = $this->repository->getUnnotifiedPublishedElections($unitId);
+		$unnotified = array_values($this->repository->getUnnotifiedPublishedElections($unitId));
 		Assert::count(1, $unnotified);
 		Assert::same($elId, (int)$unnotified[0]->id);
 

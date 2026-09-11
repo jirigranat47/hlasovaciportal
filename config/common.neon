@@ -3,10 +3,10 @@ php:
 
 parameters:
 	skautis:
-		appId: 'a3d42171-84fb-4f27-8ad6-d98c92a95c47' # Zadejte vaše přidělené AppID
+		appId: 'vložte-vaše-skautis-app-id' # Zadejte vaše přidělené AppID (ideálně v config/local.neon)
 		isTest: true # Pro vývoj na test-is.skaut.cz nechte true
 		debugRoles: false # Zapnout/vypnout Tracy barDump a logování načtených rolí
-	baseUrl: 'http://localhost:8000'
+	baseUrl: 'http://localhost:8089'
 	cron:
 		token: 'zmente_v_local_neon'
 	voting:
