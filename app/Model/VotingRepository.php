@@ -11,7 +11,7 @@ class VotingRepository
 {
 	public function __construct(
 		private Explorer $database,
-		private string $encryptionKey = 'skaut_hlasovaci_portal_default_secret_key_v1',
+		private string $encryptionKey,
 		private int $defaultMinVotingDurationHours = 48
 	) {}
 
