@@ -91,7 +91,7 @@
 		<div style="display: flex; gap: 1rem; flex-wrap: wrap;">
 			<div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 5px;">
 				<label n:name="from_email" style="font-weight: bold; font-size: 0.9rem;">E-mail odesílatele:</label>
-				<input n:name="from_email" id="smtp-from-email" class="form-control" placeholder="např. stredisko123@skaut.cz" style="padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 4px;">
+				<input n:name="from_email" id="smtp-from-email" class="form-control" placeholder="např. stredisko123@skaut.cz" style="padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 4px;" oninput="this.dataset.autoFilled = 'false'">
 			</div>
 			<div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 5px;">
 				<label n:name="from_name" style="font-weight: bold; font-size: 0.9rem;">Jméno odesílatele (v e-mailu):</label>

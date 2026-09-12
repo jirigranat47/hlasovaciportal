@@ -50,6 +50,10 @@ class MailSender
 				->setSubject($subject)
 				->setHtmlBody($bodyHtml);
 
+			if (!empty($smtp->from_email)) {
+				$message->addReplyTo($smtp->from_email, $smtp->from_name);
+			}
+
 			try {
 				$mailer->send($message);
 			} catch (\Throwable $e) {
@@ -91,10 +95,14 @@ class MailSender
 				->setSubject('🧪 Testovací e-mail z Hlasovacího Portálu')
 				->setHtmlBody('<h2>Test SMTP spojení byl úspěšný!</h2><p>Tento e-mail potvrzuje, že SMTP server vaší jednotky je správně nakonfigurován a připraven k odesílání notifikací.</p><p>Odesláno z: <strong>' . htmlspecialchars($fromEmail) . '</strong> (' . htmlspecialchars($fromName) . ')<br>Čas odeslání: ' . (new \DateTime())->format('d. m. Y H:i:s') . '</p>');
 
+			if (!empty($fromEmail)) {
+				$message->addReplyTo($fromEmail, $fromName);
+			}
+
 			$mailer->send($message);
 			return [
 				'success' => true,
-				'message' => "Testovací e-mail byl úspěšně odeslán na adresu {$recipientEmail}.",
+				'message' => "Testovací e-mail byl úspěšně odeslán z adresy '{$fromEmail}' ({$fromName}) na adresu '{$recipientEmail}'.",
 			];
 		} catch (\Throwable $e) {
 			$errorMsg = $e->getMessage();
