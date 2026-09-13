@@ -13,6 +13,14 @@ parameters:
 		minDurationHoursDefault: 48
 	security:
 		encryptionKey: 'zmente_v_local_neon'
+	smtp:
+		host: 'smtp.gmail.com'
+		port: 587
+		username: 'hlasovani@skaut.cz'
+		password: 'zmente_v_local_neon'
+		secure: 'tls'
+		fromEmail: 'hlasovani@skaut.cz'
+		defaultFromName: 'Skautský Hlasovací Portál'
 
 application:
 	errorPresenter: Error

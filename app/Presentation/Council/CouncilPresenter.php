@@ -91,15 +91,18 @@ final class CouncilPresenter extends BasePresenter
 		$defaultMinHours = $this->votingRepository->getDefaultMinVotingDuration();
 		$this->template->defaultMinHours = $defaultMinHours;
 
+		$defaultFromName = 'Rada ' . ($userData['unitName'] ?: 'jednotky');
 		if ($settings) {
 			$this['unitSettingsForm']->setDefaults([
 				'allow_custom_end_time' => (bool)$settings->allow_custom_end_time,
 				'min_voting_duration_hours' => $settings->min_voting_duration_hours ? (int)$settings->min_voting_duration_hours : $defaultMinHours,
+				'from_name' => $settings->from_name ?: $defaultFromName,
 			]);
 		} else {
 			$this['unitSettingsForm']->setDefaults([
 				'allow_custom_end_time' => false,
 				'min_voting_duration_hours' => $defaultMinHours,
+				'from_name' => $defaultFromName,
 			]);
 		}
 	}
@@ -350,20 +353,49 @@ final class CouncilPresenter extends BasePresenter
 			->setDefaultValue($defaultMinHours)
 			->addRule(Form::Min, 'Minimální povolená délka trvání hlasování je 1 hodina.', 1);
 
+		$form->addText('from_name', 'Jméno odesílatele e-mailů (v e-mailu):')
+			->setNullable();
+
+		$form->addText('test_recipient', 'Příjemce zkušebního e-mailu:')
+			->setNullable();
+
+		$form->addSubmit('test', '🧪 Odeslat zkušební e-mail');
 		$form->addSubmit('submit', '💾 Uložit nastavení jednotky');
 
 		$form->onSuccess[] = function (Form $form, array $values): void {
 			$userData = $this->skautisAuthManager->getUserData();
 			$unitId = (int)$userData['unitId'];
 
+			$isTest = $form->isSubmitted() === $form['test'];
+			$testRecipient = trim((string)($values['test_recipient'] ?? ''));
+			unset($values['test_recipient']);
+
 			try {
 				$this->votingRepository->saveUnitSettings($unitId, $values);
-				$this->flashMessage('Nastavení jednotky bylo úspěšně uloženo.', 'success');
 			} catch (\Throwable $e) {
 				$this->flashMessage('Chyba při ukládání: ' . $e->getMessage(), 'danger');
+				$this->redirect('this');
 				return;
 			}
 
+			if ($isTest) {
+				if (empty($testRecipient) || !filter_var($testRecipient, FILTER_VALIDATE_EMAIL)) {
+					$this->flashMessage('Nastavení bylo uloženo. Pro odeslání zkušebního e-mailu zadejte platnou e-mailovou adresu příjemce.', 'warning');
+					$this->redirect('this');
+					return;
+				}
+
+				$testResult = $this->mailSender->testUnitSmtp($unitId, $testRecipient);
+				if ($testResult['success']) {
+					$this->flashMessage($testResult['message'], 'success');
+				} else {
+					$this->flashMessage($testResult['message'], 'danger');
+				}
+				$this->redirect('this');
+				return;
+			}
+
+			$this->flashMessage('Nastavení jednotky bylo úspěšně uloženo.', 'success');
 			$this->redirect('this');
 		};
 

@@ -7,6 +7,8 @@ parameters:
 		token: 'vložte-silné-tajné-heslo-pro-cron'
 	security:
 		encryptionKey: 'vložte-vlastní-tajný-šifrovací-klíč-pro-smtp-hesla'
+	smtp:
+		password: 'vložte-16místné-heslo-aplikace-k-hlasovani@skaut.cz'
 
 database:
 	dsn: 'mysql:host=localhost;dbname=hlasovaciportal;charset=utf8mb4'

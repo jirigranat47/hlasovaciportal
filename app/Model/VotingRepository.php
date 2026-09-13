@@ -205,9 +205,12 @@ class VotingRepository
 	{
 		$row = $this->database->table('unit_settings')->get($unitId);
 		$minHours = !empty($values['min_voting_duration_hours']) ? max(1, (int)$values['min_voting_duration_hours']) : null;
+		$fromName = !empty($values['from_name']) ? trim((string)$values['from_name']) : null;
+
 		$data = [
 			'allow_custom_end_time' => !empty($values['allow_custom_end_time']) ? 1 : 0,
 			'min_voting_duration_hours' => $minHours,
+			'from_name' => $fromName,
 		];
 
 		if ($row) {
@@ -216,6 +219,24 @@ class VotingRepository
 			$data['unit_id'] = $unitId;
 			$this->database->table('unit_settings')->insert($data);
 		}
+	}
+
+	/**
+	 * Vrátí efektivní jméno odesílatele pro e-maily jednotky
+	 */
+	public function getUnitEmailFromName(int $unitId, ?string $fallbackUnitName = null): string
+	{
+		$settings = $this->getUnitSettings($unitId);
+		if ($settings && !empty($settings->from_name)) {
+			return (string)$settings->from_name;
+		}
+
+		$unitName = $fallbackUnitName ?: $this->getUnitName($unitId);
+		if (!empty($unitName)) {
+			return "Rada {$unitName}";
+		}
+
+		return 'Skautský Hlasovací Portál';
 	}
 
 	/**

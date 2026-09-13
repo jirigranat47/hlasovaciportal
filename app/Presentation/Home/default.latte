@@ -39,35 +39,12 @@
 				<a n:href="Council:settings" class="btn" style="background: #0284c7; color: white;" title="Nastavení parametrů a pravidel jednotky">
 					<i class="fa-solid fa-sliders btn-icon"></i><span class="btn-label"> Nastavení jednotky</span>
 				</a>
-				<a n:href="Council:smtp" class="btn" style="background: #777; color: white;" title="Nastavení e-mailového serveru SMTP">
-					<i class="fa-solid fa-envelope btn-icon"></i><span class="btn-label"> Nastavení SMTP</span>
-				</a>
 				<a n:href="Council:audit" class="btn" style="background: #475569; color: white;" title="Audit a historie přihlášení">
 					<i class="fa-solid fa-shield-halved btn-icon"></i><span class="btn-label"> Audit přihlášení</span>
 				</a>
 			</div>
 		{/if}
 	</div>
-
-	{* VAROVÁNÍ: NEKONFIGUROVANÉ SMTP PRO ODESÍLÁNÍ E-MAILŮ *}
-	{if $isAdmin && !$hasSmtpConfigured}
-		<div style="margin-bottom: 2rem; background: #fef2f2; border: 1px solid #fecaca; border-left: 6px solid #dc2626; border-radius: 8px; padding: 1.1rem 1.4rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; box-shadow: 0 2px 6px rgba(220, 38, 38, 0.08);">
-			<div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 260px;">
-				<i class="fa-solid fa-triangle-exclamation" style="font-size: 1.6rem; color: #dc2626;"></i>
-				<div>
-					<strong style="color: #991b1b; font-size: 1rem; display: block;">Jednotka nemá nastaveno SMTP odesílání e-mailů</strong>
-					<p style="margin: 3px 0 0 0; color: #b91c1c; font-size: 0.9rem; line-height: 1.4;">
-						Dokud nenastavíte e-mailovou schránku jednotky, <strong>nebudou členům rady odcházet e-maily</strong> s výzvami k hlasování, denními upomínkami ani výsledky usnesení.
-					</p>
-				</div>
-			</div>
-			<div style="flex-shrink: 0;">
-				<a n:href="Council:smtp" class="btn" style="background: #dc2626; color: white; font-weight: bold; padding: 0.65rem 1.2rem; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
-					<i class="fa-solid fa-envelope"></i> Nastavit SMTP odesílání &rarr;
-				</a>
-			</div>
-		</div>
-	{/if}
 
 	{* LIŠTA PRO ODESLÁNÍ HROMADNÉ VÝZVY K PUBLIKOVANÝM USNESENÍM *}
 	{if $isAdmin && $unnotifiedElectionsCount > 0}

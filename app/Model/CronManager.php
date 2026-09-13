@@ -53,11 +53,6 @@ class CronManager
 			return [];
 		}
 
-		$smtp = $this->votingRepository->getSmtpSettings($unitId);
-		if (!$smtp) {
-			return [];
-		}
-
 		$members = $this->votingRepository->getCouncilMembers($unitId);
 		$recipients = [];
 		foreach ($members as $m) {
@@ -70,9 +65,9 @@ class CronManager
 			return [];
 		}
 
-		// Zjistíme název jednotky z DB (historie přihlášení) nebo SMTP nastavení
+		// Zjistíme název jednotky z DB (historie přihlášení) nebo nastavení
 		$realUnitName = $this->votingRepository->getUnitName((int)$unitId);
-		$resolvedUnitName = $unitName ?: ($realUnitName ?: ($smtp->from_name ?: "jednotka #$unitId"));
+		$resolvedUnitName = $unitName ?: ($realUnitName ?: "jednotka #$unitId");
 
 		// Počet usnesení
 		$count = count($elections);
@@ -114,7 +109,7 @@ class CronManager
 		$body .= "</div></div>";
 
 		// Odeslání e-mailu
-		$this->mailSender->sendEmail($smtp, $recipients, $subject, $body);
+		$this->mailSender->sendEmail($unitId, $recipients, $subject, $body);
 
 		return array_keys($recipients);
 	}
@@ -201,18 +196,13 @@ class CronManager
 		$processedElectionsCount = 0;
 
 		foreach ($byUnit as $unitId => $unitElections) {
-			$smtp = $this->votingRepository->getSmtpSettings((int)$unitId);
-			if (!$smtp) {
-				continue;
-			}
-
 			$members = $this->votingRepository->getCouncilMembers((int)$unitId);
 			if (empty($members)) {
 				continue;
 			}
 
 			$realUnitName = $this->votingRepository->getUnitName((int)$unitId);
-			$unitName = $realUnitName ?: ($smtp->from_name ?: "jednotka #$unitId");
+			$unitName = $realUnitName ?: "jednotka #$unitId";
 
 			$remindedMembersPerElection = [];
 
@@ -270,7 +260,7 @@ class CronManager
 					$body .= "<p style=\"font-size: 0.8rem; color: #94a3b8; margin: 0; text-align: center;\">Toto je automatická upomínka z Hlasovacího Portálu.</p>";
 					$body .= "</div></div>";
 
-					$this->mailSender->sendEmail($smtp, [$m->email => $m->full_name], $subject, $body);
+					$this->mailSender->sendEmail((int)$unitId, [$m->email => $m->full_name], $subject, $body);
 				}
 			}
 
@@ -325,11 +315,6 @@ class CronManager
 		$totalProcessed = 0;
 
 		foreach ($byUnit as $unitId => $unitElections) {
-			$smtp = $this->votingRepository->getSmtpSettings((int)$unitId);
-			if (!$smtp) {
-				continue;
-			}
-
 			$members = $this->votingRepository->getCouncilMembers((int)$unitId);
 			$recipients = [];
 			foreach ($members as $m) {
@@ -344,7 +329,7 @@ class CronManager
 
 			$totalMembers = count($members);
 			$realUnitName = $this->votingRepository->getUnitName((int)$unitId);
-			$unitName = $realUnitName ?: ($smtp->from_name ?: "jednotka #$unitId");
+			$unitName = $realUnitName ?: "jednotka #$unitId";
 			$count = count($unitElections);
 
 			$subject = "Výsledky hlasování rady – {$unitName}";
@@ -436,7 +421,7 @@ class CronManager
 			$body .= "<p style=\"font-size: 0.8rem; color: #94a3b8; margin: 0; text-align: center;\">Toto je automatické vyhodnocení výsledků z Hlasovacího Portálu.</p>";
 			$body .= "</div></div>";
 
-			$this->mailSender->sendEmail($smtp, $recipients, $subject, $body);
+			$this->mailSender->sendEmail((int)$unitId, $recipients, $subject, $body);
 		}
 
 		return $totalProcessed;
@@ -448,11 +433,6 @@ class CronManager
 	 */
 	public function sendCancellationNotification(ActiveRow $election, string $reason): array
 	{
-		$smtp = $this->votingRepository->getSmtpSettings($election->unit_id);
-		if (!$smtp) {
-			return [];
-		}
-
 		$members = $this->votingRepository->getCouncilMembers($election->unit_id);
 		$recipients = [];
 		foreach ($members as $m) {
@@ -480,7 +460,7 @@ class CronManager
 		$body .= "<p>Záznam o stornovaném hlasování naleznete zde: <a href=\"" . $link . "\">" . $link . "</a></p>";
 		$body .= "<hr><p>Toto je automatický e-mail z Hlasovacího Portálu.</p>";
 
-		$this->mailSender->sendEmail($smtp, $recipients, $subject, $body);
+		$this->mailSender->sendEmail((int)$election->unit_id, $recipients, $subject, $body);
 
 		return array_keys($recipients);
 	}

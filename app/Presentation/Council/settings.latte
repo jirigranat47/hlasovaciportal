@@ -17,9 +17,6 @@
 		<a n:href="Council:default" class="btn" style="background: #555; color: white; display: inline-flex; align-items: center; gap: 6px;">
 			<i class="fa-solid fa-users"></i> Správa Rady
 		</a>
-		<a n:href="Council:smtp" class="btn" style="background: #777; color: white; display: inline-flex; align-items: center; gap: 6px;">
-			<i class="fa-solid fa-envelope"></i> Nastavení SMTP
-		</a>
 		<a n:href="Council:audit" class="btn" style="background: #475569; color: white; display: inline-flex; align-items: center; gap: 6px;">
 			<i class="fa-solid fa-shield-halved"></i> Audit přihlášení
 		</a>
@@ -41,6 +38,19 @@
 			<ul style="margin: 0; padding-left: 1.4rem;">
 				<li n:foreach="$form->errors as $error">{$error}</li>
 			</ul>
+		</div>
+
+		{* JMÉNO ODESÍLATELE E-MAILŮ *}
+		<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid var(--skaut-blue); border-radius: 8px; padding: 1.25rem;">
+			<label n:name="from_name" style="cursor: pointer; display: block;">
+				<strong style="color: #0f172a; font-size: 1.05rem; display: block; margin-bottom: 4px;">
+					✉️ Jméno odesílatele v e-mailu
+				</strong>
+				<span style="color: #475569; font-size: 0.9rem; line-height: 1.5; display: block; margin-bottom: 0.8rem;">
+					Notifikace jsou centrálně odesílány z účtu <strong>hlasovani@skaut.cz</strong>. Zde si můžete nastavit vlastní zobrazované jméno odesílatele, pod kterým členové rady e-maily uvidí.
+				</span>
+			</label>
+			<input n:name="from_name" class="form-control" placeholder="např. Rada {$userData['unitName'] ?: 'střediska'}" style="padding: 0.6rem 0.8rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 1rem; width: 100%; max-width: 450px;">
 		</div>
 
 		{* MINIMÁLNÍ DOBA TRVÁNÍ HLASOVÁNÍ *}
@@ -78,6 +88,22 @@
 				<strong style="color: #334155;">ℹ Jak funguje vyhodnocení výsledků:</strong><br>
 				Po vypršení stanoveného termínu (ať už během dne nebo o půlnoci) systém automaticky v nejbližším běhu plánovače (každých 15 minut) spočítá hlasy, uzavře usnesení a odešle členům rady e-mail s konečným výsledkem.
 			</div>
+		</div>
+
+		{* TESTOVACÍ ODESLÁNÍ E-MAILU *}
+		<div style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; padding: 1.1rem 1.25rem;">
+			<label n:name="test_recipient" style="font-weight: bold; font-size: 0.95rem; color: #334155; display: block; margin-bottom: 0.5rem;">
+				🧪 Otestovat odesílání e-mailů:
+			</label>
+			<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+				<input n:name="test_recipient" class="form-control" placeholder="Zadejte váš e-mail pro zkušební zprávu" style="flex: 1; min-width: 250px; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+				<button n:name="test" class="btn" style="background: #0284c7; color: white; font-weight: bold; padding: 0.6rem 1.2rem; border: none; border-radius: 6px; cursor: pointer;">
+					🧪 Odeslat test
+				</button>
+			</div>
+			<small style="color: #64748b; font-size: 0.82rem; margin-top: 4px; display: block;">
+				Odešle zkušební e-mail přes centrální účet hlasovani@skaut.cz s výše uvedeným jménem odesílatele.
+			</small>
 		</div>
 
 		<div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
