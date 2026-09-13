@@ -72,6 +72,29 @@ Pro usnadnění lokálního vývoje bez nutnosti přihlašování přes reálný
 
 ---
 
+## ✉️ E-mailové notifikace a SMTP
+
+Aplikace rozesílá výzvy k zahájení hlasování, denní upomínky pro nehlasující členy a vyhodnocení výsledků po uzavření usnesení.
+
+### 🌐 Centrální odesílání (`hlasovani@skaut.cz`)
+* Všechny notifikace jsou pro celou aplikaci odesílány **centrálně z oficiálního účtu `hlasovani@skaut.cz`** (Google Workspace).
+* **Nulová konfigurace pro střediska:** Běžní administrátoři jednotek nemusí nastavovat žádné SMTP servery, porty, SPF/DKIM záznamy ani generovat hesla aplikací – systém funguje ihned po přihlášení.
+* **Vlastní jméno odesílatele:** V sekci **Nastavení jednotky** si každé středisko může upravit pole *Jméno odesílatele v e-mailu* (např. *Rada 1. střediska Kostelec*). Členům rady tak e-maily dorazí s hlavičkou jejich střediska.
+* **Konfigurace serveru:** Technické parametry SMTP jsou nastaveny v `config/common.neon` a 16místné heslo aplikace pro účet `hlasovani@skaut.cz` se zadává v `config/local.neon`:
+  ```neon
+  parameters:
+  	smtp:
+  		password: 'vložte-16místné-heslo-aplikace-k-hlasovani@skaut.cz'
+  ```
+
+### 🔮 Plán do budoucna (Volitelné vlastní SMTP jednotky)
+Do budoucna je připravena možnost přepínání mezi dvěma režimy:
+1. **Globální nastavení (výchozí):** Využití centrálního účtu `hlasovani@skaut.cz`.
+2. **Vlastní SMTP jednotky:** Možnost, aby si konkrétní středisko v administraci zapnulo a nakonfigurovalo vlastní poštovní server (vlastní doménu, Seznam, Google Workspace střediska apod.).
+> **Poznámka:** Kompletní databázová struktura (tabulka `smtp_settings`), šifrování hesel pomocí AES-256 i formulářové komponenty pro individuální SMTP zůstávají v kódu zachovány a budou moci být v budoucnu jednoduše znovu zpřístupněny jako volitelná volba v nastavení jednotky.
+
+---
+
 ## 🔒 Bezpečnost a integrita dat
 
 Podrobná bezpečnostní analýza a argumentace ohledně ochrany proti manipulaci s hlasy, důvěryhodnosti databázových záznamů a izolace jednotek je zpracována v samostatném dokumentu [`ANALYZA-BEZPECNOSTI.md`](ANALYZA-BEZPECNOSTI.md).
