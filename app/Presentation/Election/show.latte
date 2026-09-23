@@ -24,7 +24,7 @@
 				<span style="color: var(--skaut-muted); font-size: 0.9rem;">| Návrh obdržen: <strong>{$election->proposal_received_date|date:'d. m. Y'}</strong></span>
 			{/if}
 			<span style="color: var(--skaut-muted); font-size: 0.9rem;">| Konec hlasování: <strong>{if $election->end_date->format('H:i') === '23:59'}{$election->end_date|date:'d. m. Y'} (23:59){else}{$election->end_date|date:'d. m. Y H:i'}{/if}</strong></span>
-			{if !$isClosed}
+			{if !$isClosed && $election->status === 'published'}
 				<span style="color: var(--skaut-muted); font-size: 0.9rem;" id="countdownContainer" data-end-date="{$election->end_date|date:'Y-m-d\TH:i:s'}">
 					| Konec hlasování za: <strong style="color: var(--skaut-blue);" id="countdownTimer">...</strong>
 				</span>
@@ -117,6 +117,11 @@
 					<i class="fa-solid fa-circle-info"></i> Návrh hlasování (Draft)
 				</strong>
 				<p style="margin: 2px 0 0 0; color: #612500; font-size: 0.9rem;">Toto hlasování zatím nebylo publikováno a je viditelné pouze pro správce.</p>
+				{if $election->end_date < new \DateTime()}
+					<p style="margin: 6px 0 0 0; color: #dc3545; font-size: 0.9rem; font-weight: bold; display: flex; align-items: center; gap: 6px;">
+						<i class="fa-solid fa-triangle-exclamation"></i> Nastavený termín konce hlasování již vypršel ({$election->end_date|date:'d. m. Y H:i'}). Před publikováním je nutné termín upravit.
+					</p>
+				{/if}
 			</div>
 		{/if}
 
@@ -172,8 +177,8 @@
 			</div>
 		{/if}
 
-		{* VYHODNOCENÍ - Zobrazí se pokud je hlasování ukončeno (a nebylo stornováno) *}
-		{if $isClosed && $election->status !== 'cancelled'}
+		{* VYHODNOCENÍ - Zobrazí se pokud je hlasování ukončeno (a nebylo stornováno a není návrh) *}
+		{if $isClosed && !in_array($election->status, ['cancelled', 'draft'], true)}
 			<div class="election-card" style="padding: 0; overflow: hidden; border: 2px solid {if $isAdopted}#28a745{else}#dc3545{/if};">
 				<div style="background: {if $isAdopted}#28a745{else}#dc3545{/if}; color: white; padding: 1rem 1.5rem; font-weight: bold; font-size: 1.3rem; display: flex; align-items: center; gap: 10px;">
 					{if $isAdopted}
@@ -195,7 +200,8 @@
 		{/if}
 	</div>
 
-	{* PRAVÝ PANEL - STATISTIKY A VÝSLEDKY *}
+	{* PRAVÝ PANEL - STATISTIKY A VÝSLEDKY (pouze pro publikovaná/ukončená hlasování) *}
+	{if $election->status !== 'draft'}
 	<div class="election-detail-sidebar">
 		
 		{* AGREGAVANÉ VÝSLEDKY / STATISTIKA *}
@@ -278,9 +284,10 @@
 			</div>
 		{/if}
 	</div>
+	{/if}
 </div>
 
-{if !$isClosed}
+{if !$isClosed && $election->status === 'published'}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 	const container = document.getElementById('countdownContainer');

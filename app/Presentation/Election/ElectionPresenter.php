@@ -93,7 +93,7 @@ final class ElectionPresenter extends BasePresenter
 		$isUnitAdmin = $isAdmin && (int)$election->unit_id === $unitId;
 		$isUnitCouncilMember = $isCouncilMember && (int)$election->unit_id === $unitId;
 		$now = new \DateTime();
-		$isClosed = ($election->end_date <= $now || in_array($election->status, ['cancelled', 'adopted', 'rejected'], true));
+		$isClosed = ($election->status !== 'draft') && ($election->end_date <= $now || in_array($election->status, ['cancelled', 'adopted', 'rejected'], true));
 
 		// 1. Usnesení rozpracovaná (Draft) vidí POUZE administrátor jednotky
 		if ($election->status === 'draft') {
@@ -146,7 +146,7 @@ final class ElectionPresenter extends BasePresenter
 		$this->checkElectionAccess($election, $personId, $unitId, $isAdmin, $isCouncilMember);
 
 		$now = new \DateTime();
-		$isClosed = ($election->end_date <= $now || in_array($election->status, ['cancelled', 'adopted', 'rejected'], true));
+		$isClosed = ($election->status !== 'draft') && ($election->end_date <= $now || in_array($election->status, ['cancelled', 'adopted', 'rejected'], true));
 
 		$options = $this->votingRepository->getOptions($id);
 		$userVote = $this->votingRepository->getUserVote($id, $personId);
@@ -154,7 +154,7 @@ final class ElectionPresenter extends BasePresenter
 		$hasVoted = ($userVote !== null);
 		$canVote = $isCouncilMember && !$isClosed && $election->status === 'published';
 		$canRevertToDraft = $isAdmin && $this->votingRepository->canRevertToDraft($id);
-		$showVoterList = $isAdmin || $isCouncilMember;
+		$showVoterList = ($isAdmin || $isCouncilMember) && $election->status !== 'draft';
 
 		$this->template->election = $election;
 		$this->template->options = $options;
@@ -259,7 +259,7 @@ final class ElectionPresenter extends BasePresenter
 		$this->checkElectionAccess($election, $personId, $unitId, $isAdmin, $isCouncilMember);
 
 		$now = new \DateTime();
-		$isClosed = ($election->end_date <= $now || in_array($election->status, ['cancelled', 'adopted', 'rejected'], true));
+		$isClosed = ($election->status !== 'draft') && ($election->end_date <= $now || in_array($election->status, ['cancelled', 'adopted', 'rejected'], true));
 
 		$this->template->election = $election;
 		$this->template->isClosed = $isClosed;

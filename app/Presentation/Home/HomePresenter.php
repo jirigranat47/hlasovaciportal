@@ -163,6 +163,7 @@ final class HomePresenter extends BasePresenter
 			fputcsv($output, [
 				'Číslo usnesení',
 				'Znění usnesení',
+				'Výsledek hlasování',
 				'Doplňující informace / Poznámka',
 				'Výsledek / Stav',
 				'Datum doručení návrhu',
@@ -186,9 +187,12 @@ final class HomePresenter extends BasePresenter
 					$endDateFormatted = $item['end_date']->format('d. m. Y');
 				}
 
+				$votesSummary = "Pro: {$item['pro']}, Proti: {$item['against']}, Zdržel: {$item['abstain']}";
+
 				fputcsv($output, [
 					$item['resolution_number'],
 					$item['title'],
+					$votesSummary,
 					$cleanDescription,
 					$item['statusLabel'],
 					$item['proposal_received_date'] ? $item['proposal_received_date']->format('d. m. Y') : '',

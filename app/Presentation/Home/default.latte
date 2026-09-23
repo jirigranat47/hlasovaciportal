@@ -343,6 +343,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	if (!periodSelect || items.length === 0) return;
 
+	// Načtení uloženého období ze session / local storage
+	try {
+		const savedPeriod = sessionStorage.getItem('closedPeriodSelect') || localStorage.getItem('closedPeriodSelect');
+		if (savedPeriod && ['1m', '3m', '1y', 'all'].includes(savedPeriod)) {
+			periodSelect.value = savedPeriod;
+		}
+	} catch (e) {}
+
 	function filterElections() {
 		const period = periodSelect.value;
 		const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
@@ -396,12 +404,25 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 
 	window.resetClosedFilter = function () {
-		if (periodSelect) periodSelect.value = 'all';
+		if (periodSelect) {
+			periodSelect.value = 'all';
+			try {
+				sessionStorage.setItem('closedPeriodSelect', 'all');
+				localStorage.setItem('closedPeriodSelect', 'all');
+			} catch (e) {}
+		}
 		if (searchInput) searchInput.value = '';
 		filterElections();
 	};
 
-	periodSelect.addEventListener('change', filterElections);
+	periodSelect.addEventListener('change', function () {
+		try {
+			sessionStorage.setItem('closedPeriodSelect', periodSelect.value);
+			localStorage.setItem('closedPeriodSelect', periodSelect.value);
+		} catch (e) {}
+		filterElections();
+	});
+
 	if (searchInput) {
 		searchInput.addEventListener('input', filterElections);
 	}
