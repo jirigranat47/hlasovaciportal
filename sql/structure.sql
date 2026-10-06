@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `skautis_person_id` INT NOT NULL UNIQUE,
   `full_name` VARCHAR(150) NOT NULL,
   `unit_name` VARCHAR(150) NULL,
+  `custom_email` VARCHAR(150) NULL COMMENT 'Vlastní e-mailová adresa od uživatele',
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

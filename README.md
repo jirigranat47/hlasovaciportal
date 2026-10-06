@@ -56,7 +56,7 @@ Při vyplňování žádosti o nové / produkční **AppID** na [ws.skautis.cz](
 Pro usnadnění lokálního vývoje bez nutnosti přihlašování přes reálný SkautIS můžete simulovat přihlášení různých rolí pomocí následujících URL adres:
 
 * **Zakladatel / Administrátor jednotky** (zakládá hlasování, není v radě):
-  [http://localhost:8089/sign/dev-login?unitId=123&personId=9999&personName=Admin+Zakladatel&roleKey=administrator&roleName=Administrátor](http://localhost:8089/sign/dev-login?unitId=123&personId=9999&personName=Admin+Zakladatel&roleKey=administrator&roleName=Administrátor)
+  [http://localhost:8089/sign/dev-login?unitId=123&personId=9999&personName=Admin+Zakladatel&roleKey=vedouciStredisko&roleName=Administrátor](http://localhost:8089/sign/dev-login?unitId=123&personId=9999&personName=Admin+Zakladatel&roleKey=vedouciStredisko&roleName=Administrátor)
 * **Člen rady č. 1 (Jan Novak)**:
   [http://localhost:8089/sign/dev-login?unitId=123&personId=1001&personName=Jan+Novak&roleKey=clened&roleName=Člen](http://localhost:8089/sign/dev-login?unitId=123&personId=1001&personName=Jan+Novak&roleKey=clened&roleName=Člen)
 * **Člen rady č. 2 (Petr Svoboda)**:
@@ -72,7 +72,14 @@ Pro usnadnění lokálního vývoje bez nutnosti přihlašování přes reálný
 
 ---
 
-## ✉️ E-mailové notifikace a SMTP
+## ✉️ E-mailové notifikace, SMTP a Nastavení E-mailu
+
+V aplikaci existují dva způsoby posílání e-mailů a možnost individuálního nastavení adres:
+
+1. **Vlastní e-mail uživatele**:
+   Po přihlášení do aplikace může každý uživatel kliknout na své jméno nebo na ikonku "Nastavení" v pravém horním rohu. Zde si může prohlédnout e-mail, který byl načten ze SkautISu. Pokud mu tento e-mail nevyhovuje, může si nastavit **vlastní e-mailovou adresu**, na kterou mu budou chodit notifikace, a může si odeslat zkušební testovací zprávu.
+
+2. **Centrální systémový účet** (`config/local.neon`):
 
 Aplikace rozesílá výzvy k zahájení hlasování, denní upomínky pro nehlasující členy a vyhodnocení výsledků po uzavření usnesení.
 

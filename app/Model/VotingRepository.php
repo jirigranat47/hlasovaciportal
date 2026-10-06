@@ -51,10 +51,31 @@ class VotingRepository
 	 */
 	public function getCouncilMembers(int $unitId): array
 	{
-		return $this->database->table('council_members')
+		$members = $this->database->table('council_members')
 			->where('unit_id', $unitId)
 			->order('full_name ASC')
 			->fetchAll();
+			
+		$userIds = [];
+		foreach ($members as $m) {
+			$userIds[] = $m->person_id;
+		}
+		
+		$users = [];
+		if (!empty($userIds)) {
+			$users = $this->database->table('users')->where('skautis_person_id', $userIds)->fetchPairs('skautis_person_id', 'custom_email');
+		}
+
+		$result = [];
+		foreach ($members as $m) {
+			$item = (object) $m->toArray();
+			if (!empty($users[$item->person_id])) {
+				$item->email = $users[$item->person_id];
+			}
+			$result[] = $item;
+		}
+		
+		return $result;
 	}
 
 	/**
@@ -1031,6 +1052,29 @@ class VotingRepository
 	public function getUserByPersonId(int $personId): ?ActiveRow
 	{
 		return $this->database->table('users')->where('skautis_person_id', $personId)->fetch();
+	}
+
+	/**
+	 * Uloží vlastní e-mail uživatele a zaktualizuje záznam uživatele
+	 */
+	public function saveUserCustomEmail(int $personId, string $fullName, ?string $unitName, ?string $email): void
+	{
+		$row = $this->getUserByPersonId($personId);
+		if ($row) {
+			$row->update([
+				'full_name' => $fullName,
+				'unit_name' => $unitName,
+				'custom_email' => $email,
+			]);
+		} else {
+			$this->database->table('users')->insert([
+				'skautis_person_id' => $personId,
+				'full_name' => $fullName,
+				'unit_name' => $unitName,
+				'custom_email' => $email,
+				'created_at' => new \DateTime(),
+			]);
+		}
 	}
 
 	/**

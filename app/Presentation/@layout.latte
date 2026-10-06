@@ -35,10 +35,11 @@
 				{/if}
 
 				{if $isLoggedIn}
-					<div class="user-info" title="Přihlášený uživatel">
+					<a n:href="Profile:settings" class="user-info" title="Přihlášený uživatel (Nastavení profilu)" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px;">
 						<span class="user-icon"><i class="fa-solid fa-user"></i></span>
-						<span class="user-name"><strong>{$userData['personName']}</strong></span>
-					</div>
+						<span class="user-name" style="text-decoration: underline;"><strong>{$userData['personName']}</strong></span>
+					</a>
+
 
 					<a n:href="Help:default" class="btn btn-header-icon btn-help" title="Nápověda a pravidla hlasování">
 						<i class="fa-solid fa-circle-question btn-icon"></i>
