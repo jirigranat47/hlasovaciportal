@@ -48,7 +48,7 @@ final class CronPresenter extends Presenter
 			if (count($columns) === 0) {
 				$this->connection->query("
 					ALTER TABLE `users`
-					ADD COLUMN `custom_email` VARCHAR(150) NULL DEFAULT NULL COMMENT 'Vlastní e-mail nastavený uživatelem' AFTER `email`
+					ADD COLUMN `custom_email` VARCHAR(150) NULL DEFAULT NULL COMMENT 'Vlastní e-mail nastavený uživatelem' AFTER `unit_name`
 				");
 				$message .= "OK: Sloupec custom_email byl úspěšně přidán do tabulky users.\n";
 			} else {
