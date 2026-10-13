@@ -34,7 +34,7 @@ final class CouncilPresenter extends BasePresenter
 		}
 	}
 
-	public function actionDefault(): void
+	public function actionDefault(bool $forceRefresh = false): void
 	{
 		$userData = $this->skautisAuthManager->getUserData();
 		$unitId = (int)$userData['unitId'];
@@ -43,9 +43,10 @@ final class CouncilPresenter extends BasePresenter
 		$this->template->members = $this->votingRepository->getCouncilMembers($unitId);
 		
 		// Načteme členy jednotky ze Skautisu pro autocomplete dropdown
-		$this->skautisMembers = $this->skautisAuthManager->getUnitMembers();
+		$this->skautisMembers = $this->skautisAuthManager->getUnitMembers($forceRefresh);
 		$this->template->skautisMembers = $this->skautisMembers;
 		$this->template->skautisMembersCount = count($this->skautisMembers);
+		$this->template->isTruncated = $this->skautisAuthManager->isUnitMembersTruncated();
 		$this->template->skautisError = $this->skautisAuthManager->getLastError();
 	}
 
@@ -161,25 +162,19 @@ final class CouncilPresenter extends BasePresenter
 		$this->template->debugInfo = $this->skautisAuthManager->debugFetchUnitMembers($targetUnitId);
 	}
 
+	public function handleSearchSkautis(?string $q = null): void
+	{
+		$query = $q !== null && $q !== '' ? $q : (string)$this->getHttpRequest()->getQuery('q');
+		$results = $this->skautisAuthManager->searchUnitMembers($query);
+		$this->sendJson($results);
+	}
+
 	protected function createComponentAddMemberForm(): Form
 	{
 		$form = new Form();
 
-		$options = [];
-		foreach ($this->skautisMembers as $m) {
-			$label = $m['fullName'];
-			if (!empty($m['birthday'])) {
-				$label .= ' (* ' . $m['birthday'] . ')';
-			}
-			if (!empty($m['email'])) {
-				$label .= ' (' . $m['email'] . ')';
-			}
-			$options[$m['personId']] = $label;
-		}
-
-		$form->addSelect('personId', 'Vybrat člena z jednotky:', $options)
-			->setPrompt('--- Vyberte nebo vyhledejte osobu ---')
-			->setRequired('Vyberte prosím osobu ze seznamu.');
+		$form->addHidden('personId')
+			->setRequired('Vyberte prosím osobu ze seznamu nebo zadejte její Person ID.');
 
 		$form->addSubmit('submit', 'Přidat do Rady');
 
@@ -187,6 +182,11 @@ final class CouncilPresenter extends BasePresenter
 			$userData = $this->skautisAuthManager->getUserData();
 			$unitId = (int)$userData['unitId'];
 			$personId = (int)$values->personId;
+
+			if ($personId <= 0) {
+				$this->flashMessage('Neplatné Person ID osoby.', 'danger');
+				$this->redirect('default');
+			}
 
 			// Najdeme údaje o osobě ze seznamu
 			$name = '';
@@ -199,13 +199,13 @@ final class CouncilPresenter extends BasePresenter
 				}
 			}
 
-			// Pokud e-mail chybí, dotážeme se na detail osoby ze SkautISu
-			if (empty($email)) {
+			// Pokud e-mail nebo jméno chybí, dotážeme se na detail osoby ze SkautISu
+			if (empty($name) || empty($email)) {
 				$detail = $this->skautisAuthManager->getPersonDetail($personId);
-				if (!empty($detail['email'])) {
+				if (!empty($detail['email']) && empty($email)) {
 					$email = $detail['email'];
 				}
-				if (empty($name) && !empty($detail['fullName'])) {
+				if (!empty($detail['fullName']) && empty($name)) {
 					$name = $detail['fullName'];
 				}
 			}

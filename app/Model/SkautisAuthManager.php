@@ -81,19 +81,27 @@ class SkautisAuthManager
 				try {
 					$roles = $this->skautis->user->UserRoleAll([
 						'ID_User' => $userDetail->ID,
+						'IsActive' => true,
 					]);
-					
+
+					// Fallback: pokud by uživatel neměl žádnou roli označenou jako aktivní, načteme všechny
+					if (empty($roles)) {
+						$roles = $this->skautis->user->UserRoleAll([
+							'ID_User' => $userDetail->ID,
+						]);
+					}
+
 					// Převedeme na čisté asociativní pole se všemi parametry
 					$rolesArray = json_decode(json_encode($roles), true);
 					if (isset($rolesArray['ID'])) {
 						// Pokud byla vrácena pouze jedna role (jako asociativní pole místo pole rolí)
 						$rolesArray = [$rolesArray];
 					}
-					$this->session->allRoles = $rolesArray;
+					$this->session->allRoles = $rolesArray ?: [];
 
 					// Tracy debug výpis (pokud je zapnut v neon konfiguraci: skautis.debugRoles)
 					if ($this->debugRoles) {
-						\Tracy\Debugger::barDump($rolesArray, 'SkautIS - Všechny role uživatele (UserRoleAll)');
+						\Tracy\Debugger::barDump($rolesArray, 'SkautIS - Aktivní role uživatele (UserRoleAll IsActive=true)');
 						\Tracy\Debugger::log($rolesArray, 'user-roles');
 					}
 
@@ -368,8 +376,44 @@ class SkautisAuthManager
 	}
 
 	/**
-	 * Získá seznam osob v aktivní jednotce ze skautISu přes MembershipAll pro naplnění Rady jednotky
-	 * (výsledky jsou cachovány v session na 10 minut pro bleskovou odezvu)
+	 * Pomocná metoda pro extrakci údajů o členovi ze záznamu SkautISu
+	 */
+	private function extractMemberData(mixed $m, array &$members): void
+	{
+		if (!is_object($m) && !is_array($m)) {
+			return;
+		}
+		$mObj = (object)$m;
+		$pId = (int)($mObj->ID_Person ?? ($mObj->ID ?? 0));
+		if ($pId <= 0 || isset($members[$pId])) {
+			return;
+		}
+
+		// Zpracování data narození
+		$birthdayRaw = $mObj->Birthday ?? ($mObj->BirthDate ?? ($mObj->PersonBirthday ?? ($mObj->PersonBirthDate ?? null)));
+		$birthdayFormatted = null;
+		if (!empty($birthdayRaw)) {
+			try {
+				$dt = new \DateTime((string)$birthdayRaw);
+				$birthdayFormatted = $dt->format('d. m. Y');
+			} catch (\Throwable) {
+				$birthdayFormatted = (string)$birthdayRaw;
+			}
+		}
+
+		$members[$pId] = [
+			'personId' => $pId,
+			'fullName' => $mObj->Person ?? ($mObj->DisplayName ?? "Osoba #$pId"),
+			'birthday' => $birthdayFormatted,
+			'email' => $mObj->Email ?? ($mObj->PersonEmail ?? null),
+			'membershipType' => $mObj->MembershipType ?? null,
+		];
+	}
+
+	/**
+	 * Získá seznam osob v aktivní jednotce ze skautISu přes MembershipAll pro naplnění Rady jednotky.
+	 * Pokud jednotka (např. Kraj) přesahuje limit 1 000 osob, automaticky dotáhne všechny zbývající členy rozpadem přes abecedu.
+	 * (výsledky jsou cachovány v session na 30 minut pro bleskovou odezvu)
 	 */
 	public function getUnitMembers(bool $forceRefresh = false): array
 	{
@@ -382,8 +426,8 @@ class SkautisAuthManager
 		$cacheKey = 'members_' . $unitId;
 		$now = time();
 
-		// Pokud máme data v mezipaměti a nevypršela (10 minut / 600 s)
-		if (!$forceRefresh && !empty($this->session->$cacheKey) && !empty($this->session->{$cacheKey . '_time'}) && ($now - $this->session->{$cacheKey . '_time'}) < 600) {
+		// Pokud máme data v mezipaměti a nevypršela (30 minut / 1800 s)
+		if (!$forceRefresh && !empty($this->session->$cacheKey) && !empty($this->session->{$cacheKey . '_time'}) && ($now - $this->session->{$cacheKey . '_time'}) < 1800) {
 			return $this->session->$cacheKey;
 		}
 
@@ -400,37 +444,21 @@ class SkautisAuthManager
 				'IsValid' => true,
 			]);
 
+			$initialCount = 0;
 			if (is_iterable($mList)) {
 				foreach ($mList as $m) {
-					$pId = (int)($m->ID_Person ?? ($m->ID ?? 0));
-					if ($pId <= 0 || isset($members[$pId])) {
-						continue;
-					}
-
-					// Zpracování data narození
-					$birthdayRaw = $m->Birthday ?? ($m->BirthDate ?? ($m->PersonBirthday ?? ($m->PersonBirthDate ?? null)));
-					$birthdayFormatted = null;
-					if (!empty($birthdayRaw)) {
-						try {
-							$dt = new \DateTime((string)$birthdayRaw);
-							$birthdayFormatted = $dt->format('d. m. Y');
-						} catch (\Throwable) {
-							$birthdayFormatted = (string)$birthdayRaw;
-						}
-					}
-
-					$members[$pId] = [
-						'personId' => $pId,
-						'fullName' => $m->Person ?? ($m->DisplayName ?? "Osoba #$pId"),
-						'birthday' => $birthdayFormatted,
-						'email' => $m->Email ?? ($m->PersonEmail ?? null),
-						'membershipType' => $m->MembershipType ?? null,
-					];
+					$initialCount++;
+					$this->extractMemberData($m, $members);
 				}
 			}
+
+			// Zaznamenáme, zda byl výsledek oříznut limitem 1 000 osob (kraje/velké jednotky)
+			$this->session->{$cacheKey . '_truncated'} = ($initialCount >= 1000);
 		} catch (\Throwable $e) {
 			$this->lastError = 'MembershipAll: ' . $e->getMessage();
-			\Tracy\Debugger::log($e, \Tracy\ILogger::WARNING);
+			if (!empty(\Tracy\Debugger::$logDirectory)) {
+				\Tracy\Debugger::log($e, \Tracy\ILogger::WARNING);
+			}
 			if ($this->isAuthenticationError($e)) {
 				$this->logout();
 				$this->sessionJustExpired = true;
@@ -448,6 +476,125 @@ class SkautisAuthManager
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Zjistí, zda přednačtený seznam členů jednotky přesáhl limit 1 000 osob
+	 */
+	public function isUnitMembersTruncated(): bool
+	{
+		$unitId = (int)($this->session->unitId ?? 0);
+		$cacheKey = 'members_' . $unitId . '_truncated';
+		return !empty($this->session->$cacheKey);
+	}
+
+	/**
+	 * Alias pro getUnitMembers() pro načtení osob ze SkautISu pro výběr členů Rady
+	 */
+	public function getCouncilMembers(bool $forceRefresh = false): array
+	{
+		return $this->getUnitMembers($forceRefresh);
+	}
+
+	/**
+	 * Bleskově vyhledá členy jednotky ze SkautISu podle příjmení, jména nebo Person ID.
+	 * Umožňuje administrátorům krajů i velkých jednotek okamžitý přístup ke všem osobám bez prodlev a timeoutů.
+	 */
+	public function searchUnitMembers(string $query): array
+	{
+		$trimmed = trim($query);
+		if (!$this->isLoggedIn() || empty($this->session->unitId) || $trimmed === '') {
+			return [];
+		}
+
+		$unitId = (int)$this->session->unitId;
+
+		// 1. Pokud je dotaz číslo, zkusíme přímo detail osoby podle Person ID
+		if (ctype_digit($trimmed)) {
+			$pId = (int)$trimmed;
+			$detail = $this->getPersonDetail($pId);
+			if (!empty($detail['fullName'])) {
+				return [[
+					'personId' => $pId,
+					'fullName' => $detail['fullName'],
+					'birthday' => null,
+					'email' => $detail['email'] ?? null,
+					'membershipType' => null,
+				]];
+			}
+		}
+
+		// 2. Vyhledání přes MembershipAll podle příjmení (LastName)
+		// Pokud uživatel zadal např. "Jan Novák" nebo "Novák Jan", vyzkoušíme jednotlivá slova jako příjmení
+		$words = preg_split('/\s+/', $trimmed, -1, PREG_SPLIT_NO_EMPTY);
+		$surnamesToTry = [];
+		if (count($words) === 1) {
+			$surnamesToTry[] = $words[0];
+		} else {
+			// Zkusíme poslední slovo (často příjmení: "Jan Novák") i první slovo ("Novák Jan")
+			$surnamesToTry[] = end($words);
+			$surnamesToTry[] = reset($words);
+			$surnamesToTry = array_unique($surnamesToTry);
+		}
+
+		// Přidáme i variantu s velkým počátečním písmenem pro případ, že uživatel zadal malé písmena
+		$candidates = [];
+		foreach ($surnamesToTry as $s) {
+			$candidates[] = $s;
+			$title = mb_convert_case($s, MB_CASE_TITLE, 'UTF-8');
+			if ($title !== $s) {
+				$candidates[] = $title;
+			}
+		}
+		$surnamesToTry = array_values(array_unique($candidates));
+
+		$temp = [];
+		foreach ($surnamesToTry as $lastName) {
+			if (mb_strlen($lastName) < 2) {
+				continue;
+			}
+			try {
+				$mList = $this->skautis->org->MembershipAll([
+					'ID_Unit' => $unitId,
+					'IsValid' => true,
+					'LastName' => $lastName,
+				]);
+
+				if (is_iterable($mList)) {
+					foreach ($mList as $m) {
+						$this->extractMemberData($m, $temp);
+					}
+				}
+			} catch (\Throwable $e) {
+				if (!empty(\Tracy\Debugger::$logDirectory)) {
+					\Tracy\Debugger::log($e, \Tracy\ILogger::WARNING);
+				}
+			}
+		}
+
+		// Pokud uživatel zadal více slov, ověříme aby jméno obsahovalo všechna zadaná slova
+		if (count($words) > 1 && !empty($temp)) {
+			$filtered = [];
+			foreach ($temp as $pId => $m) {
+				$matchAll = true;
+				$lowerFullName = mb_strtolower($m['fullName']);
+				foreach ($words as $w) {
+					if (!str_contains($lowerFullName, mb_strtolower($w))) {
+						$matchAll = false;
+						break;
+					}
+				}
+				if ($matchAll) {
+					$filtered[$pId] = $m;
+				}
+			}
+			$temp = $filtered;
+		}
+
+		$results = array_values($temp);
+		usort($results, fn($a, $b) => strcmp($a['fullName'], $b['fullName']));
+
+		return $results;
 	}
 
 	/**

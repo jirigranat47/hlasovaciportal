@@ -35,8 +35,8 @@
 				<div style="display: flex; flex-direction: column; gap: 6px; position: relative;">
 					<label style="font-weight: bold; font-size: 0.9rem;">Vyhledat člena jednotky:</label>
 					
-					{* Skrytý Nette select, který se synchronizuje s výběrem *}
-					<select n:name="personId" id="realPersonSelect" style="display: none;"></select>
+					{* Skrytý Nette input, který se synchronizuje s výběrem *}
+					<input type="hidden" n:name="personId" id="realPersonSelect">
 
 					{* Vyhledávací pole *}
 					<div style="position: relative;">
@@ -60,12 +60,24 @@
 					</div>
 
 					{if isset($skautisMembersCount) && $skautisMembersCount > 0}
-						<small style="color: #16a34a; font-weight: 500; margin-top: 2px;">
-							✓ K dispozici {$skautisMembersCount} členů jednotky ze SkautISu (včetně data narození).
-						</small>
+						<div style="margin-top: 2px;">
+							<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px;">
+								<small style="color: #16a34a; font-weight: 500;">
+									✓ K dispozici {$skautisMembersCount} osob ze SkautISu{if !empty($isTruncated)} <span style="color: #64748b;">(přednačteno 1 000)</span>{/if}.
+								</small>
+								<a n:href="default, forceRefresh => true" style="font-size: 0.78rem; color: #0284c7; text-decoration: none; font-weight: 500;" title="Znovu načíst aktuální členy ze SkautISu (vynutit aktualizaci)">
+									⟳ Obnovit
+								</a>
+							</div>
+							{if !empty($isTruncated)}
+								<div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 6px 10px; margin-top: 5px; font-size: 0.78rem; color: #1e40af; line-height: 1.35;">
+									<strong>Krajská jednotka:</strong> Pokud hledanou osobu nenajdete v rychlém výběru, napište její příjmení, jméno nebo Person ID – vyhledá se ihned online v rámci celého kraje.
+								</div>
+							{/if}
+						</div>
 					{else}
 						<small style="color: #e11d48; display: block; line-height: 1.4;">
-							Ze SkautISu se nepodařilo načíst osoby automaticky. Můžete člena přidat níže ručně zadáním Person ID.
+							Ze SkautISu se nepodařilo načíst osoby automaticky. Můžete zadat člena podle Person ID nebo vyhledat online.
 							{if !empty($skautisError)}<br><span style="font-family: monospace; font-size: 0.72rem; background: #fee2e2; padding: 2px 4px; border-radius: 3px;">{$skautisError}</span>{/if}
 						</small>
 					{/if}
@@ -119,7 +131,8 @@
 
 {* DATA PRO NAŠEPTÁVAČ *}
 <script>
-const SKAUTIS_MEMBERS = {json_encode($skautisMembers ?? [])|noescape};
+let SKAUTIS_MEMBERS = {json_encode($skautisMembers ?? [])|noescape};
+const SEARCH_URL = {link searchSkautis!, q => ''};
 
 document.addEventListener('DOMContentLoaded', function () {
 	const searchInput = document.getElementById('memberSearchInput');
@@ -129,8 +142,124 @@ document.addEventListener('DOMContentLoaded', function () {
 	const selectedCard = document.getElementById('selectedPersonCard');
 	const selectedName = document.getElementById('selectedPersonName');
 	const selectedMeta = document.getElementById('selectedPersonMeta');
+	let debounceTimer = null;
 
 	if (!searchInput || !resultsBox || !realSelect) return;
+
+	function renderResults(members, query) {
+		const q = (query || '').trim();
+		let html = '';
+
+		if (members.length > 0) {
+			members.slice(0, 50).forEach(m => {
+				let bdayText = m.birthday ? '<span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-size: 0.78rem; font-weight: bold; margin-left: 6px;">* ' + m.birthday + '</span>' : '';
+				let emailText = m.email ? '<span style="color: #64748b; font-size: 0.8rem; margin-left: 6px;">(' + m.email + ')</span>' : '';
+				let typeText = m.membershipType ? '<span style="color: #94a3b8; font-size: 0.75rem; margin-left: 4px;">• ' + m.membershipType + '</span>' : '';
+
+				html += `
+					<div class="autocomplete-item" data-id="${ m.personId }" style="padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s;">
+						<div>
+							<strong style="color: #0f172a; font-size: 0.95rem;">${ m.fullName }</strong>
+							${ bdayText }
+							${ emailText }
+							${ typeText }
+						</div>
+						<div style="font-size: 0.78rem; color: #94a3b8; font-family: monospace;">#${ m.personId }</div>
+					</div>
+				`;
+			});
+		}
+
+		// Možnost přidání podle Person ID pokud je dotaz číselný
+		if (/^\d+$/.test(q)) {
+			const numId = parseInt(q, 10);
+			const alreadyInList = members.some(m => m.personId === numId);
+			if (!alreadyInList) {
+				html += `
+					<div class="autocomplete-item manual-id-item" data-id="${ numId }" data-custom="1" style="padding: 10px 14px; cursor: pointer; background: #ecfdf5; border-bottom: 1px solid #a7f3d0; display: flex; justify-content: space-between; align-items: center;">
+						<div>
+							<strong style="color: #065f46; font-size: 0.95rem;">➕ Přidat osobu přímo s Person ID #${ numId }</strong>
+							<div style="font-size: 0.78rem; color: #047857;">Ověří a načte údaje automaticky ze SkautISu</div>
+						</div>
+					</div>
+				`;
+			}
+		}
+
+		// Tlačítko pro online vyhledání ve SkautISu
+		if (q.length >= 2) {
+			html += `
+				<div id="onlineSearchPrompt" style="padding: 10px 14px; cursor: pointer; background: #f0fdf4; color: #166534; font-size: 0.9rem; text-align: center; border-top: 2px solid #bbf7d0; font-weight: 600;">
+					🔍 Hledat „${ q }“ v celém kraji (online SkautIS) &rarr;
+				</div>
+			`;
+		}
+
+		if (!html) {
+			html = '<div style="padding: 12px; color: #64748b; font-size: 0.88rem; text-align: center;">Nebyly nalezeny žádné osoby odpovídající hledání.</div>';
+		}
+
+		resultsBox.innerHTML = html;
+		resultsBox.style.display = 'block';
+
+		// Navěšení kliknutí na položky
+		resultsBox.querySelectorAll('.autocomplete-item').forEach(item => {
+			item.addEventListener('mouseenter', () => item.style.background = '#f0f9ff');
+			item.addEventListener('mouseleave', () => {
+				item.style.background = item.classList.contains('manual-id-item') ? '#ecfdf5' : 'white';
+			});
+			item.addEventListener('click', function () {
+				const pId = parseInt(this.getAttribute('data-id'), 10);
+				const isCustom = this.getAttribute('data-custom') === '1';
+				let member = SKAUTIS_MEMBERS.find(m => m.personId === pId);
+				if (!member && isCustom) {
+					member = { personId: pId, fullName: 'Person ID #' + pId, email: null, birthday: null };
+				}
+				if (member) {
+					selectMember(member);
+				}
+			});
+		});
+
+		// Navěšení online hledání
+		const onlineBtn = document.getElementById('onlineSearchPrompt');
+		if (onlineBtn) {
+			onlineBtn.addEventListener('click', function () {
+				onlineBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Vyhledávám v celém kraji...';
+				try {
+					const url = new URL(SEARCH_URL, window.location.href);
+					url.searchParams.set('q', q);
+					fetch(url.toString())
+						.then(res => {
+							if (!res.ok) {
+								throw new Error('Chyba serveru: ' + res.status);
+							}
+							return res.json();
+						})
+						.then(data => {
+							if (Array.isArray(data) && data.length > 0) {
+								// Sloučíme s lokálním polem, pokud tam ještě nejsou
+								data.forEach(item => {
+									if (!SKAUTIS_MEMBERS.some(m => m.personId === item.personId)) {
+										SKAUTIS_MEMBERS.push(item);
+									}
+								});
+								renderResults(data, q);
+							} else {
+								resultsBox.innerHTML = '<div style="padding: 12px; color: #64748b; font-size: 0.88rem; text-align: center;">Ve SkautISu nebyly pro dotaz „' + q + '“ nalezeny žádné další osoby v rámci kraje.</div>';
+							}
+						})
+						.catch(err => {
+							console.error('SkautIS online search error:', err);
+							onlineBtn.textContent = 'Chyba při online vyhledávání.';
+						});
+				} catch (err) {
+					console.error('URL construction error:', err);
+					onlineBtn.textContent = 'Chyba při online vyhledávání.';
+				}
+			});
+		}
+	}
 
 	function filterMembers(query) {
 		const q = query.trim().toLowerCase();
@@ -147,47 +276,29 @@ document.addEventListener('DOMContentLoaded', function () {
 			return nameMatch || bdayMatch || idMatch || emailMatch;
 		});
 
-		if (filtered.length === 0) {
-			resultsBox.innerHTML = '<div style="padding: 12px; color: #64748b; font-size: 0.88rem; text-align: center;">Nebyly nalezeny žádné osoby odpovídající hledání.</div>';
-			resultsBox.style.display = 'block';
-			return;
-		}
+		renderResults(filtered, query);
 
-		let html = '';
-		filtered.slice(0, 50).forEach(m => {
-			let bdayText = m.birthday ? '<span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-size: 0.78rem; font-weight: bold; margin-left: 6px;">* ' + m.birthday + '</span>' : '';
-			let emailText = m.email ? '<span style="color: #64748b; font-size: 0.8rem; margin-left: 6px;">(' + m.email + ')</span>' : '';
-			let typeText = m.membershipType ? '<span style="color: #94a3b8; font-size: 0.75rem; margin-left: 4px;">• ' + m.membershipType + '</span>' : '';
-
-			html += `
-				<div class="autocomplete-item" data-id="${ m.personId }" style="padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s;">
-					<div>
-						<strong style="color: #0f172a; font-size: 0.95rem;">${ m.fullName }</strong>
-						${ bdayText }
-						${ emailText }
-						${ typeText }
-					</div>
-					<div style="font-size: 0.78rem; color: #94a3b8; font-family: monospace;">#${ m.personId }</div>
-				</div>
-			`;
-		});
-
-		resultsBox.innerHTML = html;
-		resultsBox.style.display = 'block';
-
-		// Kliknutí na položku
-		resultsBox.querySelectorAll('.autocomplete-item').forEach(item => {
-			item.addEventListener('mouseenter', () => item.style.background = '#f0f9ff');
-			item.addEventListener('mouseleave', () => item.style.background = 'white');
-			item.addEventListener('click', function () {
-				const pId = parseInt(this.getAttribute('data-id'), 10);
-				const member = SKAUTIS_MEMBERS.find(m => m.personId === pId);
-				if (member) {
-					selectMember(member);
+		// Pokud v lokálním seznamu nic není a uživatel napsal aspoň 3 znaky, automaticky dohledáme online
+		if (filtered.length === 0 && q.length >= 3) {
+			clearTimeout(debounceTimer);
+			debounceTimer = setTimeout(() => {
+				const onlineBtn = document.getElementById('onlineSearchPrompt');
+				if (onlineBtn) {
+					onlineBtn.click();
 				}
-			});
-		});
+			}, 350);
+		}
 	}
+
+	searchInput.addEventListener('keydown', function (e) {
+		if (e.key === 'Enter') {
+			e.preventDefault();
+			const onlineBtn = document.getElementById('onlineSearchPrompt');
+			if (onlineBtn) {
+				onlineBtn.click();
+			}
+		}
+	});
 
 	function selectMember(m) {
 		realSelect.value = m.personId;
