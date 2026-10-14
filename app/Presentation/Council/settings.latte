@@ -2,116 +2,136 @@
 
 {block content}
 
-<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-	<div>
-		<a n:href="Home:default" style="color: var(--skaut-muted); text-decoration: none;">&larr; Zpět na přehled</a>
-		<h1 style="color: var(--skaut-blue); margin-top: 0.5rem; margin-bottom: 0.2rem; display: flex; align-items: center; gap: 8px;">
-			<i class="fa-solid fa-sliders"></i> Nastavení jednotky
-		</h1>
-		<p style="color: var(--skaut-muted); margin: 0;">
-			Jednotka: <strong>{$userData['unitName'] ?: $userData['unitId']}</strong> (ID: {$userData['unitId']})
-		</p>
-	</div>
-
-	<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-		<a n:href="Council:default" class="btn" style="background: #555; color: white; display: inline-flex; align-items: center; gap: 6px;">
-			<i class="fa-solid fa-users"></i> Správa Rady
-		</a>
-		<a n:href="Council:audit" class="btn" style="background: #475569; color: white; display: inline-flex; align-items: center; gap: 6px;">
-			<i class="fa-solid fa-shield-halved"></i> Audit přihlášení
-		</a>
+<div class="page-header d-print-none mb-4">
+	<div class="row g-2 align-items-center">
+		<div class="col">
+			<div class="page-pretitle text-muted">
+				<a n:href="Home:default" class="text-muted text-decoration-none">
+					<i class="fa-solid fa-arrow-left me-1"></i> Zpět na přehled
+				</a>
+			</div>
+			<h2 class="page-title text-primary fw-bold mt-1">
+				<i class="fa-solid fa-sliders me-2"></i> Nastavení jednotky
+			</h2>
+			<div class="text-muted small mt-1">
+				Jednotka: <strong>{$userData['unitName'] ?: $userData['unitId']}</strong> (ID: {$userData['unitId']})
+			</div>
+		</div>
+		<div class="col-auto ms-auto d-print-none d-flex gap-2">
+			<a n:href="Council:default" class="btn btn-outline-secondary d-inline-flex align-items-center gap-1 shadow-sm">
+				<i class="fa-solid fa-users"></i> Správa Rady
+			</a>
+			<a n:href="Council:audit" class="btn btn-outline-secondary d-inline-flex align-items-center gap-1 shadow-sm">
+				<i class="fa-solid fa-shield-halved"></i> Audit přihlášení
+			</a>
+		</div>
 	</div>
 </div>
 
-<div class="election-card" style="max-width: 720px; margin: 0 auto 3rem auto; padding: 2rem;">
-	<h2 style="color: var(--skaut-blue); margin-top: 0; margin-bottom: 1.2rem; font-size: 1.3rem;">
-		Pravidla a chování hlasování pro jednotku
-	</h2>
-
-	<form n:name="unitSettingsForm" style="display: flex; flex-direction: column; gap: 1.5rem;">
-
-		{* ZOBRAZENÍ CHYB VALIDACE FORMULÁŘE *}
-		<div n:if="$form->hasErrors()" style="background: #fef2f2; border: 1px solid #fecaca; border-left: 5px solid #dc2626; border-radius: 6px; padding: 0.9rem 1.2rem; color: #991b1b; font-size: 0.95rem;">
-			<div style="font-weight: bold; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
-				<i class="fa-solid fa-circle-exclamation" style="color: #dc2626;"></i> Formulář obsahuje chyby k opravě:
-			</div>
-			<ul style="margin: 0; padding-left: 1.4rem;">
-				<li n:foreach="$form->errors as $error">{$error}</li>
-			</ul>
-		</div>
-
-		{* JMÉNO ODESÍLATELE E-MAILŮ *}
-		<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid var(--skaut-blue); border-radius: 8px; padding: 1.25rem;">
-			<label n:name="from_name" style="cursor: pointer; display: block;">
-				<strong style="color: #0f172a; font-size: 1.05rem; display: block; margin-bottom: 4px;">
-					✉️ Jméno odesílatele v e-mailu
-				</strong>
-				<span style="color: #475569; font-size: 0.9rem; line-height: 1.5; display: block; margin-bottom: 0.8rem;">
-					Notifikace jsou centrálně odesílány z účtu <strong>hlasovani@skaut.cz</strong>. Zde si můžete nastavit vlastní zobrazované jméno odesílatele, pod kterým členové rady e-maily uvidí.
-				</span>
-			</label>
-			<input n:name="from_name" class="form-control" placeholder="např. Rada {$userData['unitName'] ?: 'střediska'}" style="padding: 0.6rem 0.8rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 1rem; width: 100%; max-width: 450px;">
-		</div>
-
-		{* MINIMÁLNÍ DOBA TRVÁNÍ HLASOVÁNÍ *}
-		<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid var(--skaut-blue); border-radius: 8px; padding: 1.25rem;">
-			<label n:name="min_voting_duration_hours" style="cursor: pointer; display: block;">
-				<strong style="color: #0f172a; font-size: 1.05rem; display: block; margin-bottom: 4px;">
-					⏱ Minimální doba trvání hlasování (v hodinách)
-				</strong>
-				<span style="color: #475569; font-size: 0.9rem; line-height: 1.5; display: block; margin-bottom: 0.8rem;">
-					Stanovte nejkratší přípustnou délku trvání hlasování od okamžiku jeho vytvoření či úpravy. Výchozí hodnota je <strong>{$defaultMinHours} hodin</strong> (minimálně lze nastavit 1 hodinu).
-				</span>
-			</label>
-			<div style="display: flex; align-items: center; gap: 10px; max-width: 250px;">
-				<input n:name="min_voting_duration_hours" class="form-control" type="number" min="1" step="1" style="padding: 0.6rem 0.8rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 1rem; font-weight: bold; width: 100px; text-align: center;">
-				<span style="color: #475569; font-weight: bold;">hodin</span>
-			</div>
-		</div>
-
-		{* VOLBA ČASU UKONČENÍ HLASOVÁNÍ *}
-		<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid var(--skaut-blue); border-radius: 8px; padding: 1.25rem;">
-			<div style="display: flex; align-items: flex-start; gap: 12px;">
-				<input n:name="allow_custom_end_time" id="allow_custom_end_time" style="width: 20px; height: 20px; margin-top: 3px; cursor: pointer;">
-				<label for="allow_custom_end_time" style="cursor: pointer;">
-					<strong style="color: #0f172a; font-size: 1.05rem; display: block; margin-bottom: 4px;">
-						Povolit zadávání konkrétního času konce hlasování
-					</strong>
-					<span style="color: #475569; font-size: 0.9rem; line-height: 1.5; display: block;">
-						Ve výchozím stavu všechna hlasování končí vždy o půlnoci ve <strong>23:59</strong> a formulář nabízí pouze výběr data.<br>
-						Pokud tuto volbu aktivujete, formulář pro vytvoření i úpravu hlasování umožní zadat přesnou hodinu a minutu (např. 14:00, 18:30 apod.).
-					</span>
-				</label>
+<div class="row justify-content-center">
+	<div class="col-lg-8 col-xl-7">
+		<form n:name="unitSettingsForm" class="d-flex flex-column gap-3">
+			
+			{* ZOBRAZENÍ CHYB VALIDACE FORMULÁŘE *}
+			<div n:if="$form->hasErrors()" class="alert alert-danger shadow-sm" role="alert">
+				<div class="d-flex align-items-center mb-1 fw-bold">
+					<i class="fa-solid fa-circle-exclamation me-2 fs-3"></i> Formulář obsahuje chyby k opravě:
+				</div>
+				<ul class="mb-0 ps-4">
+					<li n:foreach="$form->errors as $error">{$error}</li>
+				</ul>
 			</div>
 
-			<div style="margin-top: 1rem; padding-top: 0.8rem; border-top: 1px solid #cbd5e1; font-size: 0.85rem; color: #64748b;">
-				<strong style="color: #334155;">ℹ Jak funguje vyhodnocení výsledků:</strong><br>
-				Po vypršení stanoveného termínu (ať už během dne nebo o půlnoci) systém automaticky v nejbližším běhu plánovače (každých 15 minut) spočítá hlasy, uzavře usnesení a odešle členům rady e-mail s konečným výsledkem.
-			</div>
-		</div>
+			<!-- HLAVNÍ NASTAVENÍ -->
+			<div class="card shadow-sm">
+				<div class="card-header bg-transparent">
+					<h3 class="card-title text-primary fw-bold">
+						<i class="fa-solid fa-scale-balanced me-2"></i> Pravidla a chování hlasování
+					</h3>
+				</div>
+				<div class="card-body d-flex flex-column gap-4">
+					
+					{* JMÉNO ODESÍLATELE E-MAILŮ *}
+					<div>
+						<label n:name="from_name" class="form-label fw-bold">
+							<i class="fa-regular fa-envelope me-1 text-primary"></i> Jméno odesílatele v e-mailu
+						</label>
+						<div class="text-muted small mb-2">
+							Notifikace jsou centrálně odesílány z účtu <strong>hlasovani@skaut.cz</strong>. Zde si můžete nastavit vlastní zobrazované jméno odesílatele, pod kterým členové rady e-maily uvidí.
+						</div>
+						<input n:name="from_name" class="form-control" placeholder="např. Rada {$userData['unitName'] ?: 'střediska'}">
+					</div>
 
-		{* TESTOVACÍ ODESLÁNÍ E-MAILU *}
-		<div style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; padding: 1.1rem 1.25rem;">
-			<label n:name="test_recipient" style="font-weight: bold; font-size: 0.95rem; color: #334155; display: block; margin-bottom: 0.5rem;">
-				🧪 Otestovat odesílání e-mailů:
-			</label>
-			<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-				<input n:name="test_recipient" class="form-control" placeholder="Zadejte váš e-mail pro zkušební zprávu" style="flex: 1; min-width: 250px; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 6px;">
-				<button n:name="test" class="btn" style="background: #0284c7; color: white; font-weight: bold; padding: 0.6rem 1.2rem; border: none; border-radius: 6px; cursor: pointer;">
-					🧪 Odeslat test
+					<hr class="my-0">
+
+					{* MINIMÁLNÍ DOBA TRVÁNÍ HLASOVÁNÍ *}
+					<div>
+						<label n:name="min_voting_duration_hours" class="form-label fw-bold">
+							<i class="fa-regular fa-clock me-1 text-primary"></i> Minimální doba trvání hlasování (v hodinách)
+						</label>
+						<div class="text-muted small mb-2">
+							Stanovte nejkratší přípustnou délku trvání hlasování od okamžiku jeho vytvoření či úpravy. Výchozí hodnota je <strong>{$defaultMinHours} hodin</strong> (minimálně lze nastavit 1 hodinu).
+						</div>
+						<div class="input-group" style="max-width: 200px;">
+							<input n:name="min_voting_duration_hours" class="form-control fw-bold text-center" type="number" min="1" step="1">
+							<span class="input-group-text">hodin</span>
+						</div>
+					</div>
+
+					<hr class="my-0">
+
+					{* VOLBA ČASU UKONČENÍ HLASOVÁNÍ *}
+					<div>
+						<label class="form-check form-switch mb-2">
+							<input n:name="allow_custom_end_time" class="form-check-input" id="allow_custom_end_time">
+							<span class="form-check-label fw-bold">Povolit zadávání konkrétního času konce hlasování</span>
+						</label>
+						<div class="text-muted small ps-4">
+							Ve výchozím stavu všechna hlasování končí vždy o půlnoci ve <strong>23:59</strong> a formulář nabízí pouze výběr data.<br>
+							Pokud tuto volbu aktivujete, formulář pro vytvoření i úpravu hlasování umožní zadat přesnou hodinu a minutu (např. 14:00, 18:30 apod.).
+						</div>
+
+						<div class="alert alert-info-lt mt-3 mb-0">
+							<div class="d-flex">
+								<i class="fa-solid fa-circle-info fs-3 me-2"></i>
+								<div class="small">
+									<strong>Jak funguje vyhodnocení výsledků:</strong><br>
+									Po vypršení stanoveného termínu systém automaticky v nejbližším běhu plánovače (každých 15 minut) spočítá hlasy, uzavře usnesení a odešle členům rady e-mail s konečným výsledkem.
+								</div>
+							</div>
+						</div>
+					</div>
+
+				</div>
+			</div>
+
+			<!-- TESTOVACÍ ODESLÁNÍ E-MAILU -->
+			<div class="card shadow-sm border-dashed">
+				<div class="card-body">
+					<label n:name="test_recipient" class="form-label fw-bold text-dark">
+						<i class="fa-solid fa-vial-circle-check text-azure me-1"></i> Otestovat odesílání e-mailů
+					</label>
+					<div class="text-muted small mb-2">
+						Odešle zkušební e-mail přes centrální účet hlasovani@skaut.cz s výše uvedeným jménem odesílatele.
+					</div>
+					<div class="input-group">
+						<input n:name="test_recipient" class="form-control" placeholder="Zadejte váš e-mail pro zkušební zprávu">
+						<button n:name="test" class="btn btn-outline-primary fw-bold">
+							<i class="fa-solid fa-paper-plane me-1"></i> Odeslat test
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<!-- TLAČÍTKO PRO ULOŽENÍ -->
+			<div class="d-flex justify-content-end mb-4">
+				<button n:name="submit" class="btn btn-skaut-yellow fw-bold px-4 py-2 fs-3 shadow-sm">
+					<i class="fa-solid fa-floppy-disk me-2"></i> Uložit nastavení jednotky
 				</button>
 			</div>
-			<small style="color: #64748b; font-size: 0.82rem; margin-top: 4px; display: block;">
-				Odešle zkušební e-mail přes centrální účet hlasovani@skaut.cz s výše uvedeným jménem odesílatele.
-			</small>
-		</div>
 
-		<div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
-			<button n:name="submit" class="btn" style="background: var(--skaut-yellow); color: #000; font-weight: bold; padding: 0.8rem 1.6rem; border: none; border-radius: 6px; cursor: pointer; font-size: 1.05rem; display: inline-flex; align-items: center; gap: 8px;">
-				<i class="fa-solid fa-floppy-disk"></i> Uložit nastavení jednotky
-			</button>
-		</div>
-
-	</form>
+		</form>
+	</div>
 </div>
+
 {/block}

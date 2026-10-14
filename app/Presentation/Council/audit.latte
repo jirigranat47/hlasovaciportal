@@ -2,133 +2,155 @@
 
 {block content}
 
-<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-	<div>
-		<a n:href="Home:default" style="color: var(--skaut-muted); text-decoration: none;">&larr; Zpět na přehled</a>
-		<h1 style="color: var(--skaut-blue); margin-top: 0.5rem; margin-bottom: 0.2rem; display: flex; align-items: center; gap: 8px;">
-			<i class="fa-solid fa-shield-halved"></i> Audit přihlášení uživatelů
-		</h1>
-		<p style="color: var(--skaut-muted); margin: 0;">
-			Jednotka: <strong>{$userData['unitName'] ?: $userData['unitId']}</strong> (ID: {$userData['unitId']})
-		</p>
-	</div>
-
-	<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-		<a n:href="Council:default" class="btn" style="background: #555; color: white; display: inline-flex; align-items: center; gap: 6px;"><i class="fa-solid fa-users"></i> Správa Rady</a>
-		<a n:href="Council:settings" class="btn" style="background: #0284c7; color: white; display: inline-flex; align-items: center; gap: 6px;"><i class="fa-solid fa-sliders"></i> Nastavení jednotky</a>
+<div class="page-header d-print-none mb-4">
+	<div class="row g-2 align-items-center">
+		<div class="col">
+			<div class="page-pretitle text-muted">
+				<a n:href="Home:default" class="text-muted text-decoration-none">
+					<i class="fa-solid fa-arrow-left me-1"></i> Zpět na přehled
+				</a>
+			</div>
+			<h2 class="page-title text-primary fw-bold mt-1">
+				<i class="fa-solid fa-shield-halved me-2"></i> Audit přihlášení uživatelů
+			</h2>
+			<div class="text-muted small mt-1">
+				Jednotka: <strong>{$userData['unitName'] ?: $userData['unitId']}</strong> (ID: {$userData['unitId']})
+			</div>
+		</div>
+		<div class="col-auto ms-auto d-print-none d-flex gap-2">
+			<a n:href="Council:default" class="btn btn-outline-secondary d-inline-flex align-items-center gap-1 shadow-sm">
+				<i class="fa-solid fa-users"></i> Správa Rady
+			</a>
+			<a n:href="Council:settings" class="btn btn-outline-secondary d-inline-flex align-items-center gap-1 shadow-sm">
+				<i class="fa-solid fa-sliders"></i> Nastavení jednotky
+			</a>
+		</div>
 	</div>
 </div>
 
-<div class="election-card">
-	<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
-		<div>
-			<h2 style="color: var(--skaut-blue); margin: 0; font-size: 1.25rem;">
-				Historie přihlášení a změn rolí v jednotce
-			</h2>
-			<div style="color: var(--skaut-muted); font-size: 0.88rem; margin-top: 4px;">
-				{if $totalCount > 0}
-					Zobrazeno <strong>{$fromIndex}–{$toIndex}</strong> z celkem <strong>{$totalCount}</strong> záznamů
-					{if !empty($q)}
-						(odpovídající hledání „<strong>{$q}</strong>“)
-					{/if}
-				{else}
-					{if !empty($q)}
-						Nebyly nalezeny žádné záznamy odpovídající hledání „<strong>{$q}</strong>“
+<div class="card shadow-sm">
+	<div class="card-header bg-transparent py-3">
+		<div class="row g-2 align-items-center w-100">
+			<div class="col">
+				<h3 class="card-title text-primary fw-bold mb-0">
+					Historie přihlášení a změn rolí v jednotce
+				</h3>
+				<div class="text-muted small mt-1">
+					{if $totalCount > 0}
+						Zobrazeno <strong>{$fromIndex}–{$toIndex}</strong> z celkem <strong>{$totalCount}</strong> záznamů
+						{if !empty($q)}
+							(filtr: „<strong>{$q}</strong>“)
+						{/if}
 					{else}
-						Zatím nejsou zaznamenána žádná přihlášení.
+						{if !empty($q)}
+							Nebyly nalezeny žádné záznamy odpovídající filtru „<strong>{$q}</strong>“
+						{else}
+							Zatím nejsou zaznamenána žádná přihlášení.
+						{/if}
 					{/if}
-				{/if}
+				</div>
+			</div>
+
+			<div class="col-auto">
+				<form method="get" action="{link audit}" class="d-flex gap-2 align-items-center flex-wrap">
+					<div class="input-icon">
+						<span class="input-icon-addon">
+							<i class="fa-solid fa-magnifying-glass text-muted"></i>
+						</span>
+						<input type="text" name="q" value="{$q}" placeholder="Hledat jméno, účet, IP..." class="form-control form-control-sm" style="min-width: 200px;">
+					</div>
+
+					<div class="d-flex align-items-center gap-1">
+						<select name="limit" id="limit-select" onchange="this.form.submit()" class="form-select form-select-sm" style="width: auto;">
+							<option value="50" {if $limit == 50}selected{/if}>50</option>
+							<option value="100" {if $limit == 100}selected{/if}>100</option>
+							<option value="500" {if $limit == 500}selected{/if}>500</option>
+						</select>
+					</div>
+
+					<button type="submit" class="btn btn-sm btn-primary">
+						Filtrovat
+					</button>
+
+					{if !empty($q)}
+						<a n:href="audit, page => 1, limit => $limit, q => null" class="btn btn-sm btn-outline-secondary" title="Zrušit filtr">
+							<i class="fa-solid fa-xmark"></i>
+						</a>
+					{/if}
+				</form>
 			</div>
 		</div>
-
-		{* VYHLEDÁVACÍ A FILTROVACÍ FORMULÁŘ *}
-		<form method="get" action="{link audit}" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-			<div style="position: relative;">
-				<input type="text" name="q" value="{$q}" placeholder="🔍 Hledat jméno, účet, roli, IP..." class="form-control" style="padding: 7px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; width: 230px;">
-			</div>
-
-			<div style="display: flex; align-items: center; gap: 5px;">
-				<label for="limit-select" style="font-size: 0.85rem; color: #475569; font-weight: bold;">Na stránku:</label>
-				<select name="limit" id="limit-select" onchange="this.form.submit()" style="padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; background: white; cursor: pointer;">
-					<option value="50" {if $limit == 50}selected{/if}>50</option>
-					<option value="100" {if $limit == 100}selected{/if}>100</option>
-					<option value="500" {if $limit == 500}selected{/if}>500</option>
-				</select>
-			</div>
-
-			<button type="submit" class="btn" style="background: var(--skaut-blue); color: white; padding: 7px 14px; font-size: 0.9rem; border-radius: 6px;">
-				Hledat
-			</button>
-
-			{if !empty($q)}
-				<a n:href="audit, page => 1, limit => $limit, q => null" class="btn" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 7px 12px; font-size: 0.88rem; border-radius: 6px; text-decoration: none;" title="Zrušit filtr vyhledávání">
-					✕ 
-				</a>
-			{/if}
-		</form>
 	</div>
 
 	{if empty($loginLogs)}
-		<div style="text-align: center; padding: 2.5rem 1.5rem; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px;">
-			<p style="color: var(--skaut-muted); margin: 0 0 0.75rem 0;">
+		<div class="card-body text-center py-5">
+			<div class="empty">
+				<div class="empty-icon text-muted">
+					<i class="fa-solid fa-shield-cat fs-1"></i>
+				</div>
+				<p class="empty-title">Žádné auditní záznamy</p>
+				<p class="empty-subtitle text-muted">
+					{if !empty($q)}
+						Pro hledaný výraz „<strong>{$q}</strong>“ nebyly nalezeny žádné záznamy.
+					{else}
+						V databázi zatím nejsou zaznamenána žádná přihlášení uživatelů.
+					{/if}
+				</p>
 				{if !empty($q)}
-					Pro hledaný výraz „<strong>{$q}</strong>“ nebyly nalezeny žádné auditní záznamy.
-				{else}
-					V databázi zatím nejsou zaznamenána žádná přihlášení uživatelů.
+					<div class="empty-action">
+						<a n:href="audit, page => 1, limit => $limit, q => null" class="btn btn-outline-primary">
+							<i class="fa-solid fa-rotate-left me-1"></i> Zrušit filtr vyhledávání
+						</a>
+					</div>
 				{/if}
-			</p>
-			{if !empty($q)}
-				<a n:href="audit, page => 1, limit => $limit, q => null" class="btn" style="background: var(--skaut-blue); color: white; font-size: 0.85rem; padding: 6px 14px; border-radius: 6px; text-decoration: none;">
-					Zobrazit všechny záznamy &rarr;
-				</a>
-			{/if}
+			</div>
 		</div>
 	{else}
 		<div class="table-responsive">
-			<table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+			<table class="table table-vcenter table-striped card-table">
 				<thead>
-					<tr style="border-bottom: 2px solid #e2e8f0; background: #f8fafc; color: #475569;">
-						<th style="padding: 10px 12px;">Datum a čas</th>
-						<th style="padding: 10px 12px;">Osoba</th>
-						<th style="padding: 10px 12px;">SkautIS Účet</th>
-						<th style="padding: 10px 12px;">Aktivní Role</th>
-						<th style="padding: 10px 12px;">Provedená akce</th>
-						<th style="padding: 10px 12px;">IP Adresa</th>
+					<tr>
+						<th>Datum a čas</th>
+						<th>Osoba</th>
+						<th>SkautIS Účet</th>
+						<th>Aktivní Role</th>
+						<th>Akce</th>
+						<th>IP Adresa</th>
 					</tr>
 				</thead>
 				<tbody>
-					<tr n:foreach="$loginLogs as $log" style="border-bottom: 1px solid #f1f5f9;">
-						<td style="padding: 10px 12px; font-weight: 500; color: #334155; white-space: nowrap;">
+					<tr n:foreach="$loginLogs as $log">
+						<td class="text-nowrap font-monospace small text-muted">
 							{$log->logged_at|date:'d. m. Y H:i:s'}
 						</td>
-						<td style="padding: 10px 12px; font-weight: bold; color: var(--skaut-blue);">
-							{$log->person_name}
-							<span style="font-size: 0.75rem; color: #94a3b8; font-weight: normal;">(#{$log->person_id})</span>
+						<td>
+							<strong class="text-dark">{$log->person_name}</strong>
+							<span class="text-muted small">(#{$log->person_id})</span>
 						</td>
-						<td style="padding: 10px 12px; color: #475569;">
+						<td class="text-muted">
 							{$log->user_name}
 						</td>
-						<td style="padding: 10px 12px;">
-							<span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; font-weight: 500;">
+						<td>
+							<span class="badge bg-blue-lt">
 								{$log->role_name ?? 'Nespecifikována'}
 							</span>
 						</td>
-						<td style="padding: 10px 12px;">
+						<td>
 							{if $log->action === 'login'}
-								<span style="background: #dcfce7; color: #15803d; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; font-weight: bold;">
-									Přihlášení
+								<span class="badge bg-success text-white">
+									<i class="fa-solid fa-right-to-bracket me-1"></i> Přihlášení
 								</span>
 							{elseif $log->action === 'role_switch'}
-								<span style="background: #fef3c7; color: #b45309; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; font-weight: bold;">
-									Přepnutí role
+								<span class="badge bg-warning text-dark">
+									<i class="fa-solid fa-repeat me-1"></i> Přepnutí role
 								</span>
 							{else}
-								<span style="background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem;">
+								<span class="badge bg-secondary-lt">
 									{$log->action}
 								</span>
 							{/if}
 						</td>
-						<td style="padding: 10px 12px; font-family: monospace; font-size: 0.8rem; color: #64748b;">
+						<td class="font-monospace small text-muted">
 							{$log->ip_address ?? '–'}
 						</td>
 					</tr>
@@ -136,47 +158,44 @@
 			</table>
 		</div>
 
-		{* STRÁNKOVÁNÍ (PAGINACE) *}
+		{* STRÁNKOVÁNÍ (TABLER PAGINACE) *}
 		{if $totalPages > 1}
-			<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
-				<div style="font-size: 0.88rem; color: var(--skaut-muted);">
+			<div class="card-footer d-flex align-items-center">
+				<p class="m-0 text-muted small">
 					Stránka <strong>{$page}</strong> z <strong>{$totalPages}</strong>
-				</div>
+				</p>
+				<ul class="pagination m-0 ms-auto">
+					<li class="page-item {if $page <= 1}disabled{/if}">
+						<a class="page-link" n:href="audit, page => 1, limit => $limit, q => $q" title="První stránka">
+							<i class="fa-solid fa-angles-left"></i>
+						</a>
+					</li>
+					<li class="page-item {if $page <= 1}disabled{/if}">
+						<a class="page-link" n:href="audit, page => $page - 1, limit => $limit, q => $q" title="Předchozí stránka">
+							<i class="fa-solid fa-angle-left"></i>
+						</a>
+					</li>
 
-				<div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
-					{if $page > 1}
-						<a n:href="audit, page => 1, limit => $limit, q => $q" class="btn" style="background: #f1f5f9; color: #334155; padding: 5px 10px; font-size: 0.85rem; border: 1px solid #cbd5e1; border-radius: 4px; text-decoration: none;" title="První stránka">&laquo;</a>
-						<a n:href="audit, page => $page - 1, limit => $limit, q => $q" class="btn" style="background: #f1f5f9; color: #334155; padding: 5px 10px; font-size: 0.85rem; border: 1px solid #cbd5e1; border-radius: 4px; text-decoration: none;" title="Předchozí stránka">&lsaquo; Předchozí</a>
-					{/if}
-
-					{var $startPage = max(1, $page - 3)}
-					{var $endPage = min($totalPages, $page + 3)}
-
-					{if $startPage > 1}
-						<span style="padding: 5px 6px; color: #94a3b8;">...</span>
-					{/if}
+					{var $startPage = max(1, $page - 2)}
+					{var $endPage = min($totalPages, $page + 2)}
 
 					{for $p = $startPage; $p <= $endPage; $p++}
-						{if $p == $page}
-							<span style="background: var(--skaut-blue); color: white; padding: 5px 11px; font-size: 0.85rem; font-weight: bold; border-radius: 4px; border: 1px solid var(--skaut-blue);">
-								{$p}
-							</span>
-						{else}
-							<a n:href="audit, page => $p, limit => $limit, q => $q" class="btn" style="background: #ffffff; color: #334155; padding: 5px 11px; font-size: 0.85rem; border: 1px solid #cbd5e1; border-radius: 4px; text-decoration: none;">
-								{$p}
-							</a>
-						{/if}
+						<li class="page-item {if $p == $page}active{/if}">
+							<a class="page-link" n:href="audit, page => $p, limit => $limit, q => $q">{$p}</a>
+						</li>
 					{/for}
 
-					{if $endPage < $totalPages}
-						<span style="padding: 5px 6px; color: #94a3b8;">...</span>
-					{/if}
-
-					{if $page < $totalPages}
-						<a n:href="audit, page => $page + 1, limit => $limit, q => $q" class="btn" style="background: #f1f5f9; color: #334155; padding: 5px 10px; font-size: 0.85rem; border: 1px solid #cbd5e1; border-radius: 4px; text-decoration: none;" title="Další stránka">Další &rsaquo;</a>
-						<a n:href="audit, page => $totalPages, limit => $limit, q => $q" class="btn" style="background: #f1f5f9; color: #334155; padding: 5px 10px; font-size: 0.85rem; border: 1px solid #cbd5e1; border-radius: 4px; text-decoration: none;" title="Poslední stránka">&raquo;</a>
-					{/if}
-				</div>
+					<li class="page-item {if $page >= $totalPages}disabled{/if}">
+						<a class="page-link" n:href="audit, page => $page + 1, limit => $limit, q => $q" title="Další stránka">
+							<i class="fa-solid fa-angle-right"></i>
+						</a>
+					</li>
+					<li class="page-item {if $page >= $totalPages}disabled{/if}">
+						<a class="page-link" n:href="audit, page => $totalPages, limit => $limit, q => $q" title="Poslední stránka">
+							<i class="fa-solid fa-angles-right"></i>
+						</a>
+					</li>
+				</ul>
 			</div>
 		{/if}
 	{/if}

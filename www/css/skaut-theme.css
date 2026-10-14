@@ -1,0 +1,133 @@
+/* ==========================================================================
+   Skautská vizuální identita & doplňky pro Tabler UI
+   ========================================================================== */
+
+:root, [data-bs-theme="light"] {
+  --tblr-primary: #002f6c;
+  --tblr-primary-rgb: 0, 47, 108;
+  --tblr-primary-fg: #ffffff;
+  --skaut-blue: #002f6c;
+  --skaut-blue-light: #004b93;
+  --skaut-yellow: #f4b400;
+  --skaut-yellow-hover: #e5a800;
+  --skaut-yellow-text: #002f6c;
+  --tblr-font-sans-serif: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+[data-bs-theme="dark"] {
+  --tblr-primary: #3b82f6;
+  --tblr-primary-rgb: 59, 130, 246;
+  --skaut-blue: #1e3a8a;
+  --skaut-blue-light: #2563eb;
+  --skaut-yellow: #f59e0b;
+}
+
+/* Skautská horní lišta (Navbar) */
+.navbar-skaut {
+  background: linear-gradient(135deg, #002250 0%, #003882 100%) !important;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.navbar-skaut .nav-link {
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 500;
+  border-radius: 6px;
+  padding: 0.5rem 0.85rem;
+  transition: all 0.15s ease;
+}
+
+.navbar-skaut .nav-link:hover,
+.navbar-skaut .nav-link.active {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.navbar-skaut .navbar-brand {
+  color: #ffffff;
+}
+
+/* Skautská tlačítka */
+.btn-skaut-primary {
+  background-color: var(--skaut-blue);
+  border-color: var(--skaut-blue);
+  color: #ffffff;
+}
+.btn-skaut-primary:hover,
+.btn-skaut-primary:focus {
+  background-color: #001f47;
+  border-color: #001f47;
+  color: #ffffff;
+}
+
+.btn-skaut-yellow {
+  background-color: var(--skaut-yellow);
+  border-color: #e0a300;
+  color: var(--skaut-yellow-text);
+  font-weight: 600;
+}
+.btn-skaut-yellow:hover,
+.btn-skaut-yellow:focus {
+  background-color: var(--skaut-yellow-hover);
+  border-color: #cca300;
+  color: #001f47;
+}
+
+.badge-skaut-unit {
+  background: rgba(244, 180, 0, 0.2);
+  color: #ffd866;
+  border: 1px solid rgba(244, 180, 0, 0.4);
+}
+
+/* Karty voleb / hlasování v modálu */
+.vote-option-card {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid var(--tblr-border-color);
+  border-radius: var(--tblr-border-radius);
+}
+.vote-option-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.vote-option-card.selected-pro {
+  border-color: #10b981 !important;
+  background-color: rgba(16, 185, 129, 0.08);
+}
+.vote-option-card.selected-proti {
+  border-color: #ef4444 !important;
+  background-color: rgba(239, 68, 68, 0.08);
+}
+.vote-option-card.selected-zdrzel {
+  border-color: #f59e0b !important;
+  background-color: rgba(245, 158, 11, 0.08);
+}
+
+/* Našeptávač členů Rady (SkautIS autocomplete) */
+.skautis-autocomplete-box {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1050;
+  background: var(--tblr-card-bg, #ffffff);
+  border: 1px solid var(--tblr-border-color, #e6e8e9);
+  border-radius: var(--tblr-border-radius);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+  max-height: 380px;
+  overflow-y: auto;
+  display: none;
+}
+
+.skautis-autocomplete-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--tblr-border-color-translucent, #f1f5f9);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.15s;
+}
+.skautis-autocomplete-item:hover {
+  background: rgba(0, 47, 108, 0.06);
+}

@@ -2,288 +2,347 @@
 
 {block content}
 
-<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-	<div>
-		<a n:href="Home:default" style="color: var(--skaut-muted); text-decoration: none;">&larr; Zpět na přehled</a>
-		<h1 style="color: var(--skaut-blue); margin-top: 0.5rem; margin-bottom: 0.5rem;">Usnesení č. {$election->resolution_number}</h1>
-		
-		<div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-			{if $election->status === 'draft'}
-				<span class="election-status" style="background: #e9ecef; color: #495057;">● Rozpracovaný návrh (Draft)</span>
-			{elseif $election->status === 'cancelled'}
-				<span class="election-status" style="background: #f8d7da; color: #721c24; font-weight: bold;">● Stornováno</span>
-			{elseif $election->status === 'adopted' || ($isClosed && $isAdopted)}
-				<span class="election-status badge-status-adopted" style="font-weight: bold;">✓ Ukončeno – Přijato</span>
-			{elseif $election->status === 'rejected' || ($isClosed && !$isAdopted)}
-				<span class="election-status badge-status-rejected" style="font-weight: bold;">✕ Ukončeno – Nepřijato</span>
-			{else}
-				<span class="election-status status-active">● Probíhá</span>
-			{/if}
-
-			{if $election->proposal_received_date}
-				<span style="color: var(--skaut-muted); font-size: 0.9rem;">| Návrh obdržen: <strong>{$election->proposal_received_date|date:'d. m. Y'}</strong></span>
-			{/if}
-			<span style="color: var(--skaut-muted); font-size: 0.9rem;">| Konec hlasování: <strong>{if $election->end_date->format('H:i') === '23:59'}{$election->end_date|date:'d. m. Y'} (23:59){else}{$election->end_date|date:'d. m. Y H:i'}{/if}</strong></span>
-			{if !$isClosed && $election->status === 'published'}
-				<span style="color: var(--skaut-muted); font-size: 0.9rem;" id="countdownContainer" data-end-date="{$election->end_date|date:'Y-m-d\TH:i:s'}">
-					| Konec hlasování za: <strong style="color: var(--skaut-blue);" id="countdownTimer">...</strong>
-				</span>
-			{/if}
-		</div>
-	</div>
-
-	<div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-		<a n:href="history, $election->id" class="btn" style="background: #475569; color: white; font-size: 0.9rem;" title="Historie změn hlasů a auditní log">
-			<i class="fa-solid fa-clock-rotate-left btn-icon"></i><span class="btn-label"> Historie a audit</span>
-		</a>
-		{if $isAdmin && $election->status === 'draft'}
-			<a n:href="edit, $election->id" class="btn btn-vote" style="background: var(--skaut-blue); font-size: 0.9rem;" title="Upravit návrh">
-				<i class="fa-solid fa-pen-to-square btn-icon"></i><span class="btn-label"> Upravit</span>
-			</a>
-			<a n:href="publish, $election->id" class="btn btn-vote" style="background: #28a745; font-size: 0.9rem;" onclick="return confirm('Opravdu chcete toto hlasování publikovat?')" title="Zahájit hlasování">
-				<i class="fa-solid fa-check btn-icon"></i><span class="btn-label"> Publikovat</span>
-			</a>
-			<a n:href="delete, $election->id" class="btn btn-vote" style="background: #dc3545; font-size: 0.9rem;" onclick="return confirm('Opravdu chcete tento návrh smazat?')" title="Smazat návrh">
-				<i class="fa-solid fa-trash btn-icon"></i><span class="btn-label"> Smazat</span>
-			</a>
-		{elseif $isAdmin && $election->status === 'published'}
-			{if $canRevertToDraft}
-				<a n:href="revertToDraft, $election->id" class="btn" style="background: #f59e0b; color: #000; font-weight: bold; font-size: 0.9rem; text-decoration: none;" onclick="return confirm('Opravdu chcete usnesení vrátit do stavu Návrh (Draft)? Dosud nikdo nehlasoval, takže budete moci text a podklady upravit a znovu publikovat.')" title="Vrátit do stavu Návrh">
-					<i class="fa-solid fa-rotate-left btn-icon" style="color: #000;"></i><span class="btn-label"> Vrátit do návrhu</span>
+<!-- ZÁHLAVÍ STRÁNKY (PAGE HEADER) -->
+<div class="page-header d-print-none mb-4">
+	<div class="row g-2 align-items-center">
+		<div class="col">
+			<div class="page-pretitle text-muted">
+				<a n:href="Home:default" class="text-muted text-decoration-none">
+					<i class="fa-solid fa-arrow-left me-1"></i> Zpět na přehled usnesení
 				</a>
-			{/if}
-			<button type="button" class="btn btn-vote" style="background: #dc3545; font-size: 0.9rem;" onclick="document.getElementById('cancelFormBox').style.display='block'" title="Stornovat toto hlasování">
-				<i class="fa-solid fa-ban btn-icon"></i><span class="btn-label"> Stornovat</span>
-			</button>
-		{/if}
+			</div>
+			<h2 class="page-title text-primary fw-bold mt-1">
+				Usnesení č. {$election->resolution_number}
+			</h2>
+			<div class="d-flex align-items-center gap-2 mt-2 flex-wrap small">
+				{if $election->status === 'draft'}
+					<span class="badge bg-secondary text-white">● Rozpracovaný návrh (Draft)</span>
+				{elseif $election->status === 'cancelled'}
+					<span class="badge bg-danger text-white">● Stornováno</span>
+				{elseif $election->status === 'adopted' || ($isClosed && $isAdopted)}
+					<span class="badge bg-success text-white">✓ Ukončeno – Přijato</span>
+				{elseif $election->status === 'rejected' || ($isClosed && !$isAdopted)}
+					<span class="badge bg-danger text-white">✕ Ukončeno – Nepřijato</span>
+				{else}
+					<span class="badge bg-success text-white">● Probíhá</span>
+				{/if}
+
+				{if $election->proposal_received_date}
+					<span class="text-muted">| Návrh obdržen: <strong>{$election->proposal_received_date|date:'d. m. Y'}</strong></span>
+				{/if}
+				<span class="text-muted">| Konec hlasování: <strong>{if $election->end_date->format('H:i') === '23:59'}{$election->end_date|date:'d. m. Y'} (23:59){else}{$election->end_date|date:'d. m. Y H:i'}{/if}</strong></span>
+				
+				{if !$isClosed && $election->status === 'published'}
+					<span class="text-muted" id="countdownContainer" data-end-date="{$election->end_date|date:'Y-m-d\TH:i:s'}">
+						| Konec za: <strong class="text-primary font-monospace" id="countdownTimer">...</strong>
+					</span>
+				{/if}
+			</div>
+		</div>
+
+		<!-- AKČNÍ TLAČÍTKA -->
+		<div class="col-auto ms-auto d-print-none">
+			<div class="btn-list">
+				<a n:href="history, $election->id" class="btn btn-outline-secondary" title="Historie změn hlasů a auditní log">
+					<i class="fa-solid fa-clock-rotate-left me-1"></i> Historie a audit
+				</a>
+
+				{if $isAdmin && $election->status === 'draft'}
+					<a n:href="edit, $election->id" class="btn btn-outline-primary" title="Upravit návrh">
+						<i class="fa-solid fa-pen-to-square me-1"></i> Upravit
+					</a>
+					<a n:href="publish, $election->id" class="btn btn-success" onclick="return confirm('Opravdu chcete toto hlasování publikovat?')" title="Zahájit hlasování">
+						<i class="fa-solid fa-check me-1"></i> Publikovat
+					</a>
+					<a n:href="delete, $election->id" class="btn btn-outline-danger" onclick="return confirm('Opravdu chcete tento návrh smazat?')" title="Smazat návrh">
+						<i class="fa-solid fa-trash me-1"></i> Smazat
+					</a>
+				{elseif $isAdmin && $election->status === 'published'}
+					{if $canRevertToDraft}
+						<a n:href="revertToDraft, $election->id" class="btn btn-warning text-dark fw-bold" onclick="return confirm('Opravdu chcete usnesení vrátit do stavu Návrh (Draft)? Dosud nikdo nehlasoval, takže budete moci text a podklady upravit a znovu publikovat.')" title="Vrátit do stavu Návrh">
+							<i class="fa-solid fa-rotate-left me-1"></i> Vrátit do návrhu
+						</a>
+					{/if}
+					<button type="button" class="btn btn-outline-danger" onclick="document.getElementById('cancelFormBox').style.display='block'" title="Stornovat toto hlasování">
+						<i class="fa-solid fa-ban me-1"></i> Stornovat
+					</button>
+				{/if}
+			</div>
+		</div>
 	</div>
 </div>
 
-<div class="election-detail-layout">
-	{* LEVÝ PANEL - DETAILY A HLASOVÁNÍ *}
-	<div class="election-detail-main">
+<div class="row g-4">
+	<!-- LEVÝ SLOUPEC: TEXT USNESENÍ A HLASOVACÍ PANEL -->
+	<div class="{if $election->status !== 'draft'}col-lg-8{else}col-12{/if}">
 		
+		{* ZPRÁVA O STORNOVÁNÍ *}
 		{if $election->status === 'cancelled'}
-			<div style="background: #f8d7da; border: 2px solid #f5c6cb; border-left: 6px solid #dc3545; padding: 1.2rem; border-radius: 8px; margin-bottom: 1.5rem;">
-				<h2 style="color: #721c24; margin-top: 0; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;">
-					<i class="fa-solid fa-ban" style="color: #dc3545;"></i>
-					<span>Toto hlasování bylo stornováno správcem</span>
-				</h2>
-				{if $election->cancellation_reason}
-					<p style="margin: 0.5rem 0 0 0; color: #721c24; font-size: 1rem; line-height: 1.5;">
-						<strong>Důvod stornování:</strong><br>
-						{$election->cancellation_reason|breaklines}
-					</p>
-				{/if}
-				{if $election->cancelled_at}
-					<p style="margin: 0.5rem 0 0 0; color: #856404; font-size: 0.85rem;">
-						Stornováno dne: {$election->cancelled_at|date:'d. m. Y H:i'}
-					</p>
-				{/if}
-				{if $isAdmin}
-					<div style="margin-top: 1.2rem;">
-						<a n:href="duplicate, $election->id" class="btn btn-vote" style="background: var(--skaut-blue); text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
-							<i class="fa-solid fa-copy"></i> Vytvořit opravené hlasování (Kopie)
-						</a>
+			<div class="alert alert-important alert-danger shadow-sm mb-4" role="alert">
+				<div class="d-flex align-items-center">
+					<i class="fa-solid fa-ban fs-1 me-3"></i>
+					<div>
+						<h4 class="alert-title fw-bold mb-1">Toto hlasování bylo stornováno správcem</h4>
+						{if $election->cancellation_reason}
+							<div class="text-white-50 mb-2">
+								<strong>Důvod stornování:</strong> {$election->cancellation_reason|breaklines}
+							</div>
+						{/if}
+						{if $election->cancelled_at}
+							<div class="small text-white-50">Stornováno dne: {$election->cancelled_at|date:'d. m. Y H:i'}</div>
+						{/if}
+						{if $isAdmin}
+							<div class="mt-3">
+								<a n:href="duplicate, $election->id" class="btn btn-sm btn-light">
+									<i class="fa-solid fa-copy me-1"></i> Vytvořit opravené hlasování (Kopie)
+								</a>
+							</div>
+						{/if}
 					</div>
-				{/if}
+				</div>
 			</div>
 		{/if}
 
+		{* FORMULÁŘ PRO STORNOVÁNÍ HLASOVÁNÍ *}
 		{if $isAdmin && $election->status === 'published'}
-			<div id="cancelFormBox" style="display: none; background: #fff5f5; border: 2px solid #feb2b2; border-left: 6px solid #dc3545; padding: 1.2rem; border-radius: 8px; margin-bottom: 1.5rem;">
-				<h3 style="color: #c53030; margin-top: 0; display: flex; align-items: center; gap: 8px;">
-					<i class="fa-solid fa-ban"></i> Stornovat toto hlasování
-				</h3>
-				<p style="color: #742a2a; font-size: 0.9rem; margin-bottom: 1rem;">
-					Stornováním se ukončí probíhající hlasování, dosavadní hlasy budou stornovány a všem členům rady bude odeslána e-mailová notifikace s udaným důvodem.
-				</p>
-				<form n:name="cancelForm">
-					<div style="display: flex; flex-direction: column; gap: 8px;">
-						<label n:name="cancellation_reason" style="font-weight: bold; color: #742a2a;">Důvod stornování (bude odeslán e-mailem členům rady):</label>
-						<textarea n:name="cancellation_reason" rows="3" style="width: 100%; padding: 8px; border: 1px solid #feb2b2; border-radius: 4px; font-size: 0.95rem;"></textarea>
-						<div style="display: flex; gap: 10px; margin-top: 10px;">
-							<button n:name="submit" class="btn" style="background: #dc3545; color: white;">Potvrdit stornování hlasování</button>
-							<button type="button" class="btn" style="background: #e2e8f0; color: #333;" onclick="document.getElementById('cancelFormBox').style.display='none'">Zrušit</button>
+			<div id="cancelFormBox" class="card border-danger shadow-sm mb-4" style="display: none;">
+				<div class="card-status-top bg-danger"></div>
+				<div class="card-header bg-danger text-white">
+					<h3 class="card-title fw-bold text-white m-0">
+						<i class="fa-solid fa-ban me-2"></i> Stornovat toto hlasování
+					</h3>
+				</div>
+				<div class="card-body">
+					<p class="text-muted small mb-3">
+						Stornováním se okamžitě ukončí probíhající hlasování, dosavadní odevzdané hlasy budou stornovány a všem členům rady bude odeslána e-mailová notifikace s udaným důvodem.
+					</p>
+					<form n:name="cancelForm">
+						<div class="mb-3">
+							<label n:name="cancellation_reason" class="form-label fw-bold text-danger">Důvod stornování (bude odeslán e-mailem členům rady):</label>
+							<textarea n:name="cancellation_reason" rows="3" class="form-control" placeholder="Uveďte důvod stornování..."></textarea>
 						</div>
-					</div>
-				</form>
+						<div class="btn-list">
+							<button n:name="submit" class="btn btn-danger">Potvrdit stornování hlasování</button>
+							<button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('cancelFormBox').style.display='none'">Zrušit</button>
+						</div>
+					</form>
+				</div>
 			</div>
 		{/if}
 
+		{* UPOZORNĚNÍ PRO DRAFT *}
 		{if $isAdmin && $election->status === 'draft'}
-			<div style="background: #fff8e6; border: 1px solid #ffe58f; padding: 1rem 1.2rem; border-radius: 8px;">
-				<strong style="color: #873800; display: flex; align-items: center; gap: 6px;">
-					<i class="fa-solid fa-circle-info"></i> Návrh hlasování (Draft)
-				</strong>
-				<p style="margin: 2px 0 0 0; color: #612500; font-size: 0.9rem;">Toto hlasování zatím nebylo publikováno a je viditelné pouze pro správce.</p>
-				{if $election->end_date < new \DateTime()}
-					<p style="margin: 6px 0 0 0; color: #dc3545; font-size: 0.9rem; font-weight: bold; display: flex; align-items: center; gap: 6px;">
-						<i class="fa-solid fa-triangle-exclamation"></i> Nastavený termín konce hlasování již vypršel ({$election->end_date|date:'d. m. Y H:i'}). Před publikováním je nutné termín upravit.
-					</p>
-				{/if}
+			<div class="alert alert-warning shadow-sm mb-4" role="alert">
+				<div class="d-flex align-items-center">
+					<i class="fa-solid fa-circle-info fs-2 me-3"></i>
+					<div>
+						<h4 class="alert-title fw-bold mb-1">Návrh hlasování (Draft)</h4>
+						<div class="text-muted">Toto hlasování zatím nebylo publikováno a je viditelné pouze pro správce jednotky.</div>
+						{if $election->end_date < new \DateTime()}
+							<div class="text-danger fw-bold small mt-1">
+								<i class="fa-solid fa-triangle-exclamation me-1"></i> Nastavený termín konce hlasování již vypršel ({$election->end_date|date:'d. m. Y H:i'}). Před publikováním je nutné termín upravit.
+							</div>
+						{/if}
+					</div>
+				</div>
 			</div>
 		{/if}
 
 		{* POPIS A TEXT USNESENÍ *}
-		<div class="election-card">
-			<h2 style="color: var(--skaut-blue); margin-top: 0; font-size: 1.2rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.5rem;">Znění usnesení</h2>
-			<div style="font-size: 1.1rem; font-weight: 600; line-height: 1.6; color: #1e293b; margin-bottom: 1.5rem; background: #f8fafc; padding: 1rem; border-left: 4px solid var(--skaut-blue); border-radius: 4px;">
-				{$election->title}
+		<div class="card shadow-sm mb-4">
+			<div class="card-header">
+				<h3 class="card-title fw-bold text-primary m-0">
+					<i class="fa-solid fa-file-lines me-2"></i> Znění usnesení
+				</h3>
 			</div>
-
-			{if $election->description}
-				<h3 style="color: var(--skaut-blue); margin-top: 1rem; font-size: 1rem;">Poznámka a doplňující informace:</h3>
-				<div style="line-height: 1.6; color: #333;" class="formatted-note">
-					{$election->description|sanitizeNote|noescape}
+			<div class="card-body">
+				<div class="p-3 bg-light rounded border-start-wide border-primary fs-2 fw-bold text-dark mb-3">
+					{$election->title}
 				</div>
-			{/if}
-		</div>
 
-		{* HLASOVACÍ DLAŽDICE / ODEVZDÁNÍ HLASU *}
-		{if !$isClosed && $election->status === 'published'}
-			<div class="election-card" style="border-left: 5px solid var(--skaut-yellow);">
-				<h2 style="color: var(--skaut-blue); margin-top: 0; font-size: 1.2rem;">Odevzdání Vašeho Hlasu</h2>
-
-				{if !$canVote}
-					<p style="color: #721c24; background: #f8d7da; padding: 0.8rem; border-radius: 4px; margin: 0; font-weight: bold;">
-						Nemáte oprávnění hlasovat. Nejste zapsán(a) na seznamu Rady této jednotky.
-					</p>
-				{else}
-					{if $hasVoted}
-						<p style="color: #155724; background: #d4edda; padding: 0.8rem; border-radius: 4px; margin-bottom: 1rem; font-weight: bold; display: flex; align-items: center; gap: 8px;">
-							<i class="fa-solid fa-circle-check"></i> Váš hlas byl zaznamenán. Svůj hlas můžete až do konce hlasování kdykoliv změnit.
-						</p>
-					{else}
-						<p style="margin-top: 0; color: #555;">Vyberte jednu z možností pro odevzdání vašeho hlasu. Hlasování je jmenovité.</p>
-					{/if}
-
-					<div class="vote-btn-group">
-						{foreach $options as $opt}
-							{var $btnClass = 'btn-vote-choice'}
-							{if $opt->title === 'Pro'}{var $btnClass = $btnClass . ' btn-vote-pro'}{/if}
-							{if $opt->title === 'Proti'}{var $btnClass = $btnClass . ' btn-vote-proti'}{/if}
-							{if $opt->title === 'Zdržel se'}{var $btnClass = $btnClass . ' btn-vote-zdrzel'}{/if}
-							{if $userVoteOptionId === $opt->id}{var $btnClass = $btnClass . ' btn-vote-selected'}{/if}
-
-							<a n:href="vote! electionId: $election->id, optionId: $opt->id" 
-							   class="{$btnClass}"
-							   onclick="return confirm({if $userVoteOptionId === $opt->id}'Váš hlas pro tuto možnost je již zaznamenán. Chcete jej potvrdit?'{else}'Opravdu chcete odevzdat/změnit váš hlas na &quot;{$opt->title}&quot;?'{/if})">
-								<span>{$opt->title}</span>
-							</a>
-						{/foreach}
+				{if $election->description}
+					<div class="text-muted small fw-bold text-uppercase mb-2">Poznámka a doplňující informace:</div>
+					<div class="text-secondary formatted-note lh-lg">
+						{$election->description|sanitizeNote|noescape}
 					</div>
 				{/if}
 			</div>
-		{/if}
+		</div>
 
-		{* VYHODNOCENÍ - Zobrazí se pokud je hlasování ukončeno (a nebylo stornováno a není návrh) *}
-		{if $isClosed && !in_array($election->status, ['cancelled', 'draft'], true)}
-			<div class="election-card" style="padding: 0; overflow: hidden; border: 2px solid {if $isAdopted}#28a745{else}#dc3545{/if};">
-				<div style="background: {if $isAdopted}#28a745{else}#dc3545{/if}; color: white; padding: 1rem 1.5rem; font-weight: bold; font-size: 1.3rem; display: flex; align-items: center; gap: 10px;">
-					{if $isAdopted}
-						<i class="fa-solid fa-circle-check"></i> Usnesení bylo PŘIJATO
+		{* HLASOVACÍ PANEL / ODEVZDÁNÍ HLASU *}
+		{if !$isClosed && $election->status === 'published'}
+			<div class="card shadow-sm border-start-wide border-warning mb-4">
+				<div class="card-status-top bg-warning"></div>
+				<div class="card-header">
+					<h3 class="card-title fw-bold m-0 d-flex align-items-center gap-2">
+						<i class="fa-solid fa-check-to-slot text-warning"></i> Odevzdání Vašeho Hlasu
+					</h3>
+				</div>
+				<div class="card-body">
+					{if !$canVote}
+						<div class="alert alert-danger mb-0">
+							<strong>Nemáte oprávnění hlasovat.</strong> Nejste zapsán(a) na seznamu Rady této jednotky.
+						</div>
 					{else}
-						<i class="fa-solid fa-circle-xmark"></i> Usnesení NEBYLO PŘIJATO
+						{if $hasVoted}
+							<div class="alert alert-success d-flex align-items-center mb-4">
+								<i class="fa-solid fa-circle-check fs-2 me-3"></i>
+								<div>
+									<strong>Váš hlas byl úspěšně zaznamenán.</strong> Svůj hlas můžete až do termínu ukončení kdykoliv změnit kliknutím na jinou možnost.
+								</div>
+							</div>
+						{else}
+							<p class="text-muted mb-4">
+								Vyberte jednu ze tří možností pro odevzdání vašeho hlasu. Hlasování je jmenovité.
+							</p>
+						{/if}
+
+						<div class="row g-3">
+							{foreach $options as $opt}
+								{var $isCurrent = ($userVoteOptionId === $opt->id)}
+								<div class="col-md-4">
+									<a n:href="vote! electionId: $election->id, optionId: $opt->id"
+									   class="card card-body text-center p-3 text-decoration-none shadow-sm vote-option-card {if $opt->title === 'Pro'}border-success {if $isCurrent}selected-pro{/if}{elseif $opt->title === 'Proti'}border-danger {if $isCurrent}selected-proti{/if}{else}border-warning {if $isCurrent}selected-zdrzel{/if}{/if}"
+									   onclick="return confirm({if $isCurrent}'Váš hlas pro tuto možnost je již zaznamenán. Chcete jej potvrdit?'{else}'Opravdu chcete odevzdat/změnit váš hlas na &quot;{$opt->title}&quot;?'{/if})">
+										<div class="fs-1 mb-2 {if $opt->title === 'Pro'}text-success{elseif $opt->title === 'Proti'}text-danger{else}text-warning{/if}">
+											<i class="fa-solid {if $opt->title === 'Pro'}fa-circle-check{elseif $opt->title === 'Proti'}fa-circle-xmark{else}fa-circle-minus{/if}"></i>
+										</div>
+										<div class="fw-bold fs-2 {if $opt->title === 'Pro'}text-success{elseif $opt->title === 'Proti'}text-danger{else}text-warning{/if}">
+											{$opt->title}
+										</div>
+										{if $isCurrent}
+											<div class="mt-2">
+												<span class="badge {if $opt->title === 'Pro'}bg-success{elseif $opt->title === 'Proti'}bg-danger{else}bg-warning text-dark{/if}">
+													✓ Váš aktuální hlas
+												</span>
+											</div>
+										{/if}
+									</a>
+								</div>
+							{/foreach}
+						</div>
 					{/if}
 				</div>
-				<div style="padding: 1.5rem;">
-					<p style="margin-top: 0; line-height: 1.5;">
+			</div>
+		{/if}
+
+		{* VYHODNOCENÍ - Pokud je hlasování ukončeno *}
+		{if $isClosed && !in_array($election->status, ['cancelled', 'draft'], true)}
+			<div class="card shadow-sm border-start-wide {if $isAdopted}border-success{else}border-danger{/if} mb-4">
+				<div class="card-status-top {if $isAdopted}bg-success{else}bg-danger{/if}"></div>
+				<div class="card-header {if $isAdopted}bg-success-lt{else}bg-danger-lt{/if}">
+					<h3 class="card-title fw-bold m-0 d-flex align-items-center gap-2 {if $isAdopted}text-success{else}text-danger{/if}">
+						<i class="fa-solid {if $isAdopted}fa-circle-check{else}fa-circle-xmark{/if}"></i>
+						Usnesení bylo {if $isAdopted}PŘIJATO{else}NEPŘIJATO{/if}
+					</h3>
+				</div>
+				<div class="card-body">
+					<p class="text-muted mb-3">
 						Rozhodovací pravidlo: Usnesení je schváleno, pokud pro něj hlasuje nadpoloviční většina všech členů rady (více než 50 %).
 						V době vyhodnocení měla rada <strong>{$totalMembers}</strong> členů, k přijetí bylo tedy potřeba alespoň <strong>{floor($totalMembers/2) + 1}</strong> hlasů „Pro“.
 					</p>
-					<div style="font-size: 1.1rem;">
-						Hlasovalo <strong>Pro</strong>: <strong style="color: #28a745; font-size: 1.3rem;">{$votesCount['Pro']}</strong> ({round(($votesCount['Pro'] / max($totalMembers, 1)) * 100)} % z celkového počtu členů).
+					<div class="d-flex align-items-center gap-2 fs-3">
+						<span>Hlasovalo <strong>Pro</strong>:</span>
+						<span class="fw-bold {if $isAdopted}text-success{else}text-danger{/if} fs-2">{$votesCount['Pro']}</span>
+						<span class="text-muted fs-4">({round(($votesCount['Pro'] / max($totalMembers, 1)) * 100)} % z celkového počtu členů)</span>
 					</div>
 				</div>
 			</div>
 		{/if}
 	</div>
 
-	{* PRAVÝ PANEL - STATISTIKY A VÝSLEDKY (pouze pro publikovaná/ukončená hlasování) *}
+	{* PRAVÝ SLOUPEC: STATISTIKY, KVÓRUM A HLASY ČLENŮ RADY *}
 	{if $election->status !== 'draft'}
-	<div class="election-detail-sidebar">
-		
-		{* AGREGAVANÉ VÝSLEDKY / STATISTIKA *}
-		<div class="election-card">
-			<h2 style="color: var(--skaut-blue); margin-top: 0; font-size: 1.2rem; margin-bottom: 1rem;">{if $election->status === 'cancelled'}Stav hlasů před stornem{elseif $isClosed}Konečné výsledky hlasování{else}Průběžný stav hlasování{/if}</h2>
-			
-			<div style="display: flex; flex-direction: column; gap: 0.8rem;">
-				<div>
-					<div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 3px;">
-						<span>Pro</span>
-						<span style="color: #28a745;">{$votesCount['Pro']} hlasů</span>
-					</div>
-					<div style="background: #eee; height: 10px; border-radius: 5px; overflow: hidden;">
-						<div style="background: #28a745; height: 100%; width: {round(($votesCount['Pro'] / max($totalMembers, 1)) * 100)}%;"></div>
-					</div>
+		<div class="col-lg-4">
+			{* SOUHRN VÝSLEDKŮ *}
+			<div class="card shadow-sm mb-4">
+				<div class="card-header">
+					<h3 class="card-title fw-bold m-0">
+						<i class="fa-solid fa-chart-pie text-primary me-2"></i>
+						{if $election->status === 'cancelled'}Stav hlasů před stornem{elseif $isClosed}Konečné výsledky{else}Průběžný stav{/if}
+					</h3>
 				</div>
-
-				<div>
-					<div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 3px;">
-						<span>Proti</span>
-						<span style="color: #dc3545;">{$votesCount['Proti']} hlasů</span>
-					</div>
-					<div style="background: #eee; height: 10px; border-radius: 5px; overflow: hidden;">
-						<div style="background: #dc3545; height: 100%; width: {round(($votesCount['Proti'] / max($totalMembers, 1)) * 100)}%;"></div>
-					</div>
-				</div>
-
-				<div>
-					<div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 3px;">
-						<span>Zdržel se</span>
-						<span style="color: #ffc107;">{$votesCount['Zdržel se']} hlasů</span>
-					</div>
-					<div style="background: #eee; height: 10px; border-radius: 5px; overflow: hidden;">
-						<div style="background: #ffc107; height: 100%; width: {round(($votesCount['Zdržel se'] / max($totalMembers, 1)) * 100)}%;"></div>
-					</div>
-				</div>
-
-				{var $totalVotes = array_sum($votesCount)}
-				<hr style="border: 0; border-top: 1px solid #eee; margin: 5px 0;">
-				<div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #555;">
-					<span>Celkem hlasovalo:</span>
-					<strong>{$totalVotes} z {$totalMembers}</strong>
-				</div>
-				<div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #555;">
-					<span>Účast:</span>
-					<strong>{round(($totalVotes / max($totalMembers, 1)) * 100)} %</strong>
-				</div>
-			</div>
-		</div>
-
-		{* JMENNÝ SEZNAM HLASUJÍCÍCH (Jen pro Členy rady a Zakladatele) *}
-		{if $showVoterList}
-			<div class="election-card">
-				<h2 style="color: var(--skaut-blue); margin-top: 0; font-size: 1.2rem; margin-bottom: 1rem;">Hlasy členů rady</h2>
-
-				<div style="display: flex; flex-direction: column; gap: 0.6rem;">
-					<div n:foreach="$voterList as $v" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f8f9fa; padding-bottom: 5px;">
-						<div>
-							<span style="font-weight: 500; font-size: 0.95rem;">{$v['name']}</span>
-							{if $v['voted'] && $v['votedAt']}
-								<div style="font-size: 0.75rem; color: #888;">{$v['votedAt']|date:'d. m. Y H:i'}</div>
-							{/if}
+				<div class="card-body">
+					<div class="mb-3">
+						<div class="d-flex justify-content-between fw-bold mb-1">
+							<span class="text-success"><i class="fa-solid fa-circle-check me-1"></i> Pro</span>
+							<span class="text-success">{$votesCount['Pro']}</span>
 						</div>
-						<span>
-							{if $v['voted']}
-								{var $badgeBg = '#e2f0d9'}{var $badgeColor = '#385723'}
-								{if $v['choice'] === 'Proti'}{var $badgeBg = '#fce4d6'}{var $badgeColor = '#c65911'}{/if}
-								{if $v['choice'] === 'Zdržel se'}{var $badgeBg = '#fff2cc'}{var $badgeColor = '#7f6000'}{/if}
-								<span style="padding: 2px 8px; font-size: 0.8rem; background: {$badgeBg|noescape}; color: {$badgeColor|noescape}; border-radius: 4px; font-weight: bold;">
-									{$v['choice']}
-								</span>
-							{else}
-								<span style="padding: 2px 8px; font-size: 0.8rem; background: #e9ecef; color: #6c757d; border-radius: 4px;">
-									nehlasoval(a)
-								</span>
-							{/if}
-						</span>
+						<div class="progress progress-sm">
+							<div class="progress-bar bg-success" style="width: {round(($votesCount['Pro'] / max($totalMembers, 1)) * 100)}%"></div>
+						</div>
+					</div>
+
+					<div class="mb-3">
+						<div class="d-flex justify-content-between fw-bold mb-1">
+							<span class="text-danger"><i class="fa-solid fa-circle-xmark me-1"></i> Proti</span>
+							<span class="text-danger">{$votesCount['Proti']}</span>
+						</div>
+						<div class="progress progress-sm">
+							<div class="progress-bar bg-danger" style="width: {round(($votesCount['Proti'] / max($totalMembers, 1)) * 100)}%"></div>
+						</div>
+					</div>
+
+					<div class="mb-3">
+						<div class="d-flex justify-content-between fw-bold mb-1">
+							<span class="text-warning"><i class="fa-solid fa-circle-minus me-1"></i> Zdržel se</span>
+							<span class="text-warning">{$votesCount['Zdržel se']}</span>
+						</div>
+						<div class="progress progress-sm">
+							<div class="progress-bar bg-warning" style="width: {round(($votesCount['Zdržel se'] / max($totalMembers, 1)) * 100)}%"></div>
+						</div>
+					</div>
+
+					{var $totalVotes = array_sum($votesCount)}
+					<div class="border-top pt-3 mt-3">
+						<div class="d-flex justify-content-between small text-muted mb-1">
+							<span>Celkem hlasovalo:</span>
+							<strong>{$totalVotes} z {$totalMembers}</strong>
+						</div>
+						<div class="d-flex justify-content-between small text-muted">
+							<span>Účast (kvórum):</span>
+							<strong class="text-primary">{round(($totalVotes / max($totalMembers, 1)) * 100)} %</strong>
+						</div>
 					</div>
 				</div>
 			</div>
-		{/if}
-	</div>
+
+			{* JMENNÝ SEZNAM HLASUJÍCÍCH *}
+			{if $showVoterList}
+				<div class="card shadow-sm mb-4">
+					<div class="card-header">
+						<h3 class="card-title fw-bold m-0">
+							<i class="fa-solid fa-users text-primary me-2"></i> Hlasy členů rady
+						</h3>
+					</div>
+					<div class="card-body p-0">
+						<div class="divide-y">
+							<div n:foreach="$voterList as $v" class="p-3 d-flex justify-content-between align-items-center">
+								<div>
+									<div class="fw-bold text-dark">{$v['name']}</div>
+									{if $v['voted'] && $v['votedAt']}
+										<div class="small text-muted font-monospace">{$v['votedAt']|date:'d. m. Y H:i'}</div>
+									{/if}
+								</div>
+								<div>
+									{if $v['voted']}
+										{if $v['choice'] === 'Pro'}
+											<span class="badge bg-success-lt fw-bold">PRO</span>
+										{elseif $v['choice'] === 'Proti'}
+											<span class="badge bg-danger-lt fw-bold">PROTI</span>
+										{else}
+											<span class="badge bg-warning-lt fw-bold">ZDRŽEL SE</span>
+										{/if}
+									{else}
+										<span class="badge bg-secondary-lt">nehlasoval(a)</span>
+									{/if}
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			{/if}
+		</div>
 	{/if}
 </div>
 

@@ -2,66 +2,94 @@
 
 {block content}
 
-<div style="margin-bottom: 2rem;">
-	<a n:href="Home:default" style="color: var(--skaut-muted); text-decoration: none;">&larr; Zpět na přehled</a>
-	<h1 style="color: var(--skaut-blue); margin-top: 0.5rem; margin-bottom: 0.2rem; display: flex; align-items: center; gap: 8px;">
-		<i class="fa-solid fa-user"></i> Můj profil a nastavení
-	</h1>
+<div class="page-header d-print-none mb-4">
+	<div class="row g-2 align-items-center">
+		<div class="col">
+			<div class="page-pretitle text-muted">
+				<a n:href="Home:default" class="text-muted text-decoration-none">
+					<i class="fa-solid fa-arrow-left me-1"></i> Zpět na přehled
+				</a>
+			</div>
+			<h2 class="page-title text-primary fw-bold mt-1">
+				<i class="fa-solid fa-user-gear me-2"></i> Můj profil a notifikace
+			</h2>
+			<div class="text-muted small mt-1">
+				Správa doručování e-mailových výzev a výsledků hlasování pro váš účet.
+			</div>
+		</div>
+	</div>
 </div>
 
-	<div class="card mb-20" style="border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); overflow: hidden;">
-		<div class="card-header" style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 1rem 1.5rem;">
-			<h2 style="margin: 0; font-size: 1.25rem; color: #1e293b; display: flex; align-items: center; gap: 10px;">
-				<i class="fa-solid fa-at" style="color: #3b82f6;"></i> E-mailová adresa pro notifikace
-			</h2>
-		</div>
-		<div class="card-body" style="padding: 1.5rem;">
-			<p style="color: #475569; margin-bottom: 1.5rem;">
-				E-mailová adresa slouží k zasílání notifikací o nových usneseních k hlasování, o denních upomínkách a výsledcích.
-			</p>
+<div class="row justify-content-center">
+	<div class="col-lg-8 col-xl-7">
+		
+		<!-- HLAVNÍ KARTA NASTAVENÍ E-MAILU -->
+		<div class="card shadow-sm mb-4">
+			<div class="card-header bg-transparent">
+				<h3 class="card-title text-primary fw-bold">
+					<i class="fa-solid fa-at me-2 text-primary"></i> E-mailová adresa pro notifikace
+				</h3>
+			</div>
+			<div class="card-body">
+				<p class="text-muted mb-3">
+					E-mailová adresa slouží k zasílání notifikací o nových usneseních k hlasování, o denních upomínkách a výsledcích.
+				</p>
 
-			<div style="display: flex; flex-direction: column; gap: 1.5rem;">
-				<div style="background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 1rem; border-radius: 0 6px 6px 0;">
-					<span style="display: block; font-size: 0.875rem; color: #166534; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Výchozí e-mail (ze SkautISu)</span>
-					<div style="font-size: 1.1rem; color: #15803d; font-weight: 500;">
-						{if $skautisEmail}{$skautisEmail}{else}<em style="color: #bbf7d0;">nenalezen</em>{/if}
+				<!-- VÝCHOZÍ SKAUTIS E-MAIL -->
+				<div class="alert alert-success-lt d-flex align-items-center mb-4">
+					<div class="me-3">
+						<i class="fa-solid fa-envelope fs-2 text-success"></i>
+					</div>
+					<div>
+						<div class="text-uppercase fw-bold small text-success">Výchozí e-mail (ze SkautISu):</div>
+						<div class="fs-3 fw-bold text-dark">
+							{if $skautisEmail}{$skautisEmail}{else}<em class="text-muted">nenalezen</em>{/if}
+						</div>
 					</div>
 				</div>
 
-				<div style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 1.5rem; border-radius: 8px;">
-					<h3 style="margin-top: 0; color: #334155; font-size: 1.1rem; margin-bottom: 0.5rem;">Chcete používat jiný e-mail?</h3>
-					<p style="color: #64748b; font-size: 0.95rem; margin-bottom: 1.5rem;">
-						Pokud si přejete dostávat upozornění na jinou adresu, zadejte ji níže. Vlastní adresa bude mít vždy přednost před tou ze SkautISu.
+				<!-- FORMULÁŘ VLASTNÍHO E-MAILU -->
+				<div class="bg-light p-3 rounded border">
+					<h4 class="text-dark fw-bold mb-1">Chcete používat jiný e-mail?</h4>
+					<p class="text-muted small mb-3">
+						Pokud si přejete dostávat upozornění na jinou adresu, zadejte ji níže. Vlastní adresa bude mít vždy přednost před adresou ze SkautISu.
 					</p>
 
-					{form profileForm class => "form-vertical"}
-						<div class="form-group" style="margin-bottom: 1.5rem;">
-							{label custom_email style => "font-weight: 600; color: #1e293b; margin-bottom: 0.5rem; display: block;" /}
-							{input custom_email class => "form-control", style => "width: 100%; max-width: 400px; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 1rem;"}
+					{form profileForm}
+						<div class="mb-3">
+							{label custom_email class => "form-label fw-bold" /}
+							<div class="input-icon">
+								<span class="input-icon-addon">
+									<i class="fa-solid fa-envelope text-muted"></i>
+								</span>
+								{input custom_email class => "form-control", placeholder => "např. jan.novak@gmail.com"}
+							</div>
 						</div>
-						<div class="form-group">
-							{input save class => "btn btn-primary", style => "padding: 0.75rem 1.5rem; font-weight: 600;"}
+						<div>
+							{input save class => "btn btn-skaut-yellow fw-bold px-4"}
 						</div>
 					{/form}
 				</div>
 			</div>
 		</div>
-	</div>
 
-	<div class="card mb-20" style="border: 1px dashed #cbd5e1; border-radius: 8px; background-color: #f8fafc;">
-		<div class="card-body" style="padding: 2rem; text-align: center;">
-			<div style="margin-bottom: 1rem;">
-				<div style="width: 48px; height: 48px; background-color: #e0f2fe; color: #0284c7; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-size: 1.5rem;">
-					<i class="fa-solid fa-paper-plane"></i>
+		<!-- TESTOVACÍ ODESLÁNÍ -->
+		<div class="card shadow-sm border-dashed">
+			<div class="card-body text-center py-4">
+				<div class="avatar avatar-lg bg-blue-lt rounded-circle mb-3 mx-auto">
+					<i class="fa-solid fa-paper-plane fs-2 text-primary"></i>
 				</div>
+				<h3 class="card-title fw-bold text-dark mb-1">Otestujte si správnost doručení</h3>
+				<p class="text-muted small mx-auto mb-3" style="max-width: 480px;">
+					Kliknutím na tlačítko níže odešlete zkušební e-mail na aktuálně nastavenou e-mailovou adresu. Tím si ověříte, že je vše správně nastaveno a notifikace vám budou spolehlivě chodit.
+				</p>
+				<a n:href="sendTestEmail!" class="btn btn-outline-primary fw-bold shadow-sm">
+					<i class="fa-solid fa-envelope-circle-check me-2"></i> Odeslat testovací e-mail
+				</a>
 			</div>
-			<h3 style="margin-top: 0; color: #0f172a; font-size: 1.2rem;">Otestujte si správnost doručení</h3>
-			<p style="color: #64748b; max-width: 500px; margin: 0 auto 1.5rem;">
-				Kliknutím na tlačítko níže odešlete zkušební e-mail na aktuálně nastavenou e-mailovou adresu. Tím si ověříte, že je vše správně nastaveno a notifikace vám budou chodit.
-			</p>
-			<a n:href="sendTestEmail!" class="btn" style="background-color: #0ea5e9; color: white; padding: 0.75rem 2rem; font-weight: bold; border-radius: 6px; box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.4); text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;">
-				<i class="fa-solid fa-envelope-circle-check" style="font-size: 1.1rem;"></i> Odeslat testovací e-mail
-			</a>
 		</div>
-	</div>
 
+	</div>
+</div>
+
+{/block}
