@@ -28,7 +28,7 @@ class SkautisAuthManager
 	/**
 	 * Vrátí URL pro přesměrování na přihlašovací stránku SkautISu
 	 */
-	public function getLoginUrl(string $backUrl): string
+	public function getLoginUrl(?string $backUrl = null): string
 	{
 		return $this->skautis->getLoginUrl($backUrl);
 	}
