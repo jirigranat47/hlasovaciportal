@@ -27,10 +27,13 @@ final class SignPresenter extends BasePresenter
 		$bl = $backlink ?? $this->backlink;
 		if ($bl) {
 			$this->getSession('auth')->backlink = $bl;
+			$this->getHttpResponse()->setCookie('auth_backlink', $bl, '1 hour', null, null, null, true, 'Lax');
 		}
 
-		$backUrl = $this->link('//Sign:callback', $bl ? ['backlink' => $bl] : []);
-		$loginUrl = $this->skautisAuthManager->getLoginUrl($backUrl);
+		// Záměrně nepředáváme návratovou adresu (ReturnUrl) do SkautISu.
+		// SkautIS má pro toto AppID v centrální evidenci pevně registrovanou návratovou adresu /login-callback.
+		// Absence ReturnUrl zabraňuje pádu stránky TwoFactor.aspx na straně SkautISu u uživatelů se zapnutým 2FA.
+		$loginUrl = $this->skautisAuthManager->getLoginUrl();
 		$this->redirectUrl($loginUrl);
 	}
 
@@ -42,7 +45,12 @@ final class SignPresenter extends BasePresenter
 		$params = array_merge($this->getHttpRequest()->getQuery(), $this->getHttpRequest()->getPost());
 		
 		$authSession = $this->getSession('auth');
-		$bl = $backlink ?? $params['backlink'] ?? $authSession->backlink ?? $this->backlink;
+		$cookieBacklink = $this->getHttpRequest()->getCookie('auth_backlink');
+		if ($cookieBacklink) {
+			$this->getHttpResponse()->deleteCookie('auth_backlink');
+		}
+
+		$bl = $backlink ?? $params['backlink'] ?? $authSession->backlink ?? $cookieBacklink ?? $this->backlink;
 		unset($authSession->backlink);
 
 		// Pokud SkautIS vrátil parametr zabalený v ReturnUrl, vytáhneme původní backlink token
