@@ -121,3 +121,31 @@ CREATE TABLE IF NOT EXISTS `user_login_logs` (
   INDEX (`unit_id`, `logged_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `cron_logs` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `started_at` DATETIME NOT NULL,
+  `finished_at` DATETIME NULL,
+  `duration_seconds` FLOAT NULL,
+  `status` VARCHAR(20) NOT NULL DEFAULT 'running' COMMENT 'running / success / error',
+  `message` TEXT NULL,
+  `emails_sent` INT NOT NULL DEFAULT 0,
+  `ip_address` VARCHAR(45) NULL,
+  INDEX (`started_at`),
+  INDEX (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `email_logs` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `unit_id` INT NULL COMMENT 'ID jednotky',
+  `recipient_email` VARCHAR(150) NOT NULL,
+  `recipient_name` VARCHAR(150) NULL,
+  `subject` VARCHAR(255) NOT NULL,
+  `type` VARCHAR(50) NOT NULL DEFAULT 'notification' COMMENT 'new_elections / reminder / results / test / notification',
+  `status` VARCHAR(20) NOT NULL DEFAULT 'sent' COMMENT 'sent / failed',
+  `error_message` TEXT NULL,
+  `sent_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX (`sent_at`),
+  INDEX (`unit_id`, `sent_at`),
+  INDEX (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+

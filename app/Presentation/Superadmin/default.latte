@@ -177,7 +177,192 @@
 
 	</div>
 
-	<!-- 3. PŘEHLED A KATALOG ZAPOJENÝCH JEDNOTEK -->
+	<!-- 3. PROVOZNÍ MONITORING: E-MAILY & PLÁNOVAČ (CRON) -->
+	<div style="background: white; border-radius: 12px; padding: 1.75rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.03); margin-bottom: 2rem;">
+		<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 1rem;">
+			<div>
+				<h2 style="margin: 0; color: #0f172a; font-size: 1.35rem; display: flex; align-items: center; gap: 10px;">
+					<i class="fa-solid fa-server" style="color: #0284c7;"></i> Provozní monitoring: E-maily & Plánovač úloh (Cron)
+				</h2>
+				<p style="margin: 4px 0 0 0; color: var(--skaut-muted); font-size: 0.9rem;">
+					Sledování denního limitu Google Workspace (centrální účet <code>hlasovani@skaut.cz</code>) a stav automatického plánovače
+				</p>
+			</div>
+
+			<div style="display: flex; gap: 0.5rem; align-items: center;">
+				<span style="font-size: 0.82rem; color: #64748b; background: #f8fafc; padding: 6px 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+					<i class="fa-solid fa-envelope me-1" style="color: #0284c7;"></i> Centrální odesílatel: <strong>hlasovani@skaut.cz</strong>
+				</span>
+			</div>
+		</div>
+
+		<!-- 2 HLAVNÍ KARTY MONITORINGU -->
+		<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+			
+			<!-- KARTA A: LIMIT GOOGLE WORKSPACE E-MAILŮ -->
+			<div style="background: #f8fafc; border-radius: 10px; padding: 1.25rem; border: 1px solid #e2e8f0; border-top: 4px solid {if $monitoring['emails']['limitStatus'] === 'danger'}#dc2626{elseif $monitoring['emails']['limitStatus'] === 'warning'}#f59e0b{else}#10b981{/if};">
+				<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+					<div>
+						<div style="font-size: 0.82rem; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Denní limit Google Workspace</div>
+						<div style="font-size: 1.6rem; font-weight: 800; color: #0f172a; margin-top: 2px;">
+							{$monitoring['emails']['last24h']} <span style="font-size: 1rem; font-weight: normal; color: #64748b;">/ {$monitoring['emails']['dailyLimit']} e-mailů za 24h</span>
+						</div>
+					</div>
+					<span style="padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; {if $monitoring['emails']['limitStatus'] === 'danger'}background: #fee2e2; color: #b91c1c;{elseif $monitoring['emails']['limitStatus'] === 'warning'}background: #fef3c7; color: #b45309;{else}background: #dcfce7; color: #15803d;{/if}">
+						{if $monitoring['emails']['limitStatus'] === 'danger'}🔴 Kritické vytížení
+						{elseif $monitoring['emails']['limitStatus'] === 'warning'}🟡 Zvýšený provoz
+						{else}🟢 V limitu ({$monitoring['emails']['limitUsagePct']} %)
+						{/if}
+					</span>
+				</div>
+
+				<!-- PROGRESS BAR -->
+				{var $barColor = $monitoring['emails']['limitStatus'] === 'danger' ? '#dc2626' : ($monitoring['emails']['limitStatus'] === 'warning' ? '#f59e0b' : '#10b981')}
+				<div style="height: 10px; background: #e2e8f0; border-radius: 5px; overflow: hidden; margin-bottom: 0.75rem;">
+					<div style="height: 100%; background: {$barColor}; width: {min(100, $monitoring['emails']['limitUsagePct'])}%; transition: width 0.3s;"></div>
+				</div>
+
+				<div style="display: flex; justify-content: space-between; font-size: 0.82rem; color: #64748b; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 0.75rem;">
+					<span>Zbývá do 24h limitu: <strong style="color: #0f172a;">{$monitoring['emails']['limitRemaining']} zpráv</strong></span>
+					<span>Chybné / selhané: <strong style="color: {if $monitoring['emails']['failedLast24h'] > 0}#dc2626{else}#15803d{/if};">{$monitoring['emails']['failedLast24h']}</strong></span>
+				</div>
+
+				<div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #64748b;">
+					<span>Dnes (od 00:00): <strong>{$monitoring['emails']['today']}</strong></span>
+					<span>Posledních 7 dní: <strong>{$monitoring['emails']['last7d']}</strong></span>
+				</div>
+			</div>
+
+			<!-- KARTA B: STAV PLÁNOVAČE ÚLOH (CRON) -->
+			<div style="background: #f8fafc; border-radius: 10px; padding: 1.25rem; border: 1px solid #e2e8f0; border-top: 4px solid {if $monitoring['cron']['status'] === 'ok'}#10b981{elseif $monitoring['cron']['status'] === 'delayed'}#f59e0b{else}#dc2626{/if};">
+				<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+					<div>
+						<div style="font-size: 0.82rem; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Plánovač úloh (Cron)</div>
+						<div style="font-size: 1.6rem; font-weight: 800; color: #0f172a; margin-top: 2px;">
+							{if $monitoring['cron']['status'] === 'ok'}
+								<span style="color: #15803d; font-size: 1.3rem;"><i class="fa-solid fa-circle-check me-1"></i> Aktivní a v pořádku</span>
+							{elseif $monitoring['cron']['status'] === 'delayed'}
+								<span style="color: #b45309; font-size: 1.3rem;"><i class="fa-solid fa-triangle-exclamation me-1"></i> Zpoždění běhu</span>
+							{elseif $monitoring['cron']['status'] === 'never_run'}
+								<span style="color: #64748b; font-size: 1.3rem;"><i class="fa-solid fa-circle-question me-1"></i> Dosud nespuštěn</span>
+							{else}
+								<span style="color: #b91c1c; font-size: 1.3rem;"><i class="fa-solid fa-circle-xmark me-1"></i> Pozor: Cron neběží!</span>
+							{/if}
+						</div>
+					</div>
+					<span style="padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; {if $monitoring['cron']['status'] === 'ok'}background: #dcfce7; color: #15803d;{elseif $monitoring['cron']['status'] === 'delayed'}background: #fef3c7; color: #b45309;{else}background: #fee2e2; color: #b91c1c;{/if}">
+						{if $monitoring['cron']['minutesSinceLastRun'] !== null}
+							před {$monitoring['cron']['minutesSinceLastRun']} min
+						{else}
+							bez záznamu
+						{/if}
+					</span>
+				</div>
+
+				<div style="font-size: 0.85rem; color: #475569; margin-bottom: 0.75rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem;">
+					{if $monitoring['cron']['lastRun']}
+						Poslední spuštění: <strong>{$monitoring['cron']['lastRun']->format('d. m. Y H:i:s')}</strong>
+						{if $monitoring['cron']['lastDuration'] !== null}
+							<span style="color: #64748b; font-size: 0.8rem;">(délka: {$monitoring['cron']['lastDuration']} s)</span>
+						{/if}
+					{else}
+						Zatím nebyl zaznamenán žádný běh cronu. Plánovač se nastavuje např. na <code>cron-job.org</code>.
+					{/if}
+				</div>
+
+				<div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: #64748b;">
+					<span>Doporučená frekvence: <strong>každých 15 minut</strong></span>
+					<span style="color: #0284c7; font-weight: 600;">
+						<i class="fa-solid fa-circle-info me-1"></i> Dokumentace v CRON.md
+					</span>
+				</div>
+			</div>
+
+		</div>
+
+		<!-- ROZKLIKÁVACÍ HISTORIE E-MAILŮ A CRONU (DETAILS / SUMMARY) -->
+		<details style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem 1rem; background: #fafafa;">
+			<summary style="cursor: pointer; font-weight: 600; color: #334155; font-size: 0.9rem; user-select: none;">
+				<i class="fa-solid fa-clock-rotate-left me-1" style="color: #64748b;"></i> Zobrazit historii odeslaných e-mailů a běhů plánovače ({count($monitoring['emails']['recent'])} e-mailů, {count($monitoring['cron']['recent'])} běhů cronu)
+			</summary>
+			
+			<div style="margin-top: 1rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.25rem;">
+				
+				<!-- TABULKA POSLEDNÍCH E-MAILŮ -->
+				<div>
+					<div style="font-weight: bold; color: #0f172a; font-size: 0.88rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 6px;">
+						<i class="fa-solid fa-paper-plane" style="color: #0284c7;"></i> Poslední odeslané e-maily:
+					</div>
+					{if empty($monitoring['emails']['recent'])}
+						<p style="color: #94a3b8; font-size: 0.82rem; margin: 0; padding: 10px; background: white; border-radius: 6px; border: 1px solid #e2e8f0;">Zatím nebyly zaznamenány žádné odeslané e-maily.</p>
+					{else}
+						<div style="max-height: 280px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px; background: white;">
+							<table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
+								<tbody>
+									{foreach $monitoring['emails']['recent'] as $em}
+										<tr style="border-bottom: 1px solid #f1f5f9;">
+											<td style="padding: 6px 8px; color: #64748b; white-space: nowrap;">{$em->sent_at->format('d.m. H:i')}</td>
+											<td style="padding: 6px 8px;">
+												<div style="font-weight: 600; color: #1e293b;">{$em->recipient_email}</div>
+												<div style="font-size: 0.75rem; color: #64748b;">{$em->subject}</div>
+											</td>
+											<td style="padding: 6px 8px; text-align: right;">
+												{if $em->status === 'sent'}
+													<span style="color: #15803d; font-weight: bold;">OK</span>
+												{else}
+													<span style="color: #b91c1c; font-weight: bold;" title="{$em->error_message}">CHYBA</span>
+												{/if}
+											</td>
+										</tr>
+									{/foreach}
+								</tbody>
+							</table>
+						</div>
+					{/if}
+				</div>
+
+				<!-- TABULKA POSLEDNÍCH BĚHŮ CRONU -->
+				<div>
+					<div style="font-weight: bold; color: #0f172a; font-size: 0.88rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 6px;">
+						<i class="fa-solid fa-clock" style="color: #9333ea;"></i> Poslední běhy plánovače (Cron):
+					</div>
+					{if empty($monitoring['cron']['recent'])}
+						<p style="color: #94a3b8; font-size: 0.82rem; margin: 0; padding: 10px; background: white; border-radius: 6px; border: 1px solid #e2e8f0;">Zatím nebyl zaznamenán žádný běh plánovače.</p>
+					{else}
+						<div style="max-height: 280px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px; background: white;">
+							<table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
+								<tbody>
+									{foreach $monitoring['cron']['recent'] as $cr}
+										<tr style="border-bottom: 1px solid #f1f5f9;">
+											<td style="padding: 6px 8px; color: #64748b; white-space: nowrap;">{$cr->started_at->format('d.m. H:i:s')}</td>
+											<td style="padding: 6px 8px;">
+												<div style="color: #1e293b;">{$cr->message ?: 'Běh plánovače'}</div>
+												{if $cr->duration_seconds !== null}
+													<div style="font-size: 0.72rem; color: #94a3b8;">trvání {$cr->duration_seconds} s</div>
+												{/if}
+											</td>
+											<td style="padding: 6px 8px; text-align: right; white-space: nowrap;">
+												{if $cr->status === 'success'}
+													<span style="color: #15803d; font-weight: bold;">Úspěch</span>
+												{elseif $cr->status === 'running'}
+													<span style="color: #0284c7; font-weight: bold;">Běží...</span>
+												{else}
+													<span style="color: #b91c1c; font-weight: bold;">Chyba</span>
+												{/if}
+											</td>
+										</tr>
+									{/foreach}
+								</tbody>
+							</table>
+						</div>
+					{/if}
+				</div>
+
+			</div>
+		</details>
+	</div>
+
+	<!-- 4. PŘEHLED A KATALOG ZAPOJENÝCH JEDNOTEK -->
 	<div style="background: white; border-radius: 12px; padding: 1.75rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.03);">
 		
 		<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
