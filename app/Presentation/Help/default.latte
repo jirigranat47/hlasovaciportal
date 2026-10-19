@@ -40,6 +40,17 @@
 		</div>
 	</div>
 
+	<!-- PODMÍNKY POUŽITÍ: JEDNOTKY A ROLE -->
+	<div style="background: #f8fafc; border: 1px solid #cbd5e1; border-left: 5px solid #2563eb; border-radius: 8px; padding: 1.2rem 1.4rem; margin-bottom: 2rem; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+		<strong style="color: #1e40af; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; margin-bottom: 0.5rem;">
+			<span>ℹ️</span> Pro koho je hlasovací portál určen a jaké role jsou vyžadovány
+		</strong>
+		<ul style="margin: 0; padding-left: 1.3rem; color: #334155; line-height: 1.6; font-size: 0.95rem;">
+			<li><strong>Dostupné typy jednotek:</strong> Hlasování v portálu je dostupné <strong>výhradně pro střediskové, krajské a okresní rady</strong> (systém není určen pro oddíly, družiny ani sněmy).</li>
+			<li><strong>Požadovaná role pro člena rady:</strong> Aby mohl člen rady v portálu hlasovat a vykonávat práva člena rady, musí mít ve SkautISu pro danou jednotku roli <strong>aktivní činovník</strong>, nebo <strong>vedoucí/admin</strong> dané jednotky (vedoucí, zástupce, hospodář či administrátor). Uživatelé s jinými rolemi (např. oddílové role či činovník bez přívlastku aktivní) hlasovat nemohou.</li>
+		</ul>
+	</div>
+
 	<!-- SEKCE 1: PRO ČLENY RADY -->
 	<section id="pro-cleny-rady" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 2rem; margin-bottom: 2.5rem; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
 		<h2 style="color: var(--skaut-blue); margin-top: 0; font-size: 1.4rem; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.75rem;">
@@ -47,13 +58,15 @@
 			<span>1. Nápověda pro členy rady jednotky</span>
 		</h2>
 
-		<h3 style="color: #1e293b; font-size: 1.15rem; margin-top: 1.5rem;">🔑 Přihlášení do portálu</h3>
+		<h3 style="color: #1e293b; font-size: 1.15rem; margin-top: 1.5rem;">🔑 Přihlášení do portálu a podmínky hlasování</h3>
 		<p>
-			Do portálu se přihlašujete svými běžnými údaji ze <strong>SkautISu</strong> (uživatelské jméno a heslo). Portál si automaticky ověří vaši totožnost a aktivní roli.
+			Do portálu se přihlašujete svými běžnými údaji ze <strong>SkautISu</strong> (uživatelské jméno a heslo). Portál si automaticky ověří vaši totožnost, jednotku a aktivní roli.
 		</p>
 		<ul>
-			<li><strong>Člen rady:</strong> Pokud jste zapsáni v seznamu Rady jednotky, získáte plné právo hlasovat u všech probíhajících usnesení vaší jednotky.</li>
-			<li><strong>Host (nečlen rady):</strong> Máte přístup k archivovaným usnesením, ale nemůžete odevzdávat hlasy.</li>
+			<li><strong>Oprávněné jednotky:</strong> Hlasování je dostupné pouze pro <strong>střediskové, krajské a okresní rady</strong>.</li>
+			<li><strong>Požadované role:</strong> Člen rady musí mít ve SkautISu pro danou jednotku roli <strong>aktivní činovník</strong>, nebo <strong>vedoucí/admin</strong> (vedoucí, zástupce, hospodář, administrátor).</li>
+			<li><strong>Člen rady:</strong> Pokud jste zapsáni v seznamu Rady jednotky a máte výše uvedenou roli, získáte plné právo hlasovat u všech probíhajících usnesení vaší jednotky.</li>
+			<li><strong>Host (nečlen rady):</strong> Máte přístup k archivovaným i probíhajícím usnesením své jednotky k nahlížení, ale nemůžete odevzdávat hlasy.</li>
 		</ul>
 
 		<div style="background: #f8fafc; border: 1px solid #cbd5e1; border-left: 4px solid #3b82f6; padding: 12px 16px; border-radius: 6px; margin: 1.25rem 0;">
@@ -93,7 +106,7 @@
 		</h2>
 
 		<p>
-			Administrátorská práva jsou automaticky přidělena uživatelům s odpovídající vedoucí či správcovskou rolí ve SkautISu (např. vedoucí střediska/oddílu, zástupce, hospodář, zpravodaj, administrátor apod.).
+			Administrátorská práva v portálu jsou automaticky přidělena uživatelům s rolí <strong>vedoucí/admin</strong> dané jednotky (střediska, okresu nebo kraje) ve SkautISu (vedoucí jednotky, zástupce vedoucího, hospodář či administrátor). Pro samotné členy rady, kteří v usneseních hlasují, postačuje role <strong>aktivní činovník</strong> nebo <strong>vedoucí/admin</strong>.
 		</p>
 
 		<!-- ŽIVOTNÍ CYKLUS USNESENÍ -->
@@ -211,9 +224,10 @@
 		<!-- SPRÁVA RADY A E-MAILY -->
 		<h3 style="color: #1e293b; font-size: 1.15rem; margin-top: 2rem;">👥 Správa Rady jednotky</h3>
 		<p>
-			V sekci <strong>Správa Rady</strong> nastavujete seznam osob, které mají hlasovací právo.
+			V sekci <strong>Správa Rady</strong> administrátor spravuje seznam osob, které tvoří radu a mají právo v usneseních hlasovat.
 		</p>
 		<ul>
+			<li><strong>Podmínka pro výkon hlasovacího práva:</strong> Člen rady musí mít ve SkautISu pro tuto jednotku (středisko, okres nebo kraj) roli <strong>aktivní činovník</strong> nebo <strong>vedoucí/admin</strong>.</li>
 			<li><strong>Rychlý našeptávač:</strong> Vyhledávejte členy jednotky ze SkautISu podle jména, data narození nebo Person ID.</li>
 			<li><strong>Automatické dohledání e-mailu:</strong> Při přidání člena systém automaticky dohledá jeho e-mailovou adresu z kontaktů ve SkautISu.</li>
 		</ul>
