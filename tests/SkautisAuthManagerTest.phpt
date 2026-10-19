@@ -193,6 +193,37 @@ class SkautisAuthManagerTest extends BaseTestCase
 		Assert::same('vedouciStredisko', $userData['roleKey']);
 		Assert::same('Testovací středisko', $userData['unitName']);
 	}
+
+	public function testIsSuperAdmin(): void
+	{
+		// Odhlášený uživatel není superadmin
+		$this->authManager->logout();
+		Assert::false($this->authManager->isSuperAdmin());
+
+		// Přihlášený běžný uživatel bez superadmin ID
+		$this->authManager->simulateLogin(unitId: 50001, personId: 99999);
+		Assert::false($this->authManager->isSuperAdmin());
+
+		// Nastavíme v reflexi nebo testovacím authManageru superadmin ID
+		$refProp = new \ReflectionProperty(SkautisAuthManager::class, 'superadmins');
+		$refProp->setValue($this->authManager, [777, 888]);
+
+		// Uživatel s Person ID 777 je superadmin
+		$this->authManager->simulateLogin(unitId: 50001, personId: 777);
+		Assert::true($this->authManager->isSuperAdmin());
+
+		// Uživatel s Person ID 888 je superadmin
+		$this->authManager->simulateLogin(unitId: 50001, personId: 888);
+		Assert::true($this->authManager->isSuperAdmin());
+
+		// Jiný uživatel není superadmin
+		$this->authManager->simulateLogin(unitId: 50001, personId: 123);
+		Assert::false($this->authManager->isSuperAdmin());
+
+		// Reset superadmins
+		$refProp->setValue($this->authManager, []);
+		Assert::false($this->authManager->isSuperAdmin());
+	}
 }
 
 (new SkautisAuthManagerTest($container))->run();

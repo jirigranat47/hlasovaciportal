@@ -35,6 +35,6 @@
         "allow-plugins": {}
     },
     "scripts": {
-        "test": "./vendor/bin/tester tests -C"
+        "test": "./vendor/bin/tester -j 1 tests -C"
     }
 }

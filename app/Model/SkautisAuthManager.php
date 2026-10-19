@@ -20,7 +20,8 @@ class SkautisAuthManager
 		private Request $httpRequest,
 		private string $appId,
 		private bool $isTest = true,
-		private bool $debugRoles = false
+		private bool $debugRoles = false,
+		private array $superadmins = []
 	) {
 		$this->session = $sessionManager->getSection('skautis_auth');
 	}
@@ -504,6 +505,31 @@ class SkautisAuthManager
 		}		
 
 		return false;
+	}
+
+	/**
+	 * Ověří, zda je aktuálně přihlášený uživatel superadministrátorem aplikace (dle Person ID)
+	 */
+	public function isSuperAdmin(): bool
+	{
+		if (!$this->isLoggedIn()) {
+			return false;
+		}
+
+		$personId = (int)($this->session->personId ?? 0);
+		if ($personId <= 0 || empty($this->superadmins)) {
+			return false;
+		}
+
+		return in_array($personId, array_map('intval', $this->superadmins), true);
+	}
+
+	/**
+	 * Vrátí pole Person ID všech superadministrátorů
+	 */
+	public function getSuperAdminPersonIds(): array
+	{
+		return array_map('intval', $this->superadmins);
 	}
 
 	/**

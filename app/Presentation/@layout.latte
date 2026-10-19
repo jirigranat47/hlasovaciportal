@@ -48,6 +48,14 @@
 						<i class="fa-solid fa-moon" id="themeIcon"></i>
 					</button>
 
+					<!-- SUPERADMIN TLAČÍTKO -->
+					{if $isLoggedIn && !empty($isSuperAdmin)}
+						<a n:href="Superadmin:default" class="btn btn-sm text-white d-flex align-items-center gap-1 shadow-sm" style="background: #9333ea; border-color: #9333ea;" title="Superadmin Portál (Centrální správa a statistiky)">
+							<i class="fa-solid fa-crown text-warning"></i>
+							<span class="d-none d-md-inline fw-bold">Superadmin</span>
+						</a>
+					{/if}
+
 					<!-- PŘEPÍNAČ ROLÍ ZE SKAUTISU -->
 					{if $isLoggedIn && !empty($userRoles) && count($userRoles) > 1}
 						<div class="dropdown">

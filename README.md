@@ -55,6 +55,8 @@ Při vyplňování žádosti o nové / produkční **AppID** na [ws.skautis.cz](
 
 Pro usnadnění lokálního vývoje bez nutnosti přihlašování přes reálný SkautIS můžete simulovat přihlášení různých rolí pomocí následujících URL adres:
 
+* 👑 **Superadministrátor aplikace** (přístup do Superadmin portálu s globálními statistikami a přehledem všech jednotek, `Person ID = 1`):
+  [http://localhost:8089/sign/dev-login?unitId=10001&personId=1&personName=Superadmin+Aplikace&roleKey=vedouciStredisko&roleName=Administrátor&unitName=Středisko+Superadmin](http://localhost:8089/sign/dev-login?unitId=10001&personId=1&personName=Superadmin+Aplikace&roleKey=vedouciStredisko&roleName=Administrátor&unitName=Středisko+Superadmin)
 * **Zakladatel / Administrátor jednotky** (zakládá hlasování, není v radě):
   [http://localhost:8089/sign/dev-login?unitId=123&personId=9999&personName=Admin+Zakladatel&roleKey=vedouciStredisko&roleName=Administrátor](http://localhost:8089/sign/dev-login?unitId=123&personId=9999&personName=Admin+Zakladatel&roleKey=vedouciStredisko&roleName=Administrátor)
 * **Člen rady č. 1 (Jan Novak)**:
@@ -62,13 +64,57 @@ Pro usnadnění lokálního vývoje bez nutnosti přihlašování přes reálný
 * **Člen rady č. 2 (Petr Svoboda)**:
   [http://localhost:8089/sign/dev-login?unitId=123&personId=1002&personName=Petr+Svoboda&roleKey=clened&roleName=Člen](http://localhost:8089/sign/dev-login?unitId=123&personId=1002&personName=Petr+Svoboda&roleKey=clened&roleName=Člen)
 * **Člen rady č. 3 (Marie Dvořáková)**:
-  [http://localhost:8089/sign/dev-login?unitId=123&personId=1003&personName=Marie+Dvořáková&roleKey=clened&roleName=Člen](http://localhost:8089/sign/dev-login?unitId=123&personId=1003&personName=Marie+Dvo%C5%99%C3%A1kov%C3%A1&roleKey=clened&roleName=%C4%8Clen)
+  [http://localhost:8089/sign/dev-login?unitId=123&personId=1003&personName=Marie+Dvořáková&roleKey=clened&roleName=Člen](http://localhost:8089/sign/dev-login?unitId=123&personId=1003&personName=Marie+Dvořáková&roleKey=clened&roleName=Člen)
 * **Člen rady č. 4 (Tomáš Kučera)**:
-  [http://localhost:8089/sign/dev-login?unitId=123&personId=1004&personName=Tomáš+Kučera&roleKey=clened&roleName=Člen](http://localhost:8089/sign/dev-login?unitId=123&personId=1004&personName=Tom%C3%A1%C5%A1+Ku%C4%8Dera&roleKey=clened&roleName=%C4%8Clen)
+  [http://localhost:8089/sign/dev-login?unitId=123&personId=1004&personName=Tomáš+Kučera&roleKey=clened&roleName=Člen](http://localhost:8089/sign/dev-login?unitId=123&personId=1004&personName=Tomáš+Kučera&roleKey=clened&roleName=Člen)
 * **Člen rady č. 5 (Lucie Černá)**:
-  [http://localhost:8089/sign/dev-login?unitId=123&personId=1005&personName=Lucie+Černá&roleKey=clened&roleName=Člen](http://localhost:8089/sign/dev-login?unitId=123&personId=1005&personName=Lucie+%C4%8Cern%C3%A1&roleKey=clened&roleName=%C4%8Clen)
+  [http://localhost:8089/sign/dev-login?unitId=123&personId=1005&personName=Lucie+Černá&roleKey=clened&roleName=Člen](http://localhost:8089/sign/dev-login?unitId=123&personId=1005&personName=Lucie+Černá&roleKey=clened&roleName=Člen)
 * **Host / Běžný člen** (není v radě, nezaložil hlasování):
   [http://localhost:8089/sign/dev-login?unitId=123&personId=5555&personName=Host+Skaut&roleKey=clened&roleName=Člen](http://localhost:8089/sign/dev-login?unitId=123&personId=5555&personName=Host+Skaut&roleKey=clened&roleName=Člen)
+
+---
+
+## 👑 Superadmin Portál a správa superadministrátorů
+
+Portál slouží pro centrální správu a globální přehled o využívání aplikace napříč celou organizací Junák – český skaut. Je přístupný pouze oprávněným superadministrátorům v horní liště aplikace (zlaté tlačítko s korunkou **Superadmin**) nebo přímo na adrese [http://localhost:8089/superadmin](http://localhost:8089/superadmin).
+
+### ⚙ Konfigurace superadministrátorů
+Superadministrátoři jsou definováni v konfiguračním souboru `config/local.neon` (případně v produkční konfiguraci) pomocí seznamu **SkautIS Person ID**:
+
+```neon
+parameters:
+	superadmins:
+		- 1      # Lokální dev superadmin (pro lokální testování, viz odkaz níže)
+		- 12345  # Reálné SkautIS Person ID hlavního správce
+		- 67890  # Další pověřený administrátor
+```
+
+> **Princip oprávnění:** Oprávnění superadmina je pevně vázáno na konkrétní fyzickou osobu (její `Person ID` ve SkautISu). Uživatel má přístup do portálu bez ohledu na to, za jakou skautskou jednotku (středisko, okres, kraj) nebo v jaké roli je právě přihlášen. Neoprávněný uživatel je při pokusu o vstup automaticky odmítnut chybou 403 Forbidden.
+
+### 📊 Funkce a přehledy portálu
+* **Klíčové metriky (KPI):**
+  * Celkový počet zapojených jednotek.
+  * Počet usnesení v systému (aktivní vs. uzavřená).
+  * Celkový počet odevzdaných hlasů.
+  * Globální průměrná volební účast (napříč všemi jednotkami a usneseními).
+* **Rozdělení výsledků usnesení:**
+  * Procentuální a vizuální rozpad usnesení: Schváleno (Přijato), Neschváleno (Nepřijato), Zrušeno a Probíhající.
+* **Katalog a aktivita jednotek:**
+  * Přehledná tabulka všech jednotek evidovaných v systému:
+    * Typ jednotky (Středisko, Okres, Kraj).
+    * Počet členů rady jednotky.
+    * Počet usnesení celkem.
+    * Průměrná volební účast v dané jednotce.
+    * Datum poslední aktivity v systému.
+  * Možnost filtrování a okamžitého vyhledávání podle názvu, čísla nebo typu jednotky.
+* **Detail jednotky (`/superadmin/unit/<id>`):**
+  * Detailní statistiky konkrétní jednotky, aktuální složení její rady a kompletní archiv jejích usnesení včetně výsledků a volební účasti.
+* **Auditní protokol:**
+  * Záznam přístupů superadministrátorů do portálu (datum a čas, jméno, SkautIS Person ID, IP adresa a klientský prohlížeč / User-Agent).
+
+### 🔗 Rychlý odkaz pro lokální testování jako Superadmin:
+* **[Přihlásit se jako Superadministrátor](http://localhost:8089/sign/dev-login?unitId=10001&personId=1&personName=Superadmin+Aplikace&roleKey=vedouciStredisko&roleName=Administrátor&unitName=Středisko+Superadmin)**
+* Po kliknutí budete přihlášeni jako uživatel s `Person ID = 1` a v horní navigační liště se vám zobrazí zlaté tlačítko **👑 Superadmin**, které vás přesměruje do portálu.
 
 ---
 

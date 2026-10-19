@@ -1,0 +1,360 @@
+{block title}Superadmin Portál{/block}
+
+{block content}
+<div class="container" style="max-width: 1300px; padding: 2rem 1rem;">
+
+	<!-- HLAVIČKA SUPERADMIN PORTÁLU -->
+	<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 1.5rem;">
+		<div>
+			<div style="display: flex; align-items: center; gap: 10px;">
+				<span style="background: #9333ea; color: white; width: 40px; height: 40px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.3rem; box-shadow: 0 4px 6px rgba(147, 51, 234, 0.25);">
+					<i class="fa-solid fa-crown"></i>
+				</span>
+				<h1 style="color: #581c87; margin: 0; font-size: 2rem;">Superadmin Portál</h1>
+			</div>
+			<p style="color: var(--skaut-muted); margin: 6px 0 0 0; font-size: 1rem;">
+				Globální přehled celého systému, zapojených skautských jednotek a statistiky volební účasti a usnesení
+			</p>
+		</div>
+
+		<div style="display: flex; gap: 0.5rem; align-items: center;">
+			<a n:href="Home:default" class="btn btn-secondary" style="background: white; color: #334155; border: 1px solid #cbd5e1; font-weight: 600; padding: 8px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.15s;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#94a3b8'; this.style.color='#0f172a';" onmouseout="this.style.background='white'; this.style.borderColor='#cbd5e1'; this.style.color='#334155';" title="Zpět na hlavní nástěnku jednotky">
+				<i class="fa-solid fa-arrow-left" style="color: #64748b;"></i> Zpět na portál
+			</a>
+		</div>
+	</div>
+
+	<!-- 1. GLOBÁLNÍ KPI KARTY -->
+	<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+		
+		<!-- ZAPOJENÉ JEDNOTKY -->
+		<div style="background: white; border-radius: 12px; padding: 1.25rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border-top: 4px solid #0284c7;">
+			<div style="font-size: 0.85rem; color: #64748b; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Zapojené jednotky</div>
+			<div style="font-size: 2rem; font-weight: 800; color: #0f172a; margin: 4px 0;">{$globalStats['unitsCount']}</div>
+			<div style="font-size: 0.82rem; color: #64748b;">
+				<span style="color: #0369a1; font-weight: 600;">{$globalStats['unitsByType']['stredisko']}</span> středisek &bull; 
+				<span style="color: #4338ca; font-weight: 600;">{$globalStats['unitsByType']['okres']}</span> okresů &bull; 
+				<span style="color: #b45309; font-weight: 600;">{$globalStats['unitsByType']['kraj']}</span> krajů
+			</div>
+		</div>
+
+		<!-- CELKEM USNESENÍ -->
+		<div style="background: white; border-radius: 12px; padding: 1.25rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border-top: 4px solid var(--skaut-blue);">
+			<div style="font-size: 0.85rem; color: #64748b; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Celkem usnesení</div>
+			<div style="font-size: 2rem; font-weight: 800; color: #0f172a; margin: 4px 0;">{$globalStats['totalElections']}</div>
+			<div style="font-size: 0.82rem; color: #64748b;">
+				<span style="color: #16a34a; font-weight: 600;">{$globalStats['activeElections']} probíhá</span> &bull; 
+				<span style="color: #475569; font-weight: 600;">{$globalStats['closedElections']} uzavřeno</span>
+				{if $globalStats['draftElections'] > 0} &bull; <span style="color: #eab308; font-weight: 600;">{$globalStats['draftElections']} draft</span>{/if}
+			</div>
+		</div>
+
+		<!-- ČLENOVÉ RAD -->
+		<div style="background: white; border-radius: 12px; padding: 1.25rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border-top: 4px solid #10b981;">
+			<div style="font-size: 0.85rem; color: #64748b; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Členové rad (Hlasující)</div>
+			<div style="font-size: 2rem; font-weight: 800; color: #0f172a; margin: 4px 0;">{$globalStats['councilMembersCount']}</div>
+			<div style="font-size: 0.82rem; color: #64748b;">
+				všech zapsaných osob v radách jednotek
+			</div>
+		</div>
+
+		<!-- ODEVZDANÉ HLASY -->
+		<div style="background: white; border-radius: 12px; padding: 1.25rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border-top: 4px solid #f59e0b;">
+			<div style="font-size: 0.85rem; color: #64748b; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Odevzdané hlasy</div>
+			<div style="font-size: 2rem; font-weight: 800; color: #0f172a; margin: 4px 0;">{$globalStats['totalVotesCount']}</div>
+			<div style="font-size: 0.82rem; color: #64748b;">
+				zaznamenáno {$globalStats['totalLoginsCount']} přihlášení
+			</div>
+		</div>
+
+		<!-- PRŮMĚRNÁ VOLEBNÍ ÚČAST -->
+		<div style="background: white; border-radius: 12px; padding: 1.25rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border-top: 4px solid #8b5cf6;">
+			<div style="font-size: 0.85rem; color: #64748b; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Volební účast</div>
+			<div style="font-size: 2rem; font-weight: 800; color: #7c3aed; margin: 4px 0;">{$globalStats['globalTurnoutPct']} %</div>
+			<div style="font-size: 0.82rem; color: #64748b;">
+				průměrná účast v uzavřených usneseních
+			</div>
+		</div>
+
+		<!-- ÚSPĚŠNOST SCHVÁLENÍ -->
+		<div style="background: white; border-radius: 12px; padding: 1.25rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border-top: 4px solid #16a34a;">
+			<div style="font-size: 0.85rem; color: #64748b; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Úspěšnost usnesení</div>
+			<div style="font-size: 2rem; font-weight: 800; color: #15803d; margin: 4px 0;">{$globalStats['globalSuccessPct']} %</div>
+			<div style="font-size: 0.82rem; color: #64748b;">
+				schváleno (nadpoloviční většina Pro)
+			</div>
+		</div>
+
+	</div>
+
+	<!-- 2. ANALYTICKÉ SOUHRNY A ROZPADY -->
+	<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
+		
+		<!-- KARTA 1: VÝSLEDKY A ROZPAD HLASŮ -->
+		<div style="background: white; border-radius: 12px; padding: 1.5rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.03);">
+			<h3 style="margin-top: 0; margin-bottom: 1rem; color: #1e293b; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+				<i class="fa-solid fa-square-poll-vertical" style="color: var(--skaut-blue);"></i> Výsledky usnesení & Rozložení hlasů
+			</h3>
+
+			<div style="display: flex; gap: 1.5rem; justify-content: space-around; margin-bottom: 1.5rem; text-align: center; background: #f8fafc; padding: 1rem; border-radius: 8px;">
+				<div>
+					<div style="color: #16a34a; font-weight: bold; font-size: 1.4rem;">{$analytics['outcomes']['adopted']}</div>
+					<div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Přijato (Pro &gt; 50%)</div>
+				</div>
+				<div style="border-left: 1px solid #e2e8f0;"></div>
+				<div>
+					<div style="color: #dc2626; font-weight: bold; font-size: 1.4rem;">{$analytics['outcomes']['rejected']}</div>
+					<div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Nepřijato</div>
+				</div>
+				<div style="border-left: 1px solid #e2e8f0;"></div>
+				<div>
+					<div style="color: #64748b; font-weight: bold; font-size: 1.4rem;">{$analytics['outcomes']['cancelled']}</div>
+					<div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Stornováno</div>
+				</div>
+			</div>
+
+			<div style="font-size: 0.88rem; font-weight: bold; color: #475569; margin-bottom: 0.5rem;">Celkové rozložení hlasů:</div>
+			{var $totalVotesInOpts = $analytics['votesBreakdown']['pro'] + $analytics['votesBreakdown']['against'] + $analytics['votesBreakdown']['abstain']}
+			{var $proPct = $totalVotesInOpts > 0 ? round(($analytics['votesBreakdown']['pro'] / $totalVotesInOpts) * 100, 1) : 0}
+			{var $againstPct = $totalVotesInOpts > 0 ? round(($analytics['votesBreakdown']['against'] / $totalVotesInOpts) * 100, 1) : 0}
+			{var $abstainPct = $totalVotesInOpts > 0 ? round(($analytics['votesBreakdown']['abstain'] / $totalVotesInOpts) * 100, 1) : 0}
+
+			<div style="height: 24px; border-radius: 6px; overflow: hidden; display: flex; margin-bottom: 0.75rem; background: #e2e8f0;">
+				<div style="background: #16a34a; width: {$proPct}%;" title="Pro: {$analytics['votesBreakdown']['pro']} ({$proPct}%)"></div>
+				<div style="background: #dc2626; width: {$againstPct}%;" title="Proti: {$analytics['votesBreakdown']['against']} ({$againstPct}%)"></div>
+				<div style="background: #64748b; width: {$abstainPct}%;" title="Zdržel se: {$analytics['votesBreakdown']['abstain']} ({$abstainPct}%)"></div>
+			</div>
+
+			<div style="display: flex; justify-content: space-between; font-size: 0.82rem; color: #475569;">
+				<span><span style="display: inline-block; width: 10px; height: 10px; background: #16a34a; border-radius: 2px; margin-right: 4px;"></span> Pro: <strong>{$analytics['votesBreakdown']['pro']}</strong> ({$proPct}%)</span>
+				<span><span style="display: inline-block; width: 10px; height: 10px; background: #dc2626; border-radius: 2px; margin-right: 4px;"></span> Proti: <strong>{$analytics['votesBreakdown']['against']}</strong> ({$againstPct}%)</span>
+				<span><span style="display: inline-block; width: 10px; height: 10px; background: #64748b; border-radius: 2px; margin-right: 4px;"></span> Zdržel se: <strong>{$analytics['votesBreakdown']['abstain']}</strong> ({$abstainPct}%)</span>
+			</div>
+		</div>
+
+		<!-- KARTA 2: DISTRIBUCE VOLEBNÍ ÚČASTI & SEZÓNNÍ TRENDY -->
+		<div style="background: white; border-radius: 12px; padding: 1.5rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.03);">
+			<h3 style="margin-top: 0; margin-bottom: 1rem; color: #1e293b; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+				<i class="fa-solid fa-chart-pie" style="color: #7c3aed;"></i> Distribuce volební účasti jednotek
+			</h3>
+
+			<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1.25rem;">
+				<div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 0.75rem;">
+					<div style="font-size: 1.25rem; font-weight: bold; color: #15803d;">{$analytics['turnoutDistribution']['high']} jednotek</div>
+					<div style="font-size: 0.8rem; color: #166534;">Vynikající účast (&ge; 90 %)</div>
+				</div>
+				<div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 0.75rem;">
+					<div style="font-size: 1.25rem; font-weight: bold; color: #1d4ed8;">{$analytics['turnoutDistribution']['good']} jednotek</div>
+					<div style="font-size: 0.8rem; color: #1e40af;">Dobrá účast (75 &ndash; 89 %)</div>
+				</div>
+				<div style="background: #fefce8; border: 1px solid #fef08a; border-radius: 8px; padding: 0.75rem;">
+					<div style="font-size: 1.25rem; font-weight: bold; color: #a16207;">{$analytics['turnoutDistribution']['average']} jednotek</div>
+					<div style="font-size: 0.8rem; color: #854d0e;">Průměrná účast (50 &ndash; 74 %)</div>
+				</div>
+				<div style="background: #fff1f2; border: 1px solid #fecdd3; border-radius: 8px; padding: 0.75rem;">
+					<div style="font-size: 1.25rem; font-weight: bold; color: #be123c;">{$analytics['turnoutDistribution']['low']} jednotek</div>
+					<div style="font-size: 0.8rem; color: #9f1239;">Nízká účast (&lt; 50 %)</div>
+				</div>
+			</div>
+
+			<div style="font-size: 0.85rem; color: #64748b;">
+				Trend zakládání nových usnesení za posledních 6 měsíců:
+				<div style="display: flex; gap: 8px; margin-top: 6px; align-items: flex-end; height: 50px;">
+					{var $maxCount = 1}
+					{foreach $analytics['monthlyTrends'] as $m}
+						{if $m['count'] > $maxCount}{var $maxCount = $m['count']}{/if}
+					{/foreach}
+					{foreach $analytics['monthlyTrends'] as $m}
+						{var $barH = max(10, round(($m['count'] / $maxCount) * 45))}
+						<div style="flex: 1; text-align: center;">
+							<div style="height: {$barH}px; background: var(--skaut-blue); border-radius: 3px 3px 0 0;" title="{$m['label']}: {$m['count']} usnesení"></div>
+							<div style="font-size: 0.7rem; color: #64748b; margin-top: 2px;">{$m['label']}</div>
+						</div>
+					{/foreach}
+				</div>
+			</div>
+		</div>
+
+	</div>
+
+	<!-- 3. PŘEHLED A KATALOG ZAPOJENÝCH JEDNOTEK -->
+	<div style="background: white; border-radius: 12px; padding: 1.75rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.03);">
+		
+		<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+			<div>
+				<h2 style="margin: 0; color: #0f172a; font-size: 1.4rem; display: flex; align-items: center; gap: 8px;">
+					<i class="fa-solid fa-list-check" style="color: #9333ea;"></i> Přehled skautských jednotek ({count($units)})
+				</h2>
+				<p style="margin: 4px 0 0 0; color: var(--skaut-muted); font-size: 0.9rem;">
+					Aktivita, velikost rady, statistiky volební účasti a úspěšnosti jednotlivých jednotek
+				</p>
+			</div>
+
+			<!-- VYHLEDÁVÁNÍ -->
+			<form method="get" action="{link this}" style="display: flex; gap: 0.5rem; align-items: center;">
+				<input type="hidden" name="type" value="{$selectedType}">
+				<input type="hidden" name="sort" value="{$selectedSort}">
+				<div style="position: relative;">
+					<input type="text" name="q" value="{$searchQuery}" placeholder="Hledat jednotku nebo ID..." style="padding: 6px 12px 6px 32px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; width: 220px;">
+					<i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 10px; color: #94a3b8; font-size: 0.85rem;"></i>
+				</div>
+				<button type="submit" class="btn btn-sm btn-primary" style="padding: 6px 12px;">Hledat</button>
+				{if !empty($searchQuery)}
+					<a n:href="this, type => $selectedType, q => null, sort => $selectedSort" class="btn btn-sm btn-secondary" title="Zrušit hledání">✕</a>
+				{/if}
+			</form>
+		</div>
+
+		<!-- FILTRY TYPU JEDNOTKY -->
+		<div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+			<a n:href="this, type => 'all', q => $searchQuery, sort => $selectedSort" class="btn btn-sm" style="border-radius: 20px; padding: 5px 14px; font-size: 0.85rem; font-weight: {if $selectedType === 'all'}bold{else}500{/if}; background: {if $selectedType === 'all'}#0284c7{else}#f8fafc{/if}; color: {if $selectedType === 'all'}white{else}#475569{/if}; border: 1px solid {if $selectedType === 'all'}#0284c7{else}#cbd5e1{/if}; text-decoration: none;">
+				Všechny jednotky ({$globalStats['unitsCount']})
+			</a>
+			<a n:href="this, type => 'stredisko', q => $searchQuery, sort => $selectedSort" class="btn btn-sm" style="border-radius: 20px; padding: 5px 14px; font-size: 0.85rem; font-weight: {if $selectedType === 'stredisko'}bold{else}500{/if}; background: {if $selectedType === 'stredisko'}#0284c7{else}#f8fafc{/if}; color: {if $selectedType === 'stredisko'}white{else}#475569{/if}; border: 1px solid {if $selectedType === 'stredisko'}#0284c7{else}#cbd5e1{/if}; text-decoration: none;">
+				<i class="fa-solid fa-campground me-1"></i> Střediska ({$globalStats['unitsByType']['stredisko']})
+			</a>
+			<a n:href="this, type => 'okres', q => $searchQuery, sort => $selectedSort" class="btn btn-sm" style="border-radius: 20px; padding: 5px 14px; font-size: 0.85rem; font-weight: {if $selectedType === 'okres'}bold{else}500{/if}; background: {if $selectedType === 'okres'}#0284c7{else}#f8fafc{/if}; color: {if $selectedType === 'okres'}white{else}#475569{/if}; border: 1px solid {if $selectedType === 'okres'}#0284c7{else}#cbd5e1{/if}; text-decoration: none;">
+				<i class="fa-solid fa-tree me-1"></i> Okresy ({$globalStats['unitsByType']['okres']})
+			</a>
+			<a n:href="this, type => 'kraj', q => $searchQuery, sort => $selectedSort" class="btn btn-sm" style="border-radius: 20px; padding: 5px 14px; font-size: 0.85rem; font-weight: {if $selectedType === 'kraj'}bold{else}500{/if}; background: {if $selectedType === 'kraj'}#0284c7{else}#f8fafc{/if}; color: {if $selectedType === 'kraj'}white{else}#475569{/if}; border: 1px solid {if $selectedType === 'kraj'}#0284c7{else}#cbd5e1{/if}; text-decoration: none;">
+				<i class="fa-solid fa-mountain-sun me-1"></i> Kraje ({$globalStats['unitsByType']['kraj']})
+			</a>
+		</div>
+
+		<!-- TABULKA JEDNOTEK -->
+		{if empty($units)}
+			<div style="text-align: center; padding: 3rem 1rem; color: #64748b; background: #f8fafc; border-radius: 8px;">
+				<i class="fa-solid fa-folder-open" style="font-size: 2.5rem; margin-bottom: 0.75rem; color: #cbd5e1;"></i>
+				<div style="font-size: 1.1rem; font-weight: bold;">Nebyly nalezeny žádné jednotky</div>
+				<p style="margin: 4px 0 0 0; font-size: 0.9rem;">Zkuste upravit filtry nebo vyhledávací dotaz.</p>
+			</div>
+		{else}
+			<div style="overflow-x: auto;">
+				<table style="width: 100%; border-collapse: collapse; font-size: 0.92rem;">
+					<thead>
+						<tr style="border-bottom: 2px solid #e2e8f0; text-align: left; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;">
+							<th style="padding: 10px 12px;">
+								<a n:href="this, type => $selectedType, q => $searchQuery, sort => 'name'" style="color: inherit; text-decoration: none;" title="Seřadit podle názvu">
+									Jednotka {if $selectedSort === 'name'}↑{/if}
+								</a>
+							</th>
+							<th style="padding: 10px 12px; text-align: center;">Typ</th>
+							<th style="padding: 10px 12px; text-align: center;">
+								<a n:href="this, type => $selectedType, q => $searchQuery, sort => 'members'" style="color: inherit; text-decoration: none;" title="Seřadit podle počtu členů rady">
+									Členů rady {if $selectedSort === 'members'}↓{/if}
+								</a>
+							</th>
+							<th style="padding: 10px 12px; text-align: center;">
+								<a n:href="this, type => $selectedType, q => $searchQuery, sort => 'elections'" style="color: inherit; text-decoration: none;" title="Seřadit podle počtu usnesení">
+									Usnesení {if $selectedSort === 'elections'}↓{/if}
+								</a>
+							</th>
+							<th style="padding: 10px 12px; text-align: center;">Hlasů</th>
+							<th style="padding: 10px 12px; text-align: center;">
+								<a n:href="this, type => $selectedType, q => $searchQuery, sort => 'turnout'" style="color: inherit; text-decoration: none;" title="Seřadit podle volební účasti">
+									Volební účast {if $selectedSort === 'turnout'}↓{/if}
+								</a>
+							</th>
+							<th style="padding: 10px 12px; text-align: center;">Úspěšnost</th>
+							<th style="padding: 10px 12px; text-align: right;">
+								<a n:href="this, type => $selectedType, q => $searchQuery, sort => 'activity'" style="color: {if $selectedSort === 'activity'}#0284c7{else}inherit{/if}; text-decoration: none; font-weight: {if $selectedSort === 'activity'}bold{else}normal{/if};" title="Seřadit podle data posledního přihlášení">
+									Poslední přihlášení {if $selectedSort === 'activity'}↓{/if}
+								</a>
+							</th>
+							<th style="padding: 10px 12px; text-align: center;">Akce</th>
+						</tr>
+					</thead>
+					<tbody>
+						{foreach $units as $u}
+							{var $typeMeta = App\Model\SuperadminRepository::getUnitTypeLabel($u['unit_type'])}
+							<tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc';" onmouseout="this.style.background='transparent';">
+								<!-- JEDNOTKA -->
+								<td style="padding: 12px;">
+									<div style="font-weight: bold; color: #0f172a;">
+										<a n:href="unit, id => $u['unit_id']" style="color: inherit; text-decoration: none;" title="Zobrazit detail jednotky">
+											{$u['unit_name']}
+										</a>
+									</div>
+									<div style="font-size: 0.8rem; color: #64748b;">
+										ID: <code>#{$u['unit_id']}</code>
+										{if $u['has_custom_settings']}<span title="Vlastní nastavení jednotky" style="margin-left: 4px; color: #0284c7;">⚙</span>{/if}
+										{if $u['has_custom_smtp']}<span title="Vlastní SMTP server" style="margin-left: 4px; color: #16a34a;">✉</span>{/if}
+									</div>
+								</td>
+
+								<!-- TYP -->
+								<td style="padding: 12px; text-align: center;">
+									<span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: bold; background: {$typeMeta['badgeBg']}; color: {$typeMeta['badgeColor']};">
+										<i class="fa-solid {$typeMeta['icon']}" style="font-size: 0.7rem;"></i> {$typeMeta['label']}
+									</span>
+								</td>
+
+								<!-- ČLENŮ RADY -->
+								<td style="padding: 12px; text-align: center;">
+									<span style="font-weight: bold; font-size: 1rem; color: #334155;">{$u['council_members_count']}</span>
+								</td>
+
+								<!-- USNESENÍ -->
+								<td style="padding: 12px; text-align: center;">
+									<div style="font-weight: bold; color: #0f172a;">{$u['total_elections']}</div>
+									<div style="font-size: 0.78rem; color: #64748b;">
+										{if $u['active_elections'] > 0}<span style="color: #16a34a; font-weight: bold;">{$u['active_elections']} akt.</span>{else}0 akt.{/if} &bull; {$u['closed_elections']} uz.
+									</div>
+								</td>
+
+								<!-- HLASŮ -->
+								<td style="padding: 12px; text-align: center;">
+									<span style="color: #475569; font-weight: 600;">{$u['total_votes']}</span>
+								</td>
+
+								<!-- VOLEBNÍ ÚČAST -->
+								<td style="padding: 12px; text-align: center;">
+									{if $u['turnout_pct'] !== null}
+										{var $turnColor = $u['turnout_pct'] >= 85 ? '#15803d' : ($u['turnout_pct'] >= 65 ? '#0369a1' : '#b91c1c')}
+										<div style="font-weight: bold; color: {$turnColor}; font-size: 0.95rem;">
+											{$u['turnout_pct']} %
+										</div>
+									{else}
+										<span style="color: #94a3b8; font-size: 0.85rem;">&ndash;</span>
+									{/if}
+								</td>
+
+								<!-- ÚSPĚŠNOST -->
+								<td style="padding: 12px; text-align: center;">
+									{if $u['success_pct'] !== null}
+										{var $succColor = $u['success_pct'] >= 80 ? '#15803d' : '#a16207'}
+										<div style="font-weight: bold; color: {$succColor}; font-size: 0.95rem;">
+											{$u['success_pct']} %
+										</div>
+									{else}
+										<span style="color: #94a3b8; font-size: 0.85rem;">&ndash;</span>
+									{/if}
+								</td>
+
+								<!-- POSLEDNÍ AKTIVITA -->
+								<td style="padding: 12px; text-align: right; color: #64748b; font-size: 0.85rem;">
+									{if $u['last_activity']}
+										{$u['last_activity']->format('d. m. Y')}
+										<div style="font-size: 0.75rem; color: #94a3b8;">{$u['last_activity']->format('H:i')}</div>
+									{else}
+										<span style="color: #cbd5e1;">nikdy</span>
+									{/if}
+								</td>
+
+								<!-- AKCE -->
+								<td style="padding: 12px; text-align: center;">
+									<a n:href="unit, id => $u['unit_id']" class="btn btn-sm" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-weight: 600; padding: 5px 12px; font-size: 0.82rem; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); transition: all 0.15s;" onmouseover="this.style.background='#dbeafe'; this.style.borderColor='#93c5fd'; this.style.color='#1e40af';" onmouseout="this.style.background='#eff6ff'; this.style.borderColor='#bfdbfe'; this.style.color='#1d4ed8';" title="Detail jednotky #{$u['unit_id']}">
+										<i class="fa-solid fa-arrow-up-right-from-square" style="color: #2563eb; font-size: 0.8rem;"></i> Detail
+									</a>
+								</td>
+							</tr>
+						{/foreach}
+					</tbody>
+				</table>
+			</div>
+		{/if}
+
+	</div>
+
+</div>
+{/block}

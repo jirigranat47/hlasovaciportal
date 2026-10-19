@@ -208,18 +208,28 @@ header, .main-header {
 
 /* Všechna tlačítka akcí s tmavým/barevným pozadím mají bílé ikony */
 .btn-vote i,
-.admin-quick-actions .btn i,
-.btn-secondary i {
+.admin-quick-actions .btn i {
   color: #ffffff;
 }
 
 .btn-secondary {
-  background: rgba(255,255,255,0.2);
-  color: white;
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
 }
 
 .btn-secondary:hover {
-  background: rgba(255,255,255,0.3);
+  background: #e2e8f0;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.btn-secondary i {
+  color: #475569;
+}
+
+.btn-secondary:hover i {
+  color: #0f172a;
 }
 
 .btn-vote {
