@@ -97,13 +97,17 @@ class SkautisAuthManager
 						// Pokud byla vrácena pouze jedna role (jako asociativní pole místo pole rolí)
 						$rolesArray = [$rolesArray];
 					}
-					$this->session->allRoles = $rolesArray ?: [];
+					$rolesArray = $rolesArray ?: [];
 
 					// Tracy debug výpis (pokud je zapnut v neon konfiguraci: skautis.debugRoles)
 					if ($this->debugRoles) {
 						\Tracy\Debugger::barDump($rolesArray, 'SkautIS - Aktivní role uživatele (UserRoleAll IsActive=true)');
 						\Tracy\Debugger::log($rolesArray, 'user-roles');
 					}
+
+					// Omezíme seznam nabízených rolí pouze na Kraj, Okres, Středisko (vedoucí/admin či aktivní činovník)
+					$allowedRoles = self::filterAllowedRoles($rolesArray);
+					$this->session->allRoles = $allowedRoles;
 
 					if (is_iterable($roles)) {
 						foreach ($roles as $role) {
@@ -121,6 +125,9 @@ class SkautisAuthManager
 					if (empty($this->session->unitName) && !empty($rolesArray[0]['Unit'])) {
 						$this->session->unitName = $rolesArray[0]['Unit'];
 					}
+
+					// Pokud uživatel přišel ze SkautISu s nepovolenou rolí (např. oddíl či tábor), ale má povolenou roli, automaticky přepneme
+					$this->ensureAllowedRole();
 				} catch (\Throwable $e) {
 					\Tracy\Debugger::log($e, \Tracy\ILogger::WARNING);
 				}
@@ -268,11 +275,135 @@ class SkautisAuthManager
 	}
 
 	/**
-	 * Vrátí všechny role uživatele ze SkautISu
+	 * Zkontroluje, zda daná role patří mezi povolené (Kraj, Okres, Středisko a to vedoucí/admin či aktivní činovník)
+	 */
+	public static function isAllowedRole(array $role): bool
+	{
+		$key = strtolower(trim((string)($role['Key'] ?? '')));
+		$allowedKeys = [
+			'vedoucikraj',
+			'vedoucikraje',
+			'cinovnikkraj',
+			'cinovnikkraje',
+			'vedouciokres',
+			'vedouciokresu',
+			'cinovnikokres',
+			'cinovnikokresu',
+			'vedoucistredisko',
+			'vedoucistrediska',
+			'cinovnikstredisko',
+			'cinovnikstrediska',
+		];
+		if ($key !== '' && in_array($key, $allowedKeys, true)) {
+			return true;
+		}
+
+		$roleName = trim((string)($role['Role'] ?? ($role['DisplayName'] ?? '')));
+
+		// Formát ze SkautISu "Jednotka: Role", např. "Středisko: vedoucí/admin", "Kraj: aktivní činovník", "Okres: vedoucí/admin"
+		if (preg_match('/^(kraj|okres|středisko|stredisko)\s*:\s*(vedoucí\/admin|vedouci\/admin|aktivní činovník|aktivni cinovnik)/ui', $roleName)) {
+			return true;
+		}
+
+		// Alternativní české názvy např. v testech nebo dev simulacích: "Vedoucí střediska", "Vedoucí kraje", "Aktivní činovník okresu"
+		if (preg_match('/^(vedoucí|vedouci|aktivní činovník|aktivni cinovnik|činovník|cinovnik)\s+(kraje|okresu|střediska|strediska)/ui', $roleName)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Vrátí klíč pro uspořádání rolí: Kraj -> Okres -> Středisko, uvnitř vedoucí/admin -> aktivní činovník, pak abecedně dle jednotky
+	 */
+	public static function getRoleSortKey(array $role): string
+	{
+		$key = strtolower(trim((string)($role['Key'] ?? '')));
+		$roleName = mb_strtolower(trim((string)($role['Role'] ?? ($role['DisplayName'] ?? ''))), 'UTF-8');
+
+		$unitPriority = 9;
+		if (str_contains($key, 'kraj') || str_contains($roleName, 'kraj')) {
+			$unitPriority = 1;
+		} elseif (str_contains($key, 'okres') || str_contains($roleName, 'okres')) {
+			$unitPriority = 2;
+		} elseif (str_contains($key, 'stredisko') || str_contains($roleName, 'středisko') || str_contains($roleName, 'stredisko')) {
+			$unitPriority = 3;
+		}
+
+		$typePriority = 9;
+		if (str_contains($key, 'vedouci') || str_contains($roleName, 'vedoucí') || str_contains($roleName, 'vedouci') || str_contains($roleName, 'admin')) {
+			$typePriority = 1;
+		} elseif (str_contains($key, 'cinovnik') || str_contains($roleName, 'činovník') || str_contains($roleName, 'cinovnik')) {
+			$typePriority = 2;
+		}
+
+		$unitName = (string)($role['Unit'] ?? '');
+
+		return sprintf('%d_%d_%s', $unitPriority, $typePriority, $unitName);
+	}
+
+	/**
+	 * Vyfiltruje a uspořádá pouze povolené role (Kraj, Okres, Středisko a to vedoucí/admin či aktivní činovník)
+	 */
+	public static function filterAllowedRoles(array $roles): array
+	{
+		$filtered = [];
+		foreach ($roles as $role) {
+			if (is_array($role) && self::isAllowedRole($role)) {
+				$filtered[] = $role;
+			}
+		}
+
+		usort($filtered, fn($a, $b) => strcmp(self::getRoleSortKey($a), self::getRoleSortKey($b)));
+
+		return $filtered;
+	}
+
+	/**
+	 * Zajistí, že pokud má uživatel k dispozici povolené role (Kraj/Okres/Středisko),
+	 * je aktivní role nastavena na jednu z nich (pokud byl dosud v nepovolené roli, např. oddíl či tábor).
+	 */
+	public function ensureAllowedRole(): void
+	{
+		if (!$this->isLoggedIn()) {
+			return;
+		}
+
+		$allowedRoles = $this->getAllUserRoles();
+		if (empty($allowedRoles)) {
+			return;
+		}
+
+		$currentRoleId = (int)($this->session->roleId ?? 0);
+		foreach ($allowedRoles as $role) {
+			if (((int)($role['ID'] ?? 0) === $currentRoleId) || ((int)($role['ID_Role'] ?? 0) === $currentRoleId)) {
+				return;
+			}
+		}
+
+		// Současná role není v povolených rolích, přepneme na preferovanou povolenou roli (ideálně vedoucí/admin)
+		$preferredRole = null;
+		foreach ($allowedRoles as $role) {
+			$key = strtolower((string)($role['Key'] ?? ''));
+			if (str_contains($key, 'vedouci')) {
+				$preferredRole = $role;
+				break;
+			}
+		}
+		$targetRole = $preferredRole ?? $allowedRoles[0];
+		$targetRoleId = (int)($targetRole['ID'] ?? ($targetRole['ID_Role'] ?? 0));
+		if ($targetRoleId > 0) {
+			$this->switchRole($targetRoleId);
+		}
+	}
+
+	/**
+	 * Vrátí povolené role uživatele ze SkautISu (Kraj, Okres, Středisko a to vedoucí/admin či aktivní činovník)
 	 */
 	public function getAllUserRoles(): array
 	{
-		return $this->session->allRoles ?? [];
+		$roles = $this->session->allRoles ?? [];
+		return self::filterAllowedRoles($roles);
 	}
 
 	/**
@@ -758,7 +889,7 @@ class SkautisAuthManager
 		$this->session->personName = $personName;
 		$this->session->roleKey = $roleKey;
 		$this->session->roleName = $roleName;
-		$this->session->allRoles = $roles ?? [
+		$allRoles = $roles ?? [
 			[
 				'ID' => 12345,
 				'ID_Role' => 12345,
@@ -769,6 +900,7 @@ class SkautisAuthManager
 				'Unit' => $unitName,
 			]
 		];
+		$this->session->allRoles = self::filterAllowedRoles($allRoles);
 	}
 
 	/**

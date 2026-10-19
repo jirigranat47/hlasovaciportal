@@ -24,6 +24,7 @@ abstract class BasePresenter extends Presenter
 					$this->redirect('Sign:in', ['backlink' => $this->storeRequest()]);
 				}
 			}
+			$this->baseAuthManager->ensureAllowedRole();
 		}
 	}
 
