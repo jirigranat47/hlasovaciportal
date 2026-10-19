@@ -43,6 +43,8 @@ abstract class BaseTestCase extends TestCase
 			'smtp_settings',
 			'user_login_logs',
 			'users',
+			'cron_logs',
+			'email_logs',
 		];
 		foreach ($tables as $table) {
 			$db->query("TRUNCATE TABLE `$table`");

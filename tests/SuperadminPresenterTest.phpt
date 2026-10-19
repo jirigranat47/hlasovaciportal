@@ -114,6 +114,21 @@ class SuperadminPresenterTest extends BaseTestCase
 		Assert::count(2, $unitDetail['members']);
 		Assert::count(1, $unitDetail['elections']);
 
+		// 3. Otestujeme monitoring cronu a emailů
+		$monitoring = $this->superadminRepository->getCronAndEmailMonitoring();
+		Assert::type('array', $monitoring);
+		Assert::same(2000, $monitoring['emails']['dailyLimit']);
+		Assert::same(0, $monitoring['emails']['last24h']);
+		Assert::same('ok', $monitoring['emails']['limitStatus']);
+		Assert::same('never_run', $monitoring['cron']['status']);
+
+		// 4. Otestujeme presenter action default render s novým blokem
+		$presenter3 = $this->presenterFactory->createPresenter('Superadmin');
+		$presenter3->autoCanonicalize = false;
+		$reqDefault = new Request('Superadmin', 'GET', ['action' => 'default']);
+		$respDefault = $presenter3->run($reqDefault);
+		Assert::type(\Nette\Application\Responses\TextResponse::class, $respDefault);
+
 		// Reset superadmins
 		$refProp->setValue($this->authManager, []);
 	}

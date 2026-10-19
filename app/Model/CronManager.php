@@ -18,12 +18,59 @@ class CronManager
 
 	/**
 	 * Hlavní spouštěcí metoda pro plánovač (Cron)
+	 *
+	 * @return array{new: int, reminders: int, results: int, totalElections: int}
 	 */
-	public function run(): void
+	public function run(): array
 	{
-		$this->sendAllUnnotifiedNewElectionsDigest();
-		$this->sendDailyReminders();
-		$this->sendDailyResultsDigest();
+		$newCount = $this->sendAllUnnotifiedNewElectionsDigest();
+		$remindersCount = $this->sendDailyReminders();
+		$resultsCount = $this->sendDailyResultsDigest();
+
+		return [
+			'new' => $newCount,
+			'reminders' => $remindersCount,
+			'results' => $resultsCount,
+			'totalElections' => $newCount + $remindersCount + $resultsCount,
+		];
+	}
+
+	/**
+	 * Zaznamená začátek běhu cronu do tabulky cron_logs
+	 */
+	public function logCronStart(\DateTimeInterface $startedAt, ?string $ipAddress = null): int
+	{
+		try {
+			$row = $this->database->table('cron_logs')->insert([
+				'started_at' => $startedAt,
+				'status' => 'running',
+				'ip_address' => $ipAddress,
+			]);
+			return (int)$row->id;
+		} catch (\Throwable $e) {
+			return 0;
+		}
+	}
+
+	/**
+	 * Dokončí záznam běhu cronu v tabulce cron_logs
+	 */
+	public function logCronFinish(int $logId, string $status, string $message, int $emailsSent, float $durationSeconds): void
+	{
+		if ($logId <= 0) {
+			return;
+		}
+		try {
+			$this->database->table('cron_logs')->where('id', $logId)->update([
+				'finished_at' => new \DateTime(),
+				'duration_seconds' => $durationSeconds,
+				'status' => $status,
+				'message' => mb_substr($message, 0, 2000),
+				'emails_sent' => $emailsSent,
+			]);
+		} catch (\Throwable $e) {
+			// Ignorace
+		}
 	}
 
 	/**
@@ -109,7 +156,7 @@ class CronManager
 		$body .= "</div></div>";
 
 		// Odeslání e-mailu
-		$this->mailSender->sendEmail($unitId, $recipients, $subject, $body);
+		$this->mailSender->sendEmail($unitId, $recipients, $subject, $body, null, 'new_elections');
 
 		return array_keys($recipients);
 	}
@@ -260,7 +307,7 @@ class CronManager
 					$body .= "<p style=\"font-size: 0.8rem; color: #94a3b8; margin: 0; text-align: center;\">Toto je automatická upomínka z Hlasovacího Portálu.</p>";
 					$body .= "</div></div>";
 
-					$this->mailSender->sendEmail((int)$unitId, [$m->email => $m->full_name], $subject, $body);
+					$this->mailSender->sendEmail((int)$unitId, [$m->email => $m->full_name], $subject, $body, null, 'reminder');
 				}
 			}
 
@@ -421,7 +468,7 @@ class CronManager
 			$body .= "<p style=\"font-size: 0.8rem; color: #94a3b8; margin: 0; text-align: center;\">Toto je automatické vyhodnocení výsledků z Hlasovacího Portálu.</p>";
 			$body .= "</div></div>";
 
-			$this->mailSender->sendEmail((int)$unitId, $recipients, $subject, $body);
+			$this->mailSender->sendEmail((int)$unitId, $recipients, $subject, $body, null, 'results');
 		}
 
 		return $totalProcessed;
@@ -460,7 +507,7 @@ class CronManager
 		$body .= "<p>Záznam o stornovaném hlasování naleznete zde: <a href=\"" . $link . "\">" . $link . "</a></p>";
 		$body .= "<hr><p>Toto je automatický e-mail z Hlasovacího Portálu.</p>";
 
-		$this->mailSender->sendEmail((int)$election->unit_id, $recipients, $subject, $body);
+		$this->mailSender->sendEmail((int)$election->unit_id, $recipients, $subject, $body, null, 'cancellation');
 
 		return array_keys($recipients);
 	}

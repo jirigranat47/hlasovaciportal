@@ -38,6 +38,7 @@ final class SuperadminPresenter extends BasePresenter
 		$this->template->globalStats = $this->superadminRepository->getGlobalStatistics();
 		$this->template->units = $this->superadminRepository->getUnitsList($type, $q, $sort);
 		$this->template->analytics = $this->superadminRepository->getTurnoutAndResolutionStats();
+		$this->template->monitoring = $this->superadminRepository->getCronAndEmailMonitoring();
 		$this->template->selectedType = $type ?: 'all';
 		$this->template->searchQuery = $q ?: '';
 		$this->template->selectedSort = $sort;

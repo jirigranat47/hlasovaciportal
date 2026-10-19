@@ -564,4 +564,154 @@ class SuperadminRepository
 			'monthlyTrends' => array_values($monthlyTrends),
 		];
 	}
+
+	/**
+	 * Zajistí existenci tabulek cron_logs a email_logs pro monitoring
+	 */
+	public function ensureMonitoringTablesExist(): void
+	{
+		try {
+			$this->database->query("
+				CREATE TABLE IF NOT EXISTS `cron_logs` (
+				  `id` INT AUTO_INCREMENT PRIMARY KEY,
+				  `started_at` DATETIME NOT NULL,
+				  `finished_at` DATETIME NULL,
+				  `duration_seconds` FLOAT NULL,
+				  `status` VARCHAR(20) NOT NULL DEFAULT 'running',
+				  `message` TEXT NULL,
+				  `emails_sent` INT NOT NULL DEFAULT 0,
+				  `ip_address` VARCHAR(45) NULL,
+				  INDEX (`started_at`),
+				  INDEX (`status`)
+				) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+			");
+
+			$this->database->query("
+				CREATE TABLE IF NOT EXISTS `email_logs` (
+				  `id` INT AUTO_INCREMENT PRIMARY KEY,
+				  `unit_id` INT NULL,
+				  `recipient_email` VARCHAR(150) NOT NULL,
+				  `recipient_name` VARCHAR(150) NULL,
+				  `subject` VARCHAR(255) NOT NULL,
+				  `type` VARCHAR(50) NOT NULL DEFAULT 'notification',
+				  `status` VARCHAR(20) NOT NULL DEFAULT 'sent',
+				  `error_message` TEXT NULL,
+				  `sent_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				  INDEX (`sent_at`),
+				  INDEX (`unit_id`, `sent_at`),
+				  INDEX (`status`)
+				) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+			");
+		} catch (\Throwable $e) {
+			// Ignorace
+		}
+	}
+
+	/**
+	 * Vrátí komplexní statistiky provozního monitoringu: stav Cronu a odeslané e-maily vůči limitům
+	 */
+	public function getCronAndEmailMonitoring(): array
+	{
+		$this->ensureMonitoringTablesExist();
+
+		// 1. E-maily & Limity
+		$todayStart = (new \DateTime())->setTime(0, 0, 0);
+		$last24hStart = (new \DateTime())->modify('-24 hours');
+		$last7dStart = (new \DateTime())->modify('-7 days');
+
+		$emailsToday = (int)$this->database->table('email_logs')
+			->where('sent_at >= ?', $todayStart)
+			->where('status', 'sent')
+			->count('*');
+
+		$emailsLast24h = (int)$this->database->table('email_logs')
+			->where('sent_at >= ?', $last24hStart)
+			->where('status', 'sent')
+			->count('*');
+
+		$emailsFailedLast24h = (int)$this->database->table('email_logs')
+			->where('sent_at >= ?', $last24hStart)
+			->where('status', 'failed')
+			->count('*');
+
+		$emailsLast7d = (int)$this->database->table('email_logs')
+			->where('sent_at >= ?', $last7dStart)
+			->where('status', 'sent')
+			->count('*');
+
+		// Denní limit Google Workspace (smtp.gmail.com)
+		$dailyLimit = 2000;
+		$limitRemaining = max(0, $dailyLimit - $emailsLast24h);
+		$limitUsagePct = round(($emailsLast24h / $dailyLimit) * 100, 1);
+		$limitStatus = $limitUsagePct >= 90 ? 'danger' : ($limitUsagePct >= 65 ? 'warning' : 'ok');
+
+		// Rozpad e-mailů za 7 dní dle typu
+		$emailsByType = $this->database->table('email_logs')
+			->where('sent_at >= ?', $last7dStart)
+			->where('status', 'sent')
+			->group('type')
+			->select('type, COUNT(*) AS cnt')
+			->fetchPairs('type', 'cnt');
+
+		// 2. Cron stav
+		$lastCron = $this->database->table('cron_logs')
+			->order('started_at DESC')
+			->limit(1)
+			->fetch();
+
+		$cronStatus = 'unknown'; // ok, delayed, inactive, error, never_run
+		$minutesSinceLastRun = null;
+
+		if ($lastCron) {
+			$minutesSinceLastRun = (int)round((time() - $lastCron->started_at->getTimestamp()) / 60);
+			if ($lastCron->status === 'error') {
+				$cronStatus = 'error';
+			} elseif ($minutesSinceLastRun <= 35) {
+				$cronStatus = 'ok';
+			} elseif ($minutesSinceLastRun <= 75) {
+				$cronStatus = 'delayed';
+			} else {
+				$cronStatus = 'inactive';
+			}
+		} else {
+			$cronStatus = 'never_run';
+		}
+
+		// Poslední záznamy cronu
+		$recentCronLogs = $this->database->table('cron_logs')
+			->order('started_at DESC')
+			->limit(10)
+			->fetchAll();
+
+		// Poslední odeslané e-maily
+		$recentEmailLogs = $this->database->table('email_logs')
+			->order('sent_at DESC')
+			->limit(15)
+			->fetchAll();
+
+		return [
+			'emails' => [
+				'today' => $emailsToday,
+				'last24h' => $emailsLast24h,
+				'failedLast24h' => $emailsFailedLast24h,
+				'last7d' => $emailsLast7d,
+				'dailyLimit' => $dailyLimit,
+				'limitRemaining' => $limitRemaining,
+				'limitUsagePct' => $limitUsagePct,
+				'limitStatus' => $limitStatus,
+				'byType' => $emailsByType,
+				'recent' => $recentEmailLogs,
+			],
+			'cron' => [
+				'status' => $cronStatus,
+				'lastRun' => $lastCron ? $lastCron->started_at : null,
+				'lastFinished' => $lastCron ? $lastCron->finished_at : null,
+				'lastDuration' => $lastCron ? $lastCron->duration_seconds : null,
+				'lastStatus' => $lastCron ? $lastCron->status : null,
+				'lastMessage' => $lastCron ? $lastCron->message : null,
+				'minutesSinceLastRun' => $minutesSinceLastRun,
+				'recent' => $recentCronLogs,
+			],
+		];
+	}
 }

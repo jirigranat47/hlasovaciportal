@@ -12,7 +12,8 @@ class MailSender
 {
 	public function __construct(
 		private VotingRepository $votingRepository,
-		private array $smtpConfig = []
+		private array $smtpConfig = [],
+		private ?\Nette\Database\Explorer $database = null
 	) {}
 
 	/**
@@ -55,9 +56,16 @@ class MailSender
 	 * @param string $subject Předmět e-mailu
 	 * @param string $bodyHtml HTML tělo e-mailu
 	 * @param string|null $customFromName Volitelné vlastní jméno odesílatele
+	 * @param string $type Typ zprávy pro monitoring (new_elections, reminder, results, test, notification)
 	 */
-	public function sendEmail(mixed $smtpOrUnitId, array $recipients, string $subject, string $bodyHtml, ?string $customFromName = null): void
-	{
+	public function sendEmail(
+		mixed $smtpOrUnitId,
+		array $recipients,
+		string $subject,
+		string $bodyHtml,
+		?string $customFromName = null,
+		string $type = 'notification'
+	): void {
 		if (empty($recipients)) {
 			return;
 		}
@@ -78,6 +86,9 @@ class MailSender
 			$mailer = $this->createMailer();
 		} catch (\Throwable $e) {
 			trigger_error('Chyba inicializace SMTP maileru: ' . $e->getMessage(), E_USER_WARNING);
+			foreach ($recipients as $email => $name) {
+				$this->logEmail($unitId, (string)$email, is_string($name) ? $name : null, $subject, $type, 'failed', 'Chyba inicializace SMTP: ' . $e->getMessage());
+			}
 			return;
 		}
 
@@ -98,10 +109,44 @@ class MailSender
 
 			try {
 				$mailer->send($message);
+				$this->logEmail($unitId, (string)$email, is_string($name) ? $name : null, $subject, $type, 'sent');
 			} catch (\Throwable $e) {
+				$this->logEmail($unitId, (string)$email, is_string($name) ? $name : null, $subject, $type, 'failed', $e->getMessage());
 				// Chybu zalogujeme, ale pokračujeme na další e-maily
 				trigger_error('Chyba odesílání e-mailu pro jednotku ' . $unitId . ': ' . $e->getMessage(), E_USER_WARNING);
 			}
+		}
+	}
+
+	/**
+	 * Zaznamená odeslání (nebo selhání) e-mailu do tabulky email_logs pro monitoring
+	 */
+	private function logEmail(
+		?int $unitId,
+		string $email,
+		?string $name,
+		string $subject,
+		string $type,
+		string $status,
+		?string $errorMessage = null
+	): void {
+		if (!$this->database) {
+			return;
+		}
+
+		try {
+			$this->database->table('email_logs')->insert([
+				'unit_id' => $unitId && $unitId > 0 ? $unitId : null,
+				'recipient_email' => mb_substr($email, 0, 150),
+				'recipient_name' => $name ? mb_substr($name, 0, 150) : null,
+				'subject' => mb_substr($subject, 0, 255),
+				'type' => $type,
+				'status' => $status,
+				'error_message' => $errorMessage ? mb_substr($errorMessage, 0, 1000) : null,
+				'sent_at' => new \DateTime(),
+			]);
+		} catch (\Throwable $e) {
+			// Tichá ignorace, logování nesmí přerušit samotný běh aplikace
 		}
 	}
 
@@ -133,6 +178,8 @@ class MailSender
 			}
 
 			$mailer->send($message);
+			$this->logEmail($unitId, $recipientEmail, null, '🧪 Zkušební e-mail z Hlasovacího Portálu', 'test', 'sent');
+
 			return [
 				'success' => true,
 				'message' => "Zkušební e-mail byl úspěšně odeslán z centrální adresy '{$fromEmail}' s odesílatelem '{$fromName}' na adresu '{$recipientEmail}'.",
@@ -144,6 +191,9 @@ class MailSender
 			} elseif (str_contains($errorMsg, 'Connection timed out') || str_contains($errorMsg, 'Connection refused')) {
 				$errorMsg = "Nepodařilo se navázat spojení se serverem " . ($this->smtpConfig['host'] ?? '') . ":" . ($this->smtpConfig['port'] ?? '') . ".";
 			}
+
+			$this->logEmail($unitId, $recipientEmail, null, '🧪 Zkušební e-mail z Hlasovacího Portálu', 'test', 'failed', $errorMsg);
+
 			return [
 				'success' => false,
 				'message' => "Chyba při odesílání: {$errorMsg}",
