@@ -60,6 +60,20 @@
 	</div>
 </div>
 
+<!-- PODMÍNKY POUŽITÍ: JEDNOTKY A ROLE -->
+<div class="alert alert-primary-lt shadow-sm mb-4">
+	<div class="d-flex">
+		<i class="fa-solid fa-circle-info fs-2 text-primary me-3"></i>
+		<div>
+			<strong class="text-primary fs-3 d-block mb-1">Pro koho je hlasovací portál určen a jaké role jsou vyžadovány</strong>
+			<ul class="mb-0 ps-3 text-secondary">
+				<li><strong>Dostupné typy jednotek:</strong> Hlasování v portálu je dostupné <strong>výhradně pro střediskové, krajské a okresní rady</strong> (systém není určen pro oddíly, družiny ani sněmy).</li>
+				<li><strong>Požadovaná role pro člena rady:</strong> Aby mohl člen rady v portálu hlasovat a vykonávat práva člena rady, musí mít ve SkautISu pro danou jednotku roli <strong>aktivní činovník</strong>, nebo <strong>vedoucí/admin</strong> dané jednotky (vedoucí, zástupce, hospodář či administrátor). Uživatelé s jinými rolemi (např. oddílové role či činovník bez přívlastku aktivní) hlasovat nemohou.</li>
+			</ul>
+		</div>
+	</div>
+</div>
+
 <!-- SEKCE 1: PRO ČLENY RADY -->
 <section id="pro-cleny-rady" class="card shadow-sm mb-4">
 	<div class="card-header bg-transparent">
@@ -69,14 +83,16 @@
 	</div>
 	<div class="card-body">
 		<h4 class="text-dark fw-bold mb-2">
-			<i class="fa-solid fa-key text-warning me-1"></i> Přihlášení do portálu
+			<i class="fa-solid fa-key text-warning me-1"></i> Přihlášení do portálu a podmínky hlasování
 		</h4>
 		<p class="text-muted">
-			Do portálu se přihlašujete svými běžnými údaji ze <strong>SkautISu</strong> (uživatelské jméno a heslo). Portál si automaticky ověří vaši totožnost a aktivní roli.
+			Do portálu se přihlašujete svými běžnými údaji ze <strong>SkautISu</strong> (uživatelské jméno a heslo). Portál si automaticky ověří vaši totožnost, jednotku a aktivní roli.
 		</p>
 		<ul class="text-muted">
-			<li><strong>Člen rady:</strong> Pokud jste zapsáni v seznamu Rady jednotky, získáte plné právo hlasovat u všech probíhajících usnesení vaší jednotky.</li>
-			<li><strong>Host (nečlen rady):</strong> Máte přístup k archivovaným usnesením, ale nemůžete odevzdávat hlasy.</li>
+			<li><strong>Oprávněné jednotky:</strong> Hlasování je dostupné pouze pro <strong>střediskové, krajské a okresní rady</strong>.</li>
+			<li><strong>Požadované role:</strong> Člen rady musí mít ve SkautISu pro danou jednotku roli <strong>aktivní činovník</strong>, nebo <strong>vedoucí/admin</strong> (vedoucí, zástupce, hospodář, administrátor).</li>
+			<li><strong>Člen rady:</strong> Pokud jste zapsáni v seznamu Rady jednotky a máte výše uvedenou roli, získáte plné právo hlasovat u všech probíhajících usnesení vaší jednotky.</li>
+			<li><strong>Host (nečlen rady):</strong> Máte přístup k archivovaným i probíhajícím usnesením své jednotky k nahlížení, ale nemůžete odevzdávat hlasy.</li>
 		</ul>
 
 		<div class="alert alert-info-lt my-3">
@@ -132,7 +148,7 @@
 	</div>
 	<div class="card-body">
 		<p class="text-muted">
-			Administrátorská práva jsou automaticky přidělena uživatelům s odpovídající vedoucí či správcovskou rolí ve SkautISu (např. vedoucí střediska/oddílu, zástupce, hospodář, zpravodaj, administrátor apod.).
+			Administrátorská práva v portálu jsou automaticky přidělena uživatelům s rolí <strong>vedoucí/admin</strong> dané jednotky (střediska, okresu nebo kraje) ve SkautISu (vedoucí jednotky, zástupce vedoucího, hospodář či administrátor). Pro samotné členy rady, kteří v usneseních hlasují, postačuje role <strong>aktivní činovník</strong> nebo <strong>vedoucí/admin</strong>.
 		</p>
 
 		<!-- ŽIVOTNÍ CYKLUS USNESENÍ -->
@@ -253,7 +269,11 @@
 		<h4 class="text-dark fw-bold mt-4 mb-2">
 			<i class="fa-solid fa-users text-primary me-1"></i> Správa Rady jednotky
 		</h4>
+		<p class="text-muted">
+			V sekci <strong>Správa Rady</strong> administrátor spravuje seznam osob, které tvoří radu a mají právo v usneseních hlasovat.
+		</p>
 		<ul class="text-muted">
+			<li><strong>Podmínka pro výkon hlasovacího práva:</strong> Člen rady musí mít ve SkautISu pro tuto jednotku (středisko, okres nebo kraj) roli <strong>aktivní činovník</strong> nebo <strong>vedoucí/admin</strong>.</li>
 			<li><strong>Rychlý našeptávač:</strong> Vyhledávejte členy jednotky ze SkautISu podle jména, data narození nebo Person ID.</li>
 			<li><strong>Automatické dohledání e-mailu:</strong> Při přidání člena systém automaticky dohledá jeho e-mailovou adresu z kontaktů ve SkautISu.</li>
 		</ul>
