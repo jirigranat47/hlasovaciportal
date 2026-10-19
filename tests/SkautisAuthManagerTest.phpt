@@ -89,6 +89,110 @@ class SkautisAuthManagerTest extends BaseTestCase
 		Assert::same("Člen Kraje #1", $allMembers[0]->full_name);
 		Assert::same("Člen Kraje #5", $allMembers[4]->full_name);
 	}
+
+	public function testIsAllowedRole(): void
+	{
+		// Povolené role dle Key
+		Assert::true(SkautisAuthManager::isAllowedRole(['Key' => 'vedouciKraj']));
+		Assert::true(SkautisAuthManager::isAllowedRole(['Key' => 'cinovnikKraj']));
+		Assert::true(SkautisAuthManager::isAllowedRole(['Key' => 'vedouciOkres']));
+		Assert::true(SkautisAuthManager::isAllowedRole(['Key' => 'cinovnikOkres']));
+		Assert::true(SkautisAuthManager::isAllowedRole(['Key' => 'vedouciStredisko']));
+		Assert::true(SkautisAuthManager::isAllowedRole(['Key' => 'cinovnikStredisko']));
+
+		// Povolené role dle Role ze SkautISu (i bez Key)
+		Assert::true(SkautisAuthManager::isAllowedRole(['Role' => 'Kraj: vedoucí/admin']));
+		Assert::true(SkautisAuthManager::isAllowedRole(['Role' => 'Kraj: aktivní činovník']));
+		Assert::true(SkautisAuthManager::isAllowedRole(['Role' => 'Okres: vedoucí/admin']));
+		Assert::true(SkautisAuthManager::isAllowedRole(['Role' => 'Okres: aktivní činovník']));
+		Assert::true(SkautisAuthManager::isAllowedRole(['Role' => 'Středisko: vedoucí/admin']));
+		Assert::true(SkautisAuthManager::isAllowedRole(['Role' => 'Středisko: aktivní činovník']));
+		Assert::true(SkautisAuthManager::isAllowedRole(['DisplayName' => 'Středisko: vedoucí/admin - 411.01']));
+
+		// Povolené alternativní názvy (např. z devLogin)
+		Assert::true(SkautisAuthManager::isAllowedRole(['Role' => 'Vedoucí kraje']));
+		Assert::true(SkautisAuthManager::isAllowedRole(['Role' => 'Vedoucí okresu']));
+		Assert::true(SkautisAuthManager::isAllowedRole(['Role' => 'Vedoucí střediska']));
+		Assert::true(SkautisAuthManager::isAllowedRole(['Role' => 'Aktivní činovník střediska']));
+
+		// Nepovolené role (oddíly, družiny, tábory, sněmy, hospodáři, členové, revizní komise atd.)
+		Assert::false(SkautisAuthManager::isAllowedRole(['Key' => 'vedouciOddil', 'Role' => 'Oddíl: vedoucí/admin']));
+		Assert::false(SkautisAuthManager::isAllowedRole(['Key' => 'cinovnikOddil', 'Role' => 'Oddíl: aktivní činovník']));
+		Assert::false(SkautisAuthManager::isAllowedRole(['Key' => 'vedouciDruzina', 'Role' => 'Družina: vedoucí/admin']));
+		Assert::false(SkautisAuthManager::isAllowedRole(['Key' => 'EventCamp', 'Role' => 'Tábor: účastník (1.7.2025)']));
+		Assert::false(SkautisAuthManager::isAllowedRole(['Key' => 'EventCongress', 'Role' => 'Sněm: účastník sněmu (20.4.2024)']));
+		Assert::false(SkautisAuthManager::isAllowedRole(['Key' => 'hospodarStredisko', 'Role' => 'Středisko: hospodář']));
+		Assert::false(SkautisAuthManager::isAllowedRole(['Key' => 'hospodarKraj', 'Role' => 'Kraj: hospodář']));
+		Assert::false(SkautisAuthManager::isAllowedRole(['Role' => 'Středisko: člen']));
+		Assert::false(SkautisAuthManager::isAllowedRole(['Role' => 'Středisko: revizní komise']));
+		Assert::false(SkautisAuthManager::isAllowedRole(['Role' => 'ZvOJ: vedoucí/admin']));
+	}
+
+	public function testFilterAllowedRolesAndSorting(): void
+	{
+		$rawRoles = [
+			['ID' => 1, 'Key' => 'EventCamp', 'Role' => 'Tábor: účastník', 'Unit' => 'Tábor'],
+			['ID' => 2, 'Key' => 'cinovnikStredisko', 'Role' => 'Středisko: aktivní činovník', 'Unit' => 'Středisko B'],
+			['ID' => 3, 'Key' => 'vedouciOddil', 'Role' => 'Oddíl: vedoucí/admin', 'Unit' => 'Oddíl 1'],
+			['ID' => 4, 'Key' => 'vedouciKraj', 'Role' => 'Kraj: vedoucí/admin', 'Unit' => 'Středočeský kraj'],
+			['ID' => 5, 'Key' => 'hospodarStredisko', 'Role' => 'Středisko: hospodář', 'Unit' => 'Středisko A'],
+			['ID' => 6, 'Key' => 'vedouciStredisko', 'Role' => 'Středisko: vedoucí/admin', 'Unit' => 'Středisko A'],
+			['ID' => 7, 'Key' => 'cinovnikOkres', 'Role' => 'Okres: aktivní činovník', 'Unit' => 'Okres Benešov'],
+		];
+
+		$filtered = SkautisAuthManager::filterAllowedRoles($rawRoles);
+		Assert::count(4, $filtered);
+
+		// Uspořádání: Kraj -> Okres -> Středisko (vedoucí před činovníkem)
+		Assert::same(4, $filtered[0]['ID']); // Kraj: vedoucí/admin
+		Assert::same(7, $filtered[1]['ID']); // Okres: aktivní činovník
+		Assert::same(6, $filtered[2]['ID']); // Středisko: vedoucí/admin
+		Assert::same(2, $filtered[3]['ID']); // Středisko: aktivní činovník
+	}
+
+	public function testEnsureAllowedRoleSwitchesToAllowedUnit(): void
+	{
+		// Simulace: uživatel je v session přihlášen jako Oddíl: vedoucí (ID 100), ale v účtu má Středisko i Kraj
+		$roles = [
+			[
+				'ID' => 201,
+				'ID_Role' => 201,
+				'ID_Unit' => 25893,
+				'Key' => 'cinovnikKraj',
+				'Role' => 'Kraj: aktivní činovník',
+				'DisplayName' => 'Kraj: aktivní činovník',
+				'Unit' => 'Karlovarský kraj',
+			],
+			[
+				'ID' => 202,
+				'ID_Role' => 202,
+				'ID_Unit' => 25893,
+				'Key' => 'vedouciStredisko',
+				'Role' => 'Středisko: vedoucí/admin',
+				'DisplayName' => 'Středisko: vedoucí/admin',
+				'Unit' => 'Testovací středisko',
+			],
+		];
+
+		// Přihlásíme uživatele s rolí oddílu (která není v povolených)
+		$this->authManager->simulateLogin(
+			unitId: 99999,
+			personId: 444,
+			personName: 'Petr Skaut',
+			roleKey: 'vedouciOddil',
+			roleName: 'Oddíl: vedoucí/admin',
+			unitName: 'Oddíl Bobrů',
+			roles: $roles
+		);
+
+		// ensureAllowedRole automaticky přepne na preferovanou povolenou roli (vedouciStredisko)
+		$this->authManager->ensureAllowedRole();
+
+		$userData = $this->authManager->getUserData();
+		Assert::same(202, $userData['roleId']);
+		Assert::same('vedouciStredisko', $userData['roleKey']);
+		Assert::same('Testovací středisko', $userData['unitName']);
+	}
 }
 
 (new SkautisAuthManagerTest($container))->run();
