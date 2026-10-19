@@ -35,6 +35,7 @@ abstract class BasePresenter extends Presenter
 		$this->template->isLoggedIn = $isLoggedIn;
 		$this->template->userData = $isLoggedIn ? $this->baseAuthManager->getUserData() : null;
 		$this->template->userRoles = $isLoggedIn ? $this->baseAuthManager->getAllUserRoles() : [];
+		$this->template->isSuperAdmin = $isLoggedIn ? $this->baseAuthManager->isSuperAdmin() : false;
 	}
 
 	public function handleSwitchRole(int $roleId): void

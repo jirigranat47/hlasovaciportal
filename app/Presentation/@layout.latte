@@ -35,6 +35,13 @@
 				{/if}
 
 				{if $isLoggedIn}
+					{if !empty($isSuperAdmin)}
+						<a n:href="Superadmin:default" class="btn btn-header-icon" style="background: #9333ea; color: white; border-color: #9333ea;" title="Superadmin Portál (Centrální správa a statistiky)">
+							<i class="fa-solid fa-crown btn-icon"></i>
+							<span class="btn-label">Superadmin</span>
+						</a>
+					{/if}
+
 					<a n:href="Profile:settings" class="user-info" title="Přihlášený uživatel (Nastavení profilu)" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px;">
 						<span class="user-icon"><i class="fa-solid fa-user"></i></span>
 						<span class="user-name" style="text-decoration: underline;"><strong>{$userData['personName']}</strong></span>

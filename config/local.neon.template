@@ -3,6 +3,8 @@ parameters:
 		appId: 'vložte-vaše-skautis-app-id'
 		isTest: false # Na produkci nastavit na false (pro testovací prostředí true)
 		debugRoles: false
+	superadmins:
+		- 12345 # Vaše SkautIS Person ID (přístup do Superadmin portálu)
 	cron:
 		token: 'vložte-silné-tajné-heslo-pro-cron'
 	security:
