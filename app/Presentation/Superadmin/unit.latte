@@ -4,10 +4,13 @@
 <div class="container" style="max-width: 1300px; padding: 2rem 1rem;">
 
 	<!-- NAVIGACE ZPĚT -->
-	<div style="margin-bottom: 1.5rem;">
-		<a n:href="default" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
-			<i class="fa-solid fa-arrow-left"></i> Zpět na přehled jednotek (Superadmin)
+	<div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+		<a n:href="default" class="btn" style="background: white; color: #1e293b; border: 1px solid #cbd5e1; padding: 8px 18px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); transition: all 0.15s;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#94a3b8'; this.style.color='#0f172a';" onmouseout="this.style.background='white'; this.style.borderColor='#cbd5e1'; this.style.color='#1e293b';">
+			<i class="fa-solid fa-arrow-left" style="color: #64748b; font-size: 0.95rem;"></i> Zpět na přehled jednotek (Superadmin)
 		</a>
+		<span style="font-size: 0.85rem; color: #64748b; background: white; padding: 6px 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
+			<i class="fa-solid fa-crown" style="color: #9333ea; margin-right: 4px;"></i> Superadmin &bull; Jednotka #{$unit['unit_id']}
+		</span>
 	</div>
 
 	<!-- HLAVIČKA JEDNOTKY -->
@@ -243,6 +246,16 @@
 				</table>
 			</div>
 		{/if}
+	</div>
+
+	<!-- SPODNÍ NAVIGACE ZPĚT -->
+	<div style="margin-top: 2rem; padding: 1.5rem 0; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+		<a n:href="default" class="btn" style="background: white; color: #1e293b; border: 1px solid #cbd5e1; padding: 9px 20px; border-radius: 8px; font-weight: 600; font-size: 0.92rem; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); transition: all 0.15s;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#94a3b8'; this.style.color='#0f172a';" onmouseout="this.style.background='white'; this.style.borderColor='#cbd5e1'; this.style.color='#1e293b';">
+			<i class="fa-solid fa-arrow-left" style="color: #64748b;"></i> Zpět na přehled jednotek (Superadmin)
+		</a>
+		<a n:href="Home:default" class="btn" style="background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; padding: 9px 16px; border-radius: 8px; font-size: 0.88rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+			<i class="fa-solid fa-house" style="color: #94a3b8;"></i> Hlavní nástěnka jednotky
+		</a>
 	</div>
 
 </div>

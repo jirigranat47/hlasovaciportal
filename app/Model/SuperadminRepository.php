@@ -152,7 +152,7 @@ class SuperadminRepository
 	/**
 	 * Vrátí strukturovaný seznam všech jednotek s jejich statistikami a aktivitou
 	 */
-	public function getUnitsList(?string $typeFilter = null, ?string $searchQuery = null): array
+	public function getUnitsList(?string $typeFilter = null, ?string $searchQuery = null, string $sortBy = 'last_activity'): array
 	{
 		$now = new \DateTime();
 
@@ -330,14 +330,36 @@ class SuperadminRepository
 			$result[] = $item;
 		}
 
-		// Seřadíme: jednotky s nejvíce usneseními a nejnovější aktivitou nahoře
-		usort($result, function ($a, $b) {
-			if ($a['total_elections'] !== $b['total_elections']) {
-				return $b['total_elections'] <=> $a['total_elections'];
+		// Seřadíme: výchozí řazení podle data posledního přihlášení / aktivity (nejnovější nahoře)
+		usort($result, function ($a, $b) use ($sortBy) {
+			if ($sortBy === 'elections') {
+				if ($a['total_elections'] !== $b['total_elections']) {
+					return $b['total_elections'] <=> $a['total_elections'];
+				}
+			} elseif ($sortBy === 'members') {
+				if ($a['council_members_count'] !== $b['council_members_count']) {
+					return $b['council_members_count'] <=> $a['council_members_count'];
+				}
+			} elseif ($sortBy === 'turnout') {
+				$aT = $a['turnout_pct'] ?? -1.0;
+				$bT = $b['turnout_pct'] ?? -1.0;
+				if ($aT !== $bT) {
+					return $bT <=> $aT;
+				}
+			} elseif ($sortBy === 'name') {
+				$cmp = strcoll($a['unit_name'], $b['unit_name']);
+				if ($cmp !== 0) {
+					return $cmp;
+				}
 			}
+
+			// Výchozí řazení nebo sekundární kritérium: podle data poslední aktivity / přihlášení (od nejnovějšího)
 			$aTime = $a['last_activity'] ? $a['last_activity']->getTimestamp() : 0;
 			$bTime = $b['last_activity'] ? $b['last_activity']->getTimestamp() : 0;
-			return $bTime <=> $aTime;
+			if ($aTime !== $bTime) {
+				return $bTime <=> $aTime;
+			}
+			return $b['total_elections'] <=> $a['total_elections'];
 		});
 
 		return $result;

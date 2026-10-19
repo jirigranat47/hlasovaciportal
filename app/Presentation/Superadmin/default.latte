@@ -18,8 +18,8 @@
 		</div>
 
 		<div style="display: flex; gap: 0.5rem; align-items: center;">
-			<a n:href="Home:default" class="btn btn-secondary" title="Zpět na hlavní nástěnku jednotky">
-				<i class="fa-solid fa-arrow-left me-1"></i> Zpět na portál
+			<a n:href="Home:default" class="btn btn-secondary" style="background: white; color: #334155; border: 1px solid #cbd5e1; font-weight: 600; padding: 8px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.15s;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#94a3b8'; this.style.color='#0f172a';" onmouseout="this.style.background='white'; this.style.borderColor='#cbd5e1'; this.style.color='#334155';" title="Zpět na hlavní nástěnku jednotky">
+				<i class="fa-solid fa-arrow-left" style="color: #64748b;"></i> Zpět na portál
 			</a>
 		</div>
 	</div>
@@ -193,29 +193,30 @@
 			<!-- VYHLEDÁVÁNÍ -->
 			<form method="get" action="{link this}" style="display: flex; gap: 0.5rem; align-items: center;">
 				<input type="hidden" name="type" value="{$selectedType}">
+				<input type="hidden" name="sort" value="{$selectedSort}">
 				<div style="position: relative;">
 					<input type="text" name="q" value="{$searchQuery}" placeholder="Hledat jednotku nebo ID..." style="padding: 6px 12px 6px 32px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; width: 220px;">
 					<i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 10px; color: #94a3b8; font-size: 0.85rem;"></i>
 				</div>
 				<button type="submit" class="btn btn-sm btn-primary" style="padding: 6px 12px;">Hledat</button>
 				{if !empty($searchQuery)}
-					<a n:href="this, type => $selectedType, q => null" class="btn btn-sm btn-secondary" title="Zrušit hledání">✕</a>
+					<a n:href="this, type => $selectedType, q => null, sort => $selectedSort" class="btn btn-sm btn-secondary" title="Zrušit hledání">✕</a>
 				{/if}
 			</form>
 		</div>
 
 		<!-- FILTRY TYPU JEDNOTKY -->
 		<div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
-			<a n:href="this, type => 'all', q => $searchQuery" class="btn btn-sm {if $selectedType === 'all'}btn-primary{else}btn-secondary{/if}" style="border-radius: 20px; padding: 4px 14px;">
+			<a n:href="this, type => 'all', q => $searchQuery, sort => $selectedSort" class="btn btn-sm" style="border-radius: 20px; padding: 5px 14px; font-size: 0.85rem; font-weight: {if $selectedType === 'all'}bold{else}500{/if}; background: {if $selectedType === 'all'}#0284c7{else}#f8fafc{/if}; color: {if $selectedType === 'all'}white{else}#475569{/if}; border: 1px solid {if $selectedType === 'all'}#0284c7{else}#cbd5e1{/if}; text-decoration: none;">
 				Všechny jednotky ({$globalStats['unitsCount']})
 			</a>
-			<a n:href="this, type => 'stredisko', q => $searchQuery" class="btn btn-sm {if $selectedType === 'stredisko'}btn-primary{else}btn-secondary{/if}" style="border-radius: 20px; padding: 4px 14px;">
+			<a n:href="this, type => 'stredisko', q => $searchQuery, sort => $selectedSort" class="btn btn-sm" style="border-radius: 20px; padding: 5px 14px; font-size: 0.85rem; font-weight: {if $selectedType === 'stredisko'}bold{else}500{/if}; background: {if $selectedType === 'stredisko'}#0284c7{else}#f8fafc{/if}; color: {if $selectedType === 'stredisko'}white{else}#475569{/if}; border: 1px solid {if $selectedType === 'stredisko'}#0284c7{else}#cbd5e1{/if}; text-decoration: none;">
 				<i class="fa-solid fa-campground me-1"></i> Střediska ({$globalStats['unitsByType']['stredisko']})
 			</a>
-			<a n:href="this, type => 'okres', q => $searchQuery" class="btn btn-sm {if $selectedType === 'okres'}btn-primary{else}btn-secondary{/if}" style="border-radius: 20px; padding: 4px 14px;">
+			<a n:href="this, type => 'okres', q => $searchQuery, sort => $selectedSort" class="btn btn-sm" style="border-radius: 20px; padding: 5px 14px; font-size: 0.85rem; font-weight: {if $selectedType === 'okres'}bold{else}500{/if}; background: {if $selectedType === 'okres'}#0284c7{else}#f8fafc{/if}; color: {if $selectedType === 'okres'}white{else}#475569{/if}; border: 1px solid {if $selectedType === 'okres'}#0284c7{else}#cbd5e1{/if}; text-decoration: none;">
 				<i class="fa-solid fa-tree me-1"></i> Okresy ({$globalStats['unitsByType']['okres']})
 			</a>
-			<a n:href="this, type => 'kraj', q => $searchQuery" class="btn btn-sm {if $selectedType === 'kraj'}btn-primary{else}btn-secondary{/if}" style="border-radius: 20px; padding: 4px 14px;">
+			<a n:href="this, type => 'kraj', q => $searchQuery, sort => $selectedSort" class="btn btn-sm" style="border-radius: 20px; padding: 5px 14px; font-size: 0.85rem; font-weight: {if $selectedType === 'kraj'}bold{else}500{/if}; background: {if $selectedType === 'kraj'}#0284c7{else}#f8fafc{/if}; color: {if $selectedType === 'kraj'}white{else}#475569{/if}; border: 1px solid {if $selectedType === 'kraj'}#0284c7{else}#cbd5e1{/if}; text-decoration: none;">
 				<i class="fa-solid fa-mountain-sun me-1"></i> Kraje ({$globalStats['unitsByType']['kraj']})
 			</a>
 		</div>
@@ -232,14 +233,34 @@
 				<table style="width: 100%; border-collapse: collapse; font-size: 0.92rem;">
 					<thead>
 						<tr style="border-bottom: 2px solid #e2e8f0; text-align: left; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;">
-							<th style="padding: 10px 12px;">Jednotka</th>
+							<th style="padding: 10px 12px;">
+								<a n:href="this, type => $selectedType, q => $searchQuery, sort => 'name'" style="color: inherit; text-decoration: none;" title="Seřadit podle názvu">
+									Jednotka {if $selectedSort === 'name'}↑{/if}
+								</a>
+							</th>
 							<th style="padding: 10px 12px; text-align: center;">Typ</th>
-							<th style="padding: 10px 12px; text-align: center;">Členů rady</th>
-							<th style="padding: 10px 12px; text-align: center;">Usnesení</th>
+							<th style="padding: 10px 12px; text-align: center;">
+								<a n:href="this, type => $selectedType, q => $searchQuery, sort => 'members'" style="color: inherit; text-decoration: none;" title="Seřadit podle počtu členů rady">
+									Členů rady {if $selectedSort === 'members'}↓{/if}
+								</a>
+							</th>
+							<th style="padding: 10px 12px; text-align: center;">
+								<a n:href="this, type => $selectedType, q => $searchQuery, sort => 'elections'" style="color: inherit; text-decoration: none;" title="Seřadit podle počtu usnesení">
+									Usnesení {if $selectedSort === 'elections'}↓{/if}
+								</a>
+							</th>
 							<th style="padding: 10px 12px; text-align: center;">Hlasů</th>
-							<th style="padding: 10px 12px; text-align: center;">Volební účast</th>
+							<th style="padding: 10px 12px; text-align: center;">
+								<a n:href="this, type => $selectedType, q => $searchQuery, sort => 'turnout'" style="color: inherit; text-decoration: none;" title="Seřadit podle volební účasti">
+									Volební účast {if $selectedSort === 'turnout'}↓{/if}
+								</a>
+							</th>
 							<th style="padding: 10px 12px; text-align: center;">Úspěšnost</th>
-							<th style="padding: 10px 12px; text-align: right;">Poslední aktivita</th>
+							<th style="padding: 10px 12px; text-align: right;">
+								<a n:href="this, type => $selectedType, q => $searchQuery, sort => 'activity'" style="color: {if $selectedSort === 'activity'}#0284c7{else}inherit{/if}; text-decoration: none; font-weight: {if $selectedSort === 'activity'}bold{else}normal{/if};" title="Seřadit podle data posledního přihlášení">
+									Poslední přihlášení {if $selectedSort === 'activity'}↓{/if}
+								</a>
+							</th>
 							<th style="padding: 10px 12px; text-align: center;">Akce</th>
 						</tr>
 					</thead>
@@ -322,8 +343,8 @@
 
 								<!-- AKCE -->
 								<td style="padding: 12px; text-align: center;">
-									<a n:href="unit, id => $u['unit_id']" class="btn btn-sm btn-secondary" style="padding: 4px 10px; font-size: 0.82rem;" title="Detail jednotky #{$u['unit_id']}">
-										<i class="fa-solid fa-arrow-up-right-from-square"></i> Detail
+									<a n:href="unit, id => $u['unit_id']" class="btn btn-sm" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-weight: 600; padding: 5px 12px; font-size: 0.82rem; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); transition: all 0.15s;" onmouseover="this.style.background='#dbeafe'; this.style.borderColor='#93c5fd'; this.style.color='#1e40af';" onmouseout="this.style.background='#eff6ff'; this.style.borderColor='#bfdbfe'; this.style.color='#1d4ed8';" title="Detail jednotky #{$u['unit_id']}">
+										<i class="fa-solid fa-arrow-up-right-from-square" style="color: #2563eb; font-size: 0.8rem;"></i> Detail
 									</a>
 								</td>
 							</tr>

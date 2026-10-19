@@ -32,13 +32,15 @@ final class SuperadminPresenter extends BasePresenter
 		}
 	}
 
-	public function renderDefault(?string $type = 'all', ?string $q = null): void
+	public function renderDefault(?string $type = 'all', ?string $q = null, ?string $sort = 'activity'): void
 	{
+		$sort = $sort ?: 'activity';
 		$this->template->globalStats = $this->superadminRepository->getGlobalStatistics();
-		$this->template->units = $this->superadminRepository->getUnitsList($type, $q);
+		$this->template->units = $this->superadminRepository->getUnitsList($type, $q, $sort);
 		$this->template->analytics = $this->superadminRepository->getTurnoutAndResolutionStats();
 		$this->template->selectedType = $type ?: 'all';
 		$this->template->searchQuery = $q ?: '';
+		$this->template->selectedSort = $sort;
 		$this->template->superAdminPersonIds = $this->skautisAuthManager->getSuperAdminPersonIds();
 	}
 
