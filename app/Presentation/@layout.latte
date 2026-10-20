@@ -127,8 +127,8 @@
 		<!-- STRÁNKOVÝ WRAPPER TABLERU -->
 		<div class="page-wrapper">
 			<!-- FLASH MESSAGES (TABLER ALERTS) -->
-			<div class="container-xl mt-3" n:if="$flashes">
-				<div n:foreach="$flashes as $flash" class="alert alert-important alert-{$flash->type == 'danger' ? 'danger' : ($flash->type == 'warning' ? 'warning' : 'success')} alert-dismissible shadow-sm" role="alert">
+			<div class="container-xl mt-3" n:if="$flashes" id="flashMessagesContainer">
+				<div n:foreach="$flashes as $flash" class="alert alert-important alert-{$flash->type == 'danger' ? 'danger' : ($flash->type == 'warning' ? 'warning' : 'success')} alert-dismissible fade show shadow-sm js-flash-alert" role="alert">
 					<div class="d-flex align-items-center">
 						<i class="fa-solid {if $flash->type == 'danger'}fa-circle-xmark{elseif $flash->type == 'warning'}fa-triangle-exclamation{else}fa-circle-check{/if} fs-2 me-3"></i>
 						<div class="flex-fill">{$flash->message}</div>
@@ -191,6 +191,35 @@
 					htmlEl.setAttribute('data-bs-theme', next);
 					localStorage.setItem('skaut-theme', next);
 					updateIcon(next);
+				});
+			}
+
+			// Automatické skrytí horních flash alertů po 15 sekundách
+			var flashContainer = document.getElementById('flashMessagesContainer');
+			var flashAlerts = document.querySelectorAll('.js-flash-alert');
+			if (flashAlerts.length > 0) {
+				function cleanupFlashContainer() {
+					if (flashContainer && flashContainer.querySelectorAll('.js-flash-alert').length === 0) {
+						flashContainer.remove();
+					}
+				}
+
+				flashAlerts.forEach(function(alertEl) {
+					alertEl.addEventListener('closed.bs.alert', cleanupFlashContainer);
+
+					setTimeout(function() {
+						if (!document.body.contains(alertEl)) return;
+						var closeBtn = alertEl.querySelector('[data-bs-dismiss="alert"]');
+						if (closeBtn) {
+							closeBtn.click();
+						} else {
+							alertEl.classList.remove('show');
+							setTimeout(function() {
+								alertEl.remove();
+								cleanupFlashContainer();
+							}, 200);
+						}
+					}, 15000);
 				});
 			}
 		})();
