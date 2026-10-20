@@ -185,7 +185,7 @@ class VotingRepositoryTest extends BaseTestCase
 
 		// 2. Osobní audit osoby 1001 musí vrátit 2 záznamy (napříč oběma jednotkami 123 i 456)
 		Assert::same(2, $this->repository->getLoginLogsCount(null, null, 1001));
-		$personLogs = $this->repository->getLoginLogsFiltered(null, null, 50, 0, 1001);
+		$personLogs = array_values($this->repository->getLoginLogsFiltered(null, null, 50, 0, 1001));
 		Assert::count(2, $personLogs);
 		foreach ($personLogs as $l) {
 			Assert::same(1001, (int)$l->person_id);
@@ -193,7 +193,7 @@ class VotingRepositoryTest extends BaseTestCase
 
 		// 3. Osobní audit osoby 2002 musí vrátit pouze 1 záznam
 		Assert::same(1, $this->repository->getLoginLogsCount(null, null, 2002));
-		$person2Logs = $this->repository->getLoginLogsFiltered(null, null, 50, 0, 2002);
+		$person2Logs = array_values($this->repository->getLoginLogsFiltered(null, null, 50, 0, 2002));
 		Assert::count(1, $person2Logs);
 		Assert::same(2002, (int)$person2Logs[0]->person_id);
 	}
