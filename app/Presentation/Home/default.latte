@@ -21,6 +21,118 @@
 			</div>
 		</div>
 	</div>
+
+	<!-- TESTOVACÍ ÚČTY PRO LOKÁLNÍ VÝVOJ -->
+	{if $isTest}
+		<div class="card shadow-sm border-dashed border-primary mb-4 bg-light-subtle">
+			<div class="card-body">
+				<div class="d-flex align-items-center mb-3">
+					<i class="fa-solid fa-flask-vial text-primary fs-2 me-2"></i>
+					<div>
+						<h3 class="card-title mb-0 fw-bold">🧪 Rychlé přihlášení testovacích uživatelů (Lokální vývoj)</h3>
+						<div class="text-muted small">Vyberte si profil pro vyzkoušení hlasování, správy rady a přepínání více jednotek</div>
+					</div>
+				</div>
+
+				<div class="row g-3">
+					<div class="col-md-6 col-lg-4">
+						<div class="card h-100 border shadow-none bg-white">
+							<div class="card-body p-3 d-flex flex-column justify-content-between">
+								<div>
+									<div class="d-flex justify-content-between align-items-start mb-1">
+										<strong class="text-primary fs-4">Jan Novák</strong>
+										<span class="badge bg-purple-lt text-purple">⭐ Více jednotek</span>
+									</div>
+									<div class="small text-muted mb-3">
+										Člen rady střediska (123), správce okresu (456) a činovník kraje (25784). Ideální pro test přepínání jednotek.
+									</div>
+								</div>
+								<a n:href="Sign:devLogin, unitId => 123, personId => 1001, personName => 'Jan Novak', roleKey => 'cinovnikStredisko', roleName => 'Středisko: aktivní činovník', unitName => '1. středisko Dvojka'" class="btn btn-sm btn-outline-primary w-100 fw-bold">
+									<i class="fa-solid fa-arrows-rotate me-1"></i> Přihlásit (přepínání jednotek)
+								</a>
+							</div>
+						</div>
+					</div>
+
+					<div class="col-md-6 col-lg-4">
+						<div class="card h-100 border shadow-none bg-white">
+							<div class="card-body p-3 d-flex flex-column justify-content-between">
+								<div>
+									<div class="d-flex justify-content-between align-items-start mb-1">
+										<strong class="text-primary fs-4">Admin Zakladatel</strong>
+										<span class="badge bg-purple-lt text-purple">⭐ Více jednotek</span>
+									</div>
+									<div class="small text-muted mb-3">
+										Správce střediska (123), správce kraje (25784) a činovník okresu (456).
+									</div>
+								</div>
+								<a n:href="Sign:devLogin, unitId => 123, personId => 9999, personName => 'Admin Zakladatel', roleKey => 'vedouciStredisko', roleName => 'Středisko: vedoucí/admin', unitName => '1. středisko Dvojka'" class="btn btn-sm btn-outline-primary w-100 fw-bold">
+									<i class="fa-solid fa-arrows-rotate me-1"></i> Přihlásit jako Admin
+								</a>
+							</div>
+						</div>
+					</div>
+
+					<div class="col-md-6 col-lg-4">
+						<div class="card h-100 border shadow-none bg-white">
+							<div class="card-body p-3 d-flex flex-column justify-content-between">
+								<div>
+									<div class="d-flex justify-content-between align-items-start mb-1">
+										<strong class="text-primary fs-4">Superadmin</strong>
+										<span class="badge bg-warning-lt text-warning">👑 Superadmin</span>
+									</div>
+									<div class="small text-muted mb-3">
+										Globální správa portálu + role ve více jednotkách (10001, 123, 25784).
+									</div>
+								</div>
+								<a n:href="Sign:devLogin, unitId => 10001, personId => 1, personName => 'Superadmin Aplikace', roleKey => 'vedouciStredisko', roleName => 'Středisko: vedoucí/admin', unitName => 'Středisko Superadmin'" class="btn btn-sm btn-outline-warning text-dark w-100 fw-bold">
+									<i class="fa-solid fa-crown me-1"></i> Přihlásit jako Superadmin
+								</a>
+							</div>
+						</div>
+					</div>
+
+					<div class="col-md-6 col-lg-6">
+						<div class="card h-100 border shadow-none bg-white">
+							<div class="card-body p-3 d-flex flex-column justify-content-between">
+								<div>
+									<div class="d-flex justify-content-between align-items-start mb-1">
+										<strong class="text-primary fs-4">Petr Svoboda</strong>
+										<span class="badge bg-secondary-lt">Jedna jednotka</span>
+									</div>
+									<div class="small text-muted mb-3">
+										Běžný člen rady 1. střediska Dvojka (123) bez dalších jednotek (přepínač se nezobrazuje).
+									</div>
+								</div>
+								<a n:href="Sign:devLogin, unitId => 123, personId => 1002, personName => 'Petr Svoboda', roleKey => 'cinovnikStredisko', roleName => 'Středisko: aktivní činovník', unitName => '1. středisko Dvojka'" class="btn btn-sm btn-outline-secondary w-100">
+									<i class="fa-solid fa-right-to-bracket me-1"></i> Přihlásit (člen rady)
+								</a>
+							</div>
+						</div>
+					</div>
+
+					<div class="col-md-6 col-lg-6">
+						<div class="card h-100 border shadow-none bg-white">
+							<div class="card-body p-3 d-flex flex-column justify-content-between">
+								<div>
+									<div class="d-flex justify-content-between align-items-start mb-1">
+										<strong class="text-primary fs-4">Host Skaut</strong>
+										<span class="badge bg-secondary-lt">Nečlen rady</span>
+									</div>
+									<div class="small text-muted mb-3">
+										Řadový skaut v jednotce 123, který není členem rady ani správcem.
+									</div>
+								</div>
+								<a n:href="Sign:devLogin, unitId => 123, personId => 5555, personName => 'Host Skaut', roleKey => 'cinovnikStredisko', roleName => 'Středisko: aktivní činovník', unitName => '1. středisko Dvojka'" class="btn btn-sm btn-outline-secondary w-100">
+									<i class="fa-solid fa-right-to-bracket me-1"></i> Přihlásit jako Host
+								</a>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	{/if}
 {else}
 	<!-- ZÁHLAVÍ PŘIHLÁŠENÉHO UŽIVATELE & RYCHLÉ AKCE (PAGE HEADER) -->
 	<div class="page-header d-print-none mb-4">
@@ -55,8 +167,8 @@
 						<a n:href="Council:settings" class="btn btn-outline-secondary" title="Nastavení parametrů a pravidel jednotky">
 							<i class="fa-solid fa-sliders me-1"></i> Nastavení jednotky
 						</a>
-						<a n:href="Council:audit" class="btn btn-outline-secondary" title="Audit a historie přihlášení">
-							<i class="fa-solid fa-shield-halved me-1"></i> Audit
+						<a n:href="Council:audit" class="btn btn-outline-secondary" title="Audit a historie přihlášení do jednotky">
+							<i class="fa-solid fa-shield-halved me-1"></i> Audit jednotky
 						</a>
 					</div>
 				</div>

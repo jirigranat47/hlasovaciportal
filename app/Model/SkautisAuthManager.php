@@ -415,6 +415,14 @@ class SkautisAuthManager
 		return $this->debugRoles;
 	}
 
+	/**
+	 * Vrátí zda běží v testovacím režimu
+	 */
+	public function isTest(): bool
+	{
+		return $this->isTest;
+	}
+
 	private ?string $lastError = null;
 
 	public function getLastError(): ?string
@@ -433,7 +441,7 @@ class SkautisAuthManager
 
 		$roles = $this->getAllUserRoles();
 		foreach ($roles as $role) {
-			if ((int)($role['ID'] ?? 0) === $userRoleId || (int)($role['ID_Role'] ?? 0) === $userRoleId) {
+			if ((int)($role['ID'] ?? 0) === $userRoleId || ((int)($role['ID'] ?? 0) === 0 && (int)($role['ID_Role'] ?? 0) === $userRoleId)) {
 				$roleId = (int)$role['ID'];
 				$unitId = isset($role['ID_Unit']) ? (int)$role['ID_Unit'] : null;
 
@@ -443,14 +451,16 @@ class SkautisAuthManager
 				$this->session->roleKey = $role['Key'] ?? '';
 				$this->session->unitName = $role['Unit'] ?? '';
 
-				// 1. Přepneme roli přímo na serveru SkautISu
-				try {
-					$this->skautis->user->LoginUpdate([
-						'ID' => $this->session->token,
-						'ID_UserRole' => $roleId,
-					]);
-				} catch (\Throwable $e) {
-					\Tracy\Debugger::log($e, \Tracy\ILogger::WARNING);
+				// 1. Přepneme roli přímo na serveru SkautISu (pouze pokud nejde o testovací simulaci)
+				if ($this->session->token !== 'mock_token') {
+					try {
+						$this->skautis->user->LoginUpdate([
+							'ID' => $this->session->token,
+							'ID_UserRole' => $roleId,
+						]);
+					} catch (\Throwable $e) {
+						\Tracy\Debugger::log($e, \Tracy\ILogger::WARNING);
+					}
 				}
 
 				// 2. Aktualizujeme data v instanci Skautis knihovny
@@ -907,26 +917,144 @@ class SkautisAuthManager
 		?array $roles = null
 	): void {
 		$this->session->token = 'mock_token';
-		$this->session->roleId = 12345;
-		$this->session->unitId = $unitId;
-		$this->session->unitName = $unitName;
 		$this->session->personId = $personId;
 		$this->session->userName = 'admin_mock';
 		$this->session->personName = $personName;
-		$this->session->roleKey = $roleKey;
-		$this->session->roleName = $roleName;
-		$allRoles = $roles ?? [
-			[
-				'ID' => 12345,
-				'ID_Role' => 12345,
-				'ID_Unit' => $unitId,
-				'Key' => $roleKey,
-				'Role' => $roleName,
-				'DisplayName' => $roleName,
-				'Unit' => $unitName,
-			]
-		];
-		$this->session->allRoles = self::filterAllowedRoles($allRoles);
+
+		if ($roles !== null) {
+			$allRoles = $roles;
+		} elseif ($personId === 1001) {
+			// Jan Novák - testovací uživatel s rolemi ve více jednotkách (středisko, okres, kraj)
+			$allRoles = [
+				[
+					'ID' => 10011,
+					'ID_Role' => 10011,
+					'ID_Unit' => 123,
+					'Key' => 'cinovnikStredisko',
+					'Role' => 'Středisko: aktivní činovník',
+					'DisplayName' => 'Středisko: aktivní činovník',
+					'Unit' => '1. středisko Dvojka',
+				],
+				[
+					'ID' => 10012,
+					'ID_Role' => 10012,
+					'ID_Unit' => 456,
+					'Key' => 'vedouciOkres',
+					'Role' => 'Okres: vedoucí/admin',
+					'DisplayName' => 'Okres: vedoucí/admin',
+					'Unit' => 'Okres Hradec Králové',
+				],
+				[
+					'ID' => 10013,
+					'ID_Role' => 10013,
+					'ID_Unit' => 25784,
+					'Key' => 'cinovnikKraj',
+					'Role' => 'Kraj: aktivní činovník',
+					'DisplayName' => 'Kraj: aktivní činovník',
+					'Unit' => 'Královéhradecký kraj',
+				],
+			];
+		} elseif ($personId === 9999) {
+			// Admin Zakladatel - administrátor s rolemi ve více jednotkách
+			$allRoles = [
+				[
+					'ID' => 99991,
+					'ID_Role' => 99991,
+					'ID_Unit' => 123,
+					'Key' => 'vedouciStredisko',
+					'Role' => 'Středisko: vedoucí/admin',
+					'DisplayName' => 'Středisko: vedoucí/admin',
+					'Unit' => '1. středisko Dvojka',
+				],
+				[
+					'ID' => 99992,
+					'ID_Role' => 99992,
+					'ID_Unit' => 456,
+					'Key' => 'cinovnikOkres',
+					'Role' => 'Okres: aktivní činovník',
+					'DisplayName' => 'Okres: aktivní činovník',
+					'Unit' => 'Okres Hradec Králové',
+				],
+				[
+					'ID' => 99993,
+					'ID_Role' => 99993,
+					'ID_Unit' => 25784,
+					'Key' => 'vedouciKraj',
+					'Role' => 'Kraj: vedoucí/admin',
+					'DisplayName' => 'Kraj: vedoucí/admin',
+					'Unit' => 'Královéhradecký kraj',
+				],
+			];
+		} elseif ($personId === 1 && $unitId === 10001) {
+			// Superadmin Aplikace (lokální vývoj - více jednotek)
+			$allRoles = [
+				[
+					'ID' => 100011,
+					'ID_Role' => 100011,
+					'ID_Unit' => 10001,
+					'Key' => 'vedouciStredisko',
+					'Role' => 'Středisko: vedoucí/admin',
+					'DisplayName' => 'Středisko: vedoucí/admin',
+					'Unit' => 'Středisko Superadmin',
+				],
+				[
+					'ID' => 100012,
+					'ID_Role' => 100012,
+					'ID_Unit' => 123,
+					'Key' => 'cinovnikStredisko',
+					'Role' => 'Středisko: aktivní činovník',
+					'DisplayName' => 'Středisko: aktivní činovník',
+					'Unit' => '1. středisko Dvojka',
+				],
+				[
+					'ID' => 100013,
+					'ID_Role' => 100013,
+					'ID_Unit' => 25784,
+					'Key' => 'vedouciKraj',
+					'Role' => 'Kraj: vedoucí/admin',
+					'DisplayName' => 'Kraj: vedoucí/admin',
+					'Unit' => 'Královéhradecký kraj',
+				],
+			];
+		} else {
+			$allRoles = [
+				[
+					'ID' => 12345,
+					'ID_Role' => 12345,
+					'ID_Unit' => $unitId,
+					'Key' => $roleKey,
+					'Role' => $roleName,
+					'DisplayName' => $roleName,
+					'Unit' => $unitName,
+				]
+			];
+		}
+
+		$filteredRoles = self::filterAllowedRoles($allRoles);
+		$this->session->allRoles = $filteredRoles;
+
+		// Najdeme roli odpovídající zvolené jednotce $unitId
+		$activeRole = null;
+		foreach ($filteredRoles as $r) {
+			if ((int)($r['ID_Unit'] ?? 0) === $unitId) {
+				$activeRole = $r;
+				break;
+			}
+		}
+
+		if ($activeRole !== null) {
+			$this->session->roleId = (int)$activeRole['ID'];
+			$this->session->unitId = (int)$activeRole['ID_Unit'];
+			$this->session->unitName = $activeRole['Unit'] ?? $unitName;
+			$this->session->roleName = $activeRole['Role'] ?? $roleName;
+			$this->session->roleKey = $activeRole['Key'] ?? $roleKey;
+		} else {
+			$this->session->roleId = 12345;
+			$this->session->unitId = $unitId;
+			$this->session->unitName = $unitName;
+			$this->session->roleName = $roleName;
+			$this->session->roleKey = $roleKey;
+		}
 	}
 
 	/**

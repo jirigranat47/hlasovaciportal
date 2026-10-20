@@ -1,0 +1,239 @@
+{block title}Moje přihlášení a bezpečnost{/block}
+
+{block content}
+
+<div class="page-header d-print-none mb-4">
+	<div class="row g-2 align-items-center">
+		<div class="col">
+			<div class="page-pretitle text-muted">
+				<a n:href="Home:default" class="text-muted text-decoration-none">
+					<i class="fa-solid fa-arrow-left me-1"></i> Zpět na přehled
+				</a>
+			</div>
+			<h2 class="page-title text-primary fw-bold mt-1">
+				<i class="fa-solid fa-clock-rotate-left me-2"></i> Historie mých přihlášení
+			</h2>
+			<div class="text-muted small mt-1">
+				Záznam vašich přihlášení, přepnutí jednotek/rolí a bezpečnostních relací pro účet <strong>{$userData['personName']}</strong> (SkautIS Person ID: #{$userData['personId']})
+			</div>
+		</div>
+		<div class="col-auto ms-auto d-print-none d-flex gap-2">
+			<a n:href="Profile:settings" class="btn btn-outline-secondary d-inline-flex align-items-center gap-1 shadow-sm">
+				<i class="fa-solid fa-user-gear"></i> Nastavení profilu a e-mailu
+			</a>
+		</div>
+	</div>
+</div>
+
+<!-- NAVIGAČNÍ ZÁLOŽKY PROFILU -->
+<div class="mb-4">
+	<ul class="nav nav-bordered">
+		<li class="nav-item">
+			<a n:href="Profile:settings" class="nav-link">
+				<i class="fa-solid fa-at me-2"></i> Nastavení e-mailu a notifikací
+			</a>
+		</li>
+		<li class="nav-item">
+			<a n:href="Profile:audit" class="nav-link active fw-bold">
+				<i class="fa-solid fa-clock-rotate-left me-2"></i> Historie mých přihlášení
+			</a>
+		</li>
+	</ul>
+</div>
+
+<div class="card shadow-sm">
+	<div class="card-header bg-transparent py-3">
+		<div class="row g-2 align-items-center w-100">
+			<div class="col">
+				<h3 class="card-title text-primary fw-bold mb-0">
+					Přehled přístupů k vašemu účtu
+				</h3>
+				<div class="text-muted small mt-1">
+					{if $totalCount > 0}
+						Zobrazeno <strong>{$fromIndex}–{$toIndex}</strong> z celkem <strong>{$totalCount}</strong> zaznamenaných přístupů
+						{if !empty($q)}
+							(filtr: „<strong>{$q}</strong>“)
+						{/if}
+					{else}
+						{if !empty($q)}
+							Nebyly nalezeny žádné záznamy odpovídající filtru „<strong>{$q}</strong>“
+						{else}
+							Zatím nejsou zaznamenána žádná přihlášení.
+						{/if}
+					{/if}
+				</div>
+			</div>
+
+			<div class="col-auto">
+				<form method="get" action="{link audit}" class="d-flex gap-2 align-items-center flex-wrap">
+					<div class="input-icon">
+						<span class="input-icon-addon">
+							<i class="fa-solid fa-magnifying-glass text-muted"></i>
+						</span>
+						<input type="text" name="q" value="{$q}" placeholder="Hledat jednotku, roli, IP..." class="form-control form-control-sm" style="min-width: 210px;">
+					</div>
+
+					<div class="d-flex align-items-center gap-1">
+						<select name="limit" id="limit-select" onchange="this.form.submit()" class="form-select form-select-sm" style="width: auto;">
+							<option value="20" {if $limit == 20}selected{/if}>20</option>
+							<option value="50" {if $limit == 50}selected{/if}>50</option>
+							<option value="100" {if $limit == 100}selected{/if}>100</option>
+						</select>
+					</div>
+
+					<button type="submit" class="btn btn-sm btn-primary">
+						Filtrovat
+					</button>
+
+					{if !empty($q)}
+						<a n:href="audit, page => 1, limit => $limit, q => null" class="btn btn-sm btn-outline-secondary" title="Zrušit filtr">
+							<i class="fa-solid fa-xmark"></i>
+						</a>
+					{/if}
+				</form>
+			</div>
+		</div>
+	</div>
+
+	{if empty($loginLogs)}
+		<div class="card-body text-center py-5">
+			<div class="empty">
+				<div class="empty-icon text-muted">
+					<i class="fa-solid fa-shield-halved fs-1"></i>
+				</div>
+				<p class="empty-title">Žádné auditní záznamy</p>
+				<p class="empty-subtitle text-muted">
+					{if !empty($q)}
+						Pro hledaný výraz „<strong>{$q}</strong>“ nebyly nalezeny žádné záznamy o vašich přihlášeních.
+					{else}
+						V databázi zatím není zaznamenána žádná historie přístupů k tomuto účtu.
+					{/if}
+				</p>
+				{if !empty($q)}
+					<div class="empty-action">
+						<a n:href="audit, page => 1, limit => $limit, q => null" class="btn btn-outline-primary">
+							<i class="fa-solid fa-rotate-left me-1"></i> Zrušit filtr vyhledávání
+						</a>
+					</div>
+				{/if}
+			</div>
+		</div>
+	{else}
+		<div class="table-responsive">
+			<table class="table table-vcenter table-hover table-striped card-table">
+				<thead>
+					<tr>
+						<th>Datum a čas</th>
+						<th>Typ akce</th>
+						<th>Jednotka</th>
+						<th>Aktivní role</th>
+						<th>IP adresa</th>
+						<th>Zařízení / Prohlížeč</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr n:foreach="$loginLogs as $log">
+						<td class="text-nowrap font-monospace small text-muted">
+							{$log->logged_at|date:'d. m. Y H:i:s'}
+						</td>
+						<td>
+							{if $log->action === 'login'}
+								<span class="badge bg-success-lt fw-bold">
+									<i class="fa-solid fa-right-to-bracket me-1"></i> Přihlášení
+								</span>
+							{elseif $log->action === 'role_switch'}
+								<span class="badge bg-warning-lt text-warning fw-bold">
+									<i class="fa-solid fa-arrows-rotate me-1"></i> Přepnutí jednotky/role
+								</span>
+							{elseif $log->action === 'logout'}
+								<span class="badge bg-secondary-lt fw-bold">
+									<i class="fa-solid fa-right-from-bracket me-1"></i> Odhlášení
+								</span>
+							{else}
+								<span class="badge bg-secondary-lt font-monospace">
+									{$log->action}
+								</span>
+							{/if}
+						</td>
+						<td>
+							{if !empty($log->unit_name)}
+								<strong class="text-dark">{$log->unit_name}</strong>
+								{if !empty($log->unit_id)}
+									<span class="text-muted small">#{$log->unit_id}</span>
+								{/if}
+							{elseif !empty($log->unit_id)}
+								<span class="text-dark">Jednotka #{$log->unit_id}</span>
+							{else}
+								<span class="text-muted fst-italic">–</span>
+							{/if}
+						</td>
+						<td>
+							{if !empty($log->role_name)}
+								<span class="badge bg-blue-lt">
+									{$log->role_name}
+								</span>
+							{else}
+								<span class="text-muted fst-italic">–</span>
+							{/if}
+						</td>
+						<td class="font-monospace small text-muted">
+							{$log->ip_address ?: '–'}
+						</td>
+						<td class="small text-muted" style="max-width: 250px;">
+							{if !empty($log->user_agent)}
+								<span class="d-inline-block text-truncate" style="max-width: 240px;" title="{$log->user_agent}">
+									{$log->user_agent}
+								</span>
+							{else}
+								<span class="fst-italic">–</span>
+							{/if}
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		{* STRÁNKOVÁNÍ *}
+		{if $totalPages > 1}
+			<div class="card-footer d-flex align-items-center">
+				<p class="m-0 text-muted small">
+					Stránka <strong>{$page}</strong> z <strong>{$totalPages}</strong>
+				</p>
+				<ul class="pagination m-0 ms-auto">
+					<li class="page-item {if $page <= 1}disabled{/if}">
+						<a class="page-link" n:href="audit, page => 1, limit => $limit, q => $q" title="První stránka">
+							<i class="fa-solid fa-angles-left"></i>
+						</a>
+					</li>
+					<li class="page-item {if $page <= 1}disabled{/if}">
+						<a class="page-link" n:href="audit, page => $page - 1, limit => $limit, q => $q" title="Předchozí stránka">
+							<i class="fa-solid fa-angle-left"></i>
+						</a>
+					</li>
+
+					{var $startPage = max(1, $page - 2)}
+					{var $endPage = min($totalPages, $page + 2)}
+
+					{for $p = $startPage; $p <= $endPage; $p++}
+						<li class="page-item {if $p == $page}active{/if}">
+							<a class="page-link" n:href="audit, page => $p, limit => $limit, q => $q">{$p}</a>
+						</li>
+					{/for}
+
+					<li class="page-item {if $page >= $totalPages}disabled{/if}">
+						<a class="page-link" n:href="audit, page => $page + 1, limit => $limit, q => $q" title="Další stránka">
+							<i class="fa-solid fa-angle-right"></i>
+						</a>
+					</li>
+					<li class="page-item {if $page >= $totalPages}disabled{/if}">
+						<a class="page-link" n:href="audit, page => $totalPages, limit => $limit, q => $q" title="Poslední stránka">
+							<i class="fa-solid fa-angles-right"></i>
+						</a>
+					</li>
+				</ul>
+			</div>
+		{/if}
+	{/if}
+</div>
+
+{/block}

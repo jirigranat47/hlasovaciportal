@@ -94,7 +94,8 @@ final class SignPresenter extends BasePresenter
 	{
 		if ($this->skautisAuthManager->switchRole($roleId)) {
 			$userData = $this->skautisAuthManager->getUserData();
-			$this->flashMessage("Aktivní role byla změněna na: {$userData['roleName']}", 'success');
+			$unitInfo = !empty($userData['unitName']) ? " ({$userData['unitName']})" : '';
+			$this->flashMessage("Aktivní role byla úspěšně změněna na: {$userData['roleName']}{$unitInfo}", 'success');
 		} else {
 			$this->flashMessage('Změnu role se nepodařilo provést.', 'danger');
 		}
@@ -114,7 +115,8 @@ final class SignPresenter extends BasePresenter
 		?string $backlink = null
 	): void {
 		$this->skautisAuthManager->simulateLogin($unitId, $personId, $personName, $roleKey, $roleName, $unitName);
-		$this->flashMessage("Simulované přihlášení jako administrátor: $personName (Jednotka: $unitName #$unitId, Role: $roleName)", 'success');
+		$userData = $this->skautisAuthManager->getUserData();
+		$this->flashMessage("Simulované přihlášení: {$userData['personName']} (Jednotka: {$userData['unitName']} #{$userData['unitId']}, Role: {$userData['roleName']})", 'success');
 
 		$authSession = $this->getSession('auth');
 		$bl = $backlink ?? $authSession->backlink ?? $this->backlink;

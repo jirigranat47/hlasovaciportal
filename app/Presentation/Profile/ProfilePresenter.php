@@ -45,6 +45,42 @@ final class ProfilePresenter extends BasePresenter
 		$this->template->activeEmail = $this->template->customEmail ?: $this->template->skautisEmail;
 	}
 
+	/**
+	 * Zobrazí osobní historii přihlášení a bezpečnostních relací pro přihlášeného uživatele
+	 */
+	public function actionAudit(int $page = 1, int $limit = 50, ?string $q = null): void
+	{
+		$userData = $this->skautisAuthManager->getUserData();
+		$personId = (int)$userData['personId'];
+		$this->template->userData = $userData;
+
+		$allowedLimits = [20, 50, 100];
+		if (!in_array($limit, $allowedLimits, true)) {
+			$limit = 50;
+		}
+
+		$page = max(1, $page);
+		$searchTerm = $q ? trim($q) : null;
+
+		$totalCount = $this->votingRepository->getLoginLogsCount(null, $searchTerm, $personId);
+		$totalPages = max(1, (int)ceil($totalCount / $limit));
+		if ($page > $totalPages) {
+			$page = $totalPages;
+		}
+		$offset = ($page - 1) * $limit;
+
+		$loginLogs = $this->votingRepository->getLoginLogsFiltered(null, $searchTerm, $limit, $offset, $personId);
+
+		$this->template->loginLogs = $loginLogs;
+		$this->template->page = $page;
+		$this->template->limit = $limit;
+		$this->template->q = $searchTerm;
+		$this->template->totalCount = $totalCount;
+		$this->template->totalPages = $totalPages;
+		$this->template->fromIndex = $totalCount > 0 ? $offset + 1 : 0;
+		$this->template->toIndex = min($offset + $limit, $totalCount);
+	}
+
 	protected function createComponentProfileForm(): Form
 	{
 		$form = new Form;

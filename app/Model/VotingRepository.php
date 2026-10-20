@@ -739,9 +739,9 @@ class VotingRepository
 	}
 
 	/**
-	 * Vrátí filtrovaný a stránkovaný seznam přihlášení
+	 * Vrátí filtrovaný a stránkovaný seznam přihlášení (pro jednotku nebo konkrétního uživatele)
 	 */
-	public function getLoginLogsFiltered(?int $unitId = null, ?string $search = null, int $limit = 50, int $offset = 0): array
+	public function getLoginLogsFiltered(?int $unitId = null, ?string $search = null, int $limit = 50, int $offset = 0, ?int $personId = null): array
 	{
 		$query = $this->database->table('user_login_logs')
 			->order('logged_at DESC, id DESC')
@@ -751,9 +751,13 @@ class VotingRepository
 			$query->where('unit_id', $unitId);
 		}
 
+		if ($personId !== null) {
+			$query->where('person_id', $personId);
+		}
+
 		if ($search !== null && trim($search) !== '') {
 			$term = '%' . trim($search) . '%';
-			$query->where('person_name LIKE ? OR user_name LIKE ? OR role_name LIKE ? OR action LIKE ? OR ip_address LIKE ?', $term, $term, $term, $term, $term);
+			$query->where('person_name LIKE ? OR user_name LIKE ? OR unit_name LIKE ? OR role_name LIKE ? OR action LIKE ? OR ip_address LIKE ?', $term, $term, $term, $term, $term, $term);
 		}
 
 		return $query->fetchAll();
@@ -762,7 +766,7 @@ class VotingRepository
 	/**
 	 * Vrátí celkový počet záznamů pro zadaný filtr auditu přihlášení
 	 */
-	public function getLoginLogsCount(?int $unitId = null, ?string $search = null): int
+	public function getLoginLogsCount(?int $unitId = null, ?string $search = null, ?int $personId = null): int
 	{
 		$query = $this->database->table('user_login_logs');
 
@@ -770,9 +774,13 @@ class VotingRepository
 			$query->where('unit_id', $unitId);
 		}
 
+		if ($personId !== null) {
+			$query->where('person_id', $personId);
+		}
+
 		if ($search !== null && trim($search) !== '') {
 			$term = '%' . trim($search) . '%';
-			$query->where('person_name LIKE ? OR user_name LIKE ? OR role_name LIKE ? OR action LIKE ? OR ip_address LIKE ?', $term, $term, $term, $term, $term);
+			$query->where('person_name LIKE ? OR user_name LIKE ? OR unit_name LIKE ? OR role_name LIKE ? OR action LIKE ? OR ip_address LIKE ?', $term, $term, $term, $term, $term, $term);
 		}
 
 		return $query->count('*');

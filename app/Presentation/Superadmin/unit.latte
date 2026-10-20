@@ -1,262 +1,301 @@
 {block title}Detail jednotky: {$unit['unit_name']}{/block}
 
 {block content}
-<div class="container" style="max-width: 1300px; padding: 2rem 1rem;">
 
-	<!-- NAVIGACE ZPĚT -->
-	<div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
-		<a n:href="default" class="btn" style="background: white; color: #1e293b; border: 1px solid #cbd5e1; padding: 8px 18px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); transition: all 0.15s;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#94a3b8'; this.style.color='#0f172a';" onmouseout="this.style.background='white'; this.style.borderColor='#cbd5e1'; this.style.color='#1e293b';">
-			<i class="fa-solid fa-arrow-left" style="color: #64748b; font-size: 0.95rem;"></i> Zpět na přehled jednotek (Superadmin)
+<!-- NAVIGACE A ZÁHLAVÍ JEDNOTKY (PAGE HEADER) -->
+{var $typeMeta = App\Model\SuperadminRepository::getUnitTypeLabel($unit['unit_type'])}
+{var $badgeClass = match($unit['unit_type']) {
+	'kraj' => 'bg-amber-lt text-amber',
+	'okres' => 'bg-indigo-lt text-indigo',
+	default => 'bg-success-lt text-success',
+}}
+
+<div class="page-header d-print-none mb-4">
+	<div class="mb-2">
+		<a n:href="default" class="btn btn-sm btn-outline-secondary">
+			<i class="fa-solid fa-arrow-left me-1"></i> Zpět na přehled jednotek (Superadmin)
 		</a>
-		<span style="font-size: 0.85rem; color: #64748b; background: white; padding: 6px 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
-			<i class="fa-solid fa-crown" style="color: #9333ea; margin-right: 4px;"></i> Superadmin &bull; Jednotka #{$unit['unit_id']}
-		</span>
 	</div>
 
-	<!-- HLAVIČKA JEDNOTKY -->
-	{var $typeMeta = App\Model\SuperadminRepository::getUnitTypeLabel($unit['unit_type'])}
-	<div style="background: white; border-radius: 12px; padding: 1.75rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.03); margin-bottom: 2rem;">
-		<div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 1.25rem;">
-			<div>
-				<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-					<h1 style="color: #0f172a; margin: 0; font-size: 1.8rem;">{$unit['unit_name']}</h1>
-					<span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 14px; font-size: 0.82rem; font-weight: bold; background: {$typeMeta['badgeBg']}; color: {$typeMeta['badgeColor']};">
-						<i class="fa-solid {$typeMeta['icon']}"></i> {$typeMeta['label']}
-					</span>
-					<span style="background: #f1f5f9; color: #475569; padding: 3px 8px; border-radius: 6px; font-size: 0.85rem; font-family: monospace;">
-						#{$unit['unit_id']}
-					</span>
-				</div>
-				<p style="color: var(--skaut-muted); margin: 6px 0 0 0; font-size: 0.95rem;">
-					Poslední zaznamenaná aktivita: <strong>{if $unit['last_activity']}{$unit['last_activity']->format('d. m. Y H:i')}{else}nikdy{/if}</strong>
-				</p>
+	<div class="row g-2 align-items-center">
+		<div class="col">
+			<div class="page-pretitle text-muted">
+				Detail a statistiky skautské jednotky &bull; Superadmin Portál
 			</div>
+			<h2 class="page-title fw-bold d-flex align-items-center gap-2 flex-wrap">
+				<span>{$unit['unit_name']}</span>
+				<span class="badge {$badgeClass}">
+					<i class="fa-solid {$typeMeta['icon']} me-1"></i> {$typeMeta['label']}
+				</span>
+				<span class="badge bg-secondary-lt font-monospace fs-6">
+					#{$unit['unit_id']}
+				</span>
+			</h2>
+			<div class="text-muted small mt-1">
+				Poslední zaznamenaná aktivita: <strong>{if $unit['last_activity']}{$unit['last_activity']->format('d. m. Y H:i')}{else}nikdy{/if}</strong>
+			</div>
+		</div>
 
-			<div style="display: flex; gap: 0.5rem; align-items: center;">
+		<div class="col-auto ms-auto d-print-none">
+			<div class="btn-list">
 				{if $unit['has_custom_settings']}
-					<span style="background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: bold;">
+					<span class="badge bg-azure-lt fs-6 p-2" title="Jednotka má individuální nastavení parametrů">
 						<i class="fa-solid fa-sliders me-1"></i> Vlastní nastavení
 					</span>
 				{/if}
 				{if $hasCustomSmtp}
-					<span style="background: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: bold;">
+					<span class="badge bg-success-lt fs-6 p-2" title="Jednotka má nastaven vlastní SMTP server">
 						<i class="fa-solid fa-envelope me-1"></i> Vlastní SMTP
 					</span>
 				{else}
-					<span style="background: #f1f5f9; color: #64748b; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem;">
+					<span class="badge bg-secondary-lt fs-6 p-2" title="Využívá centrální odesílací účet hlasovani@skaut.cz">
 						Centrální e-mail
 					</span>
 				{/if}
 			</div>
 		</div>
+	</div>
+</div>
 
-		<!-- RYCHLÉ METRIKY JEDNOTKY -->
-		<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-top: 1.25rem;">
-			<div style="background: #f8fafc; padding: 0.85rem 1rem; border-radius: 8px;">
-				<div style="font-size: 0.78rem; color: #64748b; font-weight: bold; text-transform: uppercase;">Členů rady</div>
-				<div style="font-size: 1.5rem; font-weight: 800; color: #0f172a;">{$unit['council_members_count']}</div>
+<!-- RYCHLÉ METRIKY JEDNOTKY (STAT CARDS) -->
+<div class="row row-cards mb-4">
+	<div class="col-6 col-md-4 col-lg">
+		<div class="card card-sm shadow-sm h-100">
+			<div class="card-body">
+				<div class="subheader text-muted">Členů rady</div>
+				<div class="h2 mb-0 fw-bold">{$unit['council_members_count']}</div>
 			</div>
-			<div style="background: #f8fafc; padding: 0.85rem 1rem; border-radius: 8px;">
-				<div style="font-size: 0.78rem; color: #64748b; font-weight: bold; text-transform: uppercase;">Usnesení celkem</div>
-				<div style="font-size: 1.5rem; font-weight: 800; color: #0f172a;">{$unit['total_elections']}</div>
+		</div>
+	</div>
+	<div class="col-6 col-md-4 col-lg">
+		<div class="card card-sm shadow-sm h-100">
+			<div class="card-body">
+				<div class="subheader text-muted">Usnesení celkem</div>
+				<div class="h2 mb-0 fw-bold text-primary">{$unit['total_elections']}</div>
 			</div>
-			<div style="background: #f8fafc; padding: 0.85rem 1rem; border-radius: 8px;">
-				<div style="font-size: 0.78rem; color: #64748b; font-weight: bold; text-transform: uppercase;">Odevzdaných hlasů</div>
-				<div style="font-size: 1.5rem; font-weight: 800; color: #0f172a;">{$unit['total_votes']}</div>
+		</div>
+	</div>
+	<div class="col-6 col-md-4 col-lg">
+		<div class="card card-sm shadow-sm h-100">
+			<div class="card-body">
+				<div class="subheader text-muted">Odevzdaných hlasů</div>
+				<div class="h2 mb-0 fw-bold text-warning">{$unit['total_votes']}</div>
 			</div>
-			<div style="background: #f8fafc; padding: 0.85rem 1rem; border-radius: 8px;">
-				<div style="font-size: 0.78rem; color: #64748b; font-weight: bold; text-transform: uppercase;">Průměrná účast</div>
-				<div style="font-size: 1.5rem; font-weight: 800; color: #7c3aed;">
+		</div>
+	</div>
+	<div class="col-6 col-md-6 col-lg">
+		<div class="card card-sm shadow-sm h-100">
+			<div class="card-body">
+				<div class="subheader text-muted">Průměrná účast</div>
+				<div class="h2 mb-0 fw-bold text-purple">
 					{if $unit['turnout_pct'] !== null}{$unit['turnout_pct']} %{else}&ndash;{/if}
 				</div>
 			</div>
-			<div style="background: #f8fafc; padding: 0.85rem 1rem; border-radius: 8px;">
-				<div style="font-size: 0.78rem; color: #64748b; font-weight: bold; text-transform: uppercase;">Úspěšnost schválení</div>
-				<div style="font-size: 1.5rem; font-weight: 800; color: #16a34a;">
+		</div>
+	</div>
+	<div class="col-6 col-md-6 col-lg">
+		<div class="card card-sm shadow-sm h-100">
+			<div class="card-body">
+				<div class="subheader text-muted">Úspěšnost schválení</div>
+				<div class="h2 mb-0 fw-bold text-success">
 					{if $unit['success_pct'] !== null}{$unit['success_pct']} %{else}&ndash;{/if}
 				</div>
 			</div>
 		</div>
 	</div>
-
-	<!-- TABULKA 1: USNESENÍ JEDNOTKY -->
-	<div style="background: white; border-radius: 12px; padding: 1.75rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.03); margin-bottom: 2rem;">
-		<h2 style="margin-top: 0; margin-bottom: 1rem; color: #0f172a; font-size: 1.3rem; display: flex; align-items: center; gap: 8px;">
-			<i class="fa-solid fa-gavel" style="color: var(--skaut-blue);"></i> Usnesení a hlasování jednotky ({count($elections)})
-		</h2>
-
-		{if empty($elections)}
-			<p style="color: #64748b; margin: 0; font-style: italic;">Jednotka dosud nezaložila žádné hlasování.</p>
-		{else}
-			<div style="overflow-x: auto;">
-				<table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
-					<thead>
-						<tr style="border-bottom: 2px solid #e2e8f0; text-align: left; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;">
-							<th style="padding: 10px 12px;">Číslo</th>
-							<th style="padding: 10px 12px;">Název usnesení</th>
-							<th style="padding: 10px 12px; text-align: center;">Stav</th>
-							<th style="padding: 10px 12px; text-align: center;">Hlasy (Pro / Proti / Zdržel)</th>
-							<th style="padding: 10px 12px; text-align: center;">Volební účast</th>
-							<th style="padding: 10px 12px; text-align: center;">Výsledek</th>
-							<th style="padding: 10px 12px; text-align: right;">Termín ukončení</th>
-						</tr>
-					</thead>
-					<tbody>
-						{foreach $elections as $el}
-							<tr style="border-bottom: 1px solid #f1f5f9;">
-								<td style="padding: 10px 12px; font-weight: bold; color: var(--skaut-blue); white-space: nowrap;">
-									{$el['resolution_number']}
-								</td>
-								<td style="padding: 10px 12px;">
-									<div style="font-weight: 600; color: #0f172a;">{$el['title']}</div>
-									<div style="font-size: 0.78rem; color: #94a3b8;">Založeno: {$el['created_at']->format('d. m. Y H:i')}</div>
-								</td>
-								<td style="padding: 10px 12px; text-align: center;">
-									{if $el['is_cancelled']}
-										<span style="background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: bold;">Stornováno</span>
-									{elseif $el['status'] === 'draft'}
-										<span style="background: #fef9c3; color: #854d0e; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: bold;">Koncept</span>
-									{elseif !$el['is_past_end']}
-										<span style="background: #dcfce7; color: #15803d; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: bold;">Probíhá</span>
-									{else}
-										<span style="background: #e2e8f0; color: #334155; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: bold;">Uzavřeno</span>
-									{/if}
-								</td>
-								<td style="padding: 10px 12px; text-align: center;">
-									<span style="color: #16a34a; font-weight: bold;">{$el['pro_count']}</span> / 
-									<span style="color: #dc2626; font-weight: bold;">{$el['against_count']}</span> / 
-									<span style="color: #64748b; font-weight: bold;">{$el['abstain_count']}</span>
-									<span style="font-size: 0.75rem; color: #94a3b8; display: block;">({$el['total_votes']} hlasů)</span>
-								</td>
-								<td style="padding: 10px 12px; text-align: center; font-weight: bold;">
-									{$el['turnout_pct']} %
-								</td>
-								<td style="padding: 10px 12px; text-align: center;">
-									{if $el['is_cancelled']}
-										<span style="color: #64748b; font-weight: bold; font-size: 0.82rem;">&ndash;</span>
-									{elseif $el['status'] === 'draft'}
-										<span style="color: #94a3b8; font-size: 0.82rem;">&ndash;</span>
-									{elseif $el['is_adopted']}
-										<span style="background: #dcfce7; color: #166534; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 0.8rem;">✓ PŘIJATO</span>
-									{else}
-										<span style="background: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 0.8rem;">✕ NEPŘIJATO</span>
-									{/if}
-								</td>
-								<td style="padding: 10px 12px; text-align: right; color: #64748b; white-space: nowrap;">
-									{$el['end_date']->format('d. m. Y H:i')}
-								</td>
-							</tr>
-						{/foreach}
-					</tbody>
-				</table>
-			</div>
-		{/if}
-	</div>
-
-	<!-- TABULKA 2: ČLENOVÉ RADY JEDNOTKY -->
-	<div style="background: white; border-radius: 12px; padding: 1.75rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.03); margin-bottom: 2rem;">
-		<h2 style="margin-top: 0; margin-bottom: 1rem; color: #0f172a; font-size: 1.3rem; display: flex; align-items: center; gap: 8px;">
-			<i class="fa-solid fa-users" style="color: #10b981;"></i> Zapsaní členové Rady jednotky ({count($members)})
-		</h2>
-
-		{if empty($members)}
-			<p style="color: #64748b; margin: 0; font-style: italic;">Jednotka nemá v databázi zapsané žádné členy rady.</p>
-		{else}
-			<div style="overflow-x: auto;">
-				<table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
-					<thead>
-						<tr style="border-bottom: 2px solid #e2e8f0; text-align: left; color: #475569; font-size: 0.8rem; text-transform: uppercase;">
-							<th style="padding: 8px 12px;">Person ID</th>
-							<th style="padding: 8px 12px;">Jméno a příjmení</th>
-							<th style="padding: 8px 12px;">E-mail pro notifikace</th>
-							<th style="padding: 8px 12px; text-align: right;">Datum přidání</th>
-						</tr>
-					</thead>
-					<tbody>
-						{foreach $members as $m}
-							<tr style="border-bottom: 1px solid #f1f5f9;">
-								<td style="padding: 8px 12px; font-family: monospace; color: #64748b;">
-									#{$m->person_id}
-								</td>
-								<td style="padding: 8px 12px; font-weight: bold; color: #0f172a;">
-									{$m->full_name}
-								</td>
-								<td style="padding: 8px 12px; color: #475569;">
-									{if $m->email}
-										<a href="mailto:{$m->email}" style="color: var(--skaut-blue);">{$m->email}</a>
-									{else}
-										<span style="color: #94a3b8; font-style: italic;">nevyplněn</span>
-									{/if}
-								</td>
-								<td style="padding: 8px 12px; text-align: right; color: #64748b;">
-									{$m->created_at->format('d. m. Y')}
-								</td>
-							</tr>
-						{/foreach}
-					</tbody>
-				</table>
-			</div>
-		{/if}
-	</div>
-
-	<!-- TABULKA 3: HISTORIE PŘIHLÁŠENÍ DO JEDNOTKY -->
-	<div style="background: white; border-radius: 12px; padding: 1.75rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.03);">
-		<h2 style="margin-top: 0; margin-bottom: 1rem; color: #0f172a; font-size: 1.3rem; display: flex; align-items: center; gap: 8px;">
-			<i class="fa-solid fa-shield-halved" style="color: #64748b;"></i> Poslední přihlášení a aktivita v jednotce
-		</h2>
-
-		{if empty($recentLogins)}
-			<p style="color: #64748b; margin: 0; font-style: italic;">Nejsou evidována žádná přihlášení.</p>
-		{else}
-			<div style="overflow-x: auto;">
-				<table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
-					<thead>
-						<tr style="border-bottom: 2px solid #e2e8f0; text-align: left; color: #475569; font-size: 0.78rem; text-transform: uppercase;">
-							<th style="padding: 8px 12px;">Datum a čas</th>
-							<th style="padding: 8px 12px;">Uživatel</th>
-							<th style="padding: 8px 12px;">Role</th>
-							<th style="padding: 8px 12px; text-align: center;">Akce</th>
-							<th style="padding: 8px 12px; text-align: right;">IP adresa</th>
-						</tr>
-					</thead>
-					<tbody>
-						{foreach $recentLogins as $l}
-							<tr style="border-bottom: 1px solid #f1f5f9;">
-								<td style="padding: 8px 12px; color: #64748b; white-space: nowrap;">
-									{$l->logged_at->format('d. m. Y H:i:s')}
-								</td>
-								<td style="padding: 8px 12px;">
-									<strong>{$l->person_name}</strong>
-									<span style="font-size: 0.75rem; color: #94a3b8;">({$l->user_name} #{$l->person_id})</span>
-								</td>
-								<td style="padding: 8px 12px; color: #475569;">
-									{$l->role_name ?: '&ndash;'}
-								</td>
-								<td style="padding: 8px 12px; text-align: center;">
-									<span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-family: monospace;">
-										{$l->action}
-									</span>
-								</td>
-								<td style="padding: 8px 12px; text-align: right; font-family: monospace; color: #64748b; font-size: 0.8rem;">
-									{$l->ip_address ?: '&ndash;'}
-								</td>
-							</tr>
-						{/foreach}
-					</tbody>
-				</table>
-			</div>
-		{/if}
-	</div>
-
-	<!-- SPODNÍ NAVIGACE ZPĚT -->
-	<div style="margin-top: 2rem; padding: 1.5rem 0; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-		<a n:href="default" class="btn" style="background: white; color: #1e293b; border: 1px solid #cbd5e1; padding: 9px 20px; border-radius: 8px; font-weight: 600; font-size: 0.92rem; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); transition: all 0.15s;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#94a3b8'; this.style.color='#0f172a';" onmouseout="this.style.background='white'; this.style.borderColor='#cbd5e1'; this.style.color='#1e293b';">
-			<i class="fa-solid fa-arrow-left" style="color: #64748b;"></i> Zpět na přehled jednotek (Superadmin)
-		</a>
-		<a n:href="Home:default" class="btn" style="background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; padding: 9px 16px; border-radius: 8px; font-size: 0.88rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
-			<i class="fa-solid fa-house" style="color: #94a3b8;"></i> Hlavní nástěnka jednotky
-		</a>
-	</div>
-
 </div>
+
+<!-- TABULKA 1: USNESENÍ JEDNOTKY -->
+<div class="card shadow-sm mb-4">
+	<div class="card-header d-flex justify-content-between align-items-center">
+		<h3 class="card-title mb-0">
+			<i class="fa-solid fa-gavel text-primary me-2"></i> Usnesení a hlasování jednotky
+			<span class="badge bg-primary-lt ms-2">{count($elections)}</span>
+		</h3>
+	</div>
+
+	{if empty($elections)}
+		<div class="card-body text-center py-4 text-muted">
+			<p class="mb-0 fst-italic">Jednotka dosud nezaložila žádné hlasování.</p>
+		</div>
+	{else}
+		<div class="table-responsive">
+			<table class="table table-vcenter table-hover table-striped card-table">
+				<thead>
+					<tr>
+						<th>Číslo</th>
+						<th>Název usnesení</th>
+						<th class="text-center">Stav</th>
+						<th class="text-center">Hlasy (Pro / Proti / Zdržel)</th>
+						<th class="text-center">Volební účast</th>
+						<th class="text-center">Výsledek</th>
+						<th class="text-end">Termín ukončení</th>
+					</tr>
+				</thead>
+				<tbody>
+					{foreach $elections as $el}
+						<tr>
+							<td class="fw-bold text-primary text-nowrap">
+								{$el['resolution_number']}
+							</td>
+							<td>
+								<div class="fw-semibold">{$el['title']}</div>
+								<div class="small text-muted">Založeno: {$el['created_at']->format('d. m. Y H:i')}</div>
+							</td>
+							<td class="text-center">
+								{if $el['is_cancelled']}
+									<span class="badge bg-secondary-lt">Stornováno</span>
+								{elseif $el['status'] === 'draft'}
+									<span class="badge bg-warning-lt">Koncept</span>
+								{elseif !$el['is_past_end']}
+									<span class="badge bg-success-lt">Probíhá</span>
+								{else}
+									<span class="badge bg-secondary-lt">Uzavřeno</span>
+								{/if}
+							</td>
+							<td class="text-center">
+								<span class="text-success fw-bold">{$el['pro_count']}</span> / 
+								<span class="text-danger fw-bold">{$el['against_count']}</span> / 
+								<span class="text-secondary fw-bold">{$el['abstain_count']}</span>
+								<div class="small text-muted">({$el['total_votes']} hlasů)</div>
+							</td>
+							<td class="text-center fw-bold">
+								{if $el['turnout_pct'] !== null}{$el['turnout_pct']} %{else}&ndash;{/if}
+							</td>
+							<td class="text-center">
+								{if $el['is_cancelled']}
+									<span class="text-muted fw-bold">&ndash;</span>
+								{elseif $el['status'] === 'draft'}
+									<span class="text-muted">&ndash;</span>
+								{elseif $el['is_adopted']}
+									<span class="badge bg-success text-white fw-bold">✓ PŘIJATO</span>
+								{else}
+									<span class="badge bg-danger text-white fw-bold">✕ NEPŘIJATO</span>
+								{/if}
+							</td>
+							<td class="text-end text-muted small text-nowrap">
+								{$el['end_date']->format('d. m. Y H:i')}
+							</td>
+						</tr>
+					{/foreach}
+				</tbody>
+			</table>
+		</div>
+	{/if}
+</div>
+
+<!-- TABULKA 2: ČLENOVÉ RADY JEDNOTKY -->
+<div class="card shadow-sm mb-4">
+	<div class="card-header d-flex justify-content-between align-items-center">
+		<h3 class="card-title mb-0">
+			<i class="fa-solid fa-users text-success me-2"></i> Zapsaní členové Rady jednotky
+			<span class="badge bg-success-lt ms-2">{count($members)}</span>
+		</h3>
+	</div>
+
+	{if empty($members)}
+		<div class="card-body text-center py-4 text-muted">
+			<p class="mb-0 fst-italic">Jednotka nemá v databázi zapsané žádné členy rady.</p>
+		</div>
+	{else}
+		<div class="table-responsive">
+			<table class="table table-vcenter table-hover table-striped card-table">
+				<thead>
+					<tr>
+						<th style="width: 120px;">Person ID</th>
+						<th>Jméno a příjmení</th>
+						<th>E-mail pro notifikace</th>
+						<th class="text-end">Datum přidání</th>
+					</tr>
+				</thead>
+				<tbody>
+					{foreach $members as $m}
+						<tr>
+							<td class="font-monospace text-muted">
+								#{$m->person_id}
+							</td>
+							<td class="fw-bold">
+								{$m->full_name}
+							</td>
+							<td>
+								{if $m->email}
+									<a href="mailto:{$m->email}" class="text-reset">{$m->email}</a>
+								{else}
+									<span class="text-muted fst-italic">nevyplněn</span>
+								{/if}
+							</td>
+							<td class="text-end text-muted small">
+								{$m->created_at->format('d. m. Y')}
+							</td>
+						</tr>
+					{/foreach}
+				</tbody>
+			</table>
+		</div>
+	{/if}
+</div>
+
+<!-- TABULKA 3: HISTORIE PŘIHLÁŠENÍ DO JEDNOTKY -->
+<div class="card shadow-sm mb-4">
+	<div class="card-header d-flex justify-content-between align-items-center">
+		<h3 class="card-title mb-0">
+			<i class="fa-solid fa-shield-halved text-secondary me-2"></i> Poslední přihlášení a aktivita v jednotce
+		</h3>
+	</div>
+
+	{if empty($recentLogins)}
+		<div class="card-body text-center py-4 text-muted">
+			<p class="mb-0 fst-italic">Nejsou evidována žádná přihlášení.</p>
+		</div>
+	{else}
+		<div class="table-responsive">
+			<table class="table table-vcenter table-hover table-striped card-table">
+				<thead>
+					<tr>
+						<th>Datum a čas</th>
+						<th>Uživatel</th>
+						<th>Role</th>
+						<th class="text-center">Akce</th>
+						<th class="text-end">IP adresa</th>
+					</tr>
+				</thead>
+				<tbody>
+					{foreach $recentLogins as $l}
+						<tr>
+							<td class="text-muted small text-nowrap">
+								{$l->logged_at->format('d. m. Y H:i:s')}
+							</td>
+							<td>
+								<strong>{$l->person_name}</strong>
+								<span class="text-muted small">({$l->user_name} #{$l->person_id})</span>
+							</td>
+							<td class="text-muted">
+								{$l->role_name ?: '&ndash;'}
+							</td>
+							<td class="text-center">
+								<span class="badge bg-secondary-lt font-monospace">
+									{$l->action}
+								</span>
+							</td>
+							<td class="text-end font-monospace text-muted small">
+								{$l->ip_address ?: '&ndash;'}
+							</td>
+						</tr>
+					{/foreach}
+				</tbody>
+			</table>
+		</div>
+	{/if}
+</div>
+
+<!-- SPODNÍ NAVIGACE ZPĚT -->
+<div class="btn-list mb-4">
+	<a n:href="default" class="btn btn-outline-secondary">
+		<i class="fa-solid fa-arrow-left me-1"></i> Zpět na přehled jednotek (Superadmin)
+	</a>
+	<a n:href="Home:default" class="btn btn-ghost-secondary">
+		<i class="fa-solid fa-house me-1"></i> Hlavní nástěnka jednotky
+	</a>
+</div>
+
 {/block}

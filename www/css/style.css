@@ -29,7 +29,7 @@ li {
   margin-bottom: 0.35rem;
 }
 
-header, .main-header {
+.main-header {
   background: linear-gradient(135deg, var(--skaut-blue) 0%, var(--skaut-blue-light) 100%);
   color: white;
   padding: 0.85rem 1.5rem;
@@ -115,7 +115,7 @@ header, .main-header {
   border-color: var(--skaut-yellow);
 }
 
-.btn {
+.legacy-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -180,13 +180,13 @@ header, .main-header {
   border-color: rgba(239, 68, 68, 0.6);
 }
 
-.btn-primary {
+.legacy-btn-primary {
   background: var(--skaut-yellow);
   color: var(--skaut-blue);
   box-shadow: 0 4px 12px rgba(244, 180, 0, 0.3);
 }
 
-.btn-primary:hover {
+.legacy-btn-primary:hover {
   background: #e0a300;
   transform: translateY(-1px);
 }
@@ -216,23 +216,23 @@ header, .main-header {
   color: #ffffff;
 }
 
-.btn-secondary {
+.legacy-btn-secondary {
   background: #f1f5f9;
   color: #334155;
   border: 1px solid #cbd5e1;
 }
 
-.btn-secondary:hover {
+.legacy-btn-secondary:hover {
   background: #e2e8f0;
   color: #0f172a;
   border-color: #94a3b8;
 }
 
-.btn-secondary i {
+.legacy-btn-secondary i {
   color: #475569;
 }
 
-.btn-secondary:hover i {
+.legacy-btn-secondary:hover i {
   color: #0f172a;
 }
 
@@ -251,7 +251,7 @@ header, .main-header {
   cursor: not-allowed;
 }
 
-main {
+.legacy-main {
   flex: 1;
   max-width: 1100px;
   width: 100%;
@@ -403,7 +403,7 @@ main {
   font-weight: 500;
 }
 
-footer {
+.legacy-footer {
   background: #0f172a;
   color: #94a3b8;
   text-align: center;
@@ -634,7 +634,7 @@ footer {
     flex: 1 1 100%;
   }
 
-  header, .main-header {
+  .main-header {
     padding: 0.45rem 0.75rem;
     position: sticky;
     top: 0;
@@ -731,7 +731,7 @@ footer {
     margin: 0 !important;
   }
 
-  main {
+  .legacy-main {
     margin: 1rem auto;
     padding: 0 0.75rem;
   }
@@ -811,7 +811,7 @@ footer {
     font-size: 0.85rem;
   }
 
-  footer {
+  .legacy-footer {
     padding: 1.2rem 1rem;
     font-size: 0.8rem;
   }
@@ -834,4 +834,3 @@ footer {
     font-size: 1.15rem !important;
   }
 }
-

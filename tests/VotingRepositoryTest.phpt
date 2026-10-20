@@ -169,6 +169,34 @@ class VotingRepositoryTest extends BaseTestCase
 		$unnotifiedPast = $this->repository->getUnnotifiedPublishedElections($unitId);
 		Assert::count(0, $unnotifiedPast);
 	}
+
+	public function testLoginLogsFilteredByPersonId(): void
+	{
+		// Zalogujeme přihlášení pro osobu 1001 (dvě různé jednotky)
+		$this->repository->logUserLogin(1001, 'jan_novak', 'Jan Novak', 123, 'Středisko 123', 'Vedoucí', '127.0.0.1', 'Mozilla', 'login');
+		$this->repository->logUserLogin(1001, 'jan_novak', 'Jan Novak', 456, 'Okres 456', 'Činovník', '127.0.0.1', 'Mozilla', 'role_switch');
+
+		// Zalogujeme přihlášení pro osobu 2002 (jednotka 123)
+		$this->repository->logUserLogin(2002, 'petr_svoboda', 'Petr Svoboda', 123, 'Středisko 123', 'Člen', '127.0.0.2', 'Chrome', 'login');
+
+		// 1. Audit jednotky 123 bez personId musí vrátit 2 záznamy (1001 i 2002)
+		Assert::same(2, $this->repository->getLoginLogsCount(123));
+		Assert::count(2, $this->repository->getLoginLogsFiltered(123));
+
+		// 2. Osobní audit osoby 1001 musí vrátit 2 záznamy (napříč oběma jednotkami 123 i 456)
+		Assert::same(2, $this->repository->getLoginLogsCount(null, null, 1001));
+		$personLogs = $this->repository->getLoginLogsFiltered(null, null, 50, 0, 1001);
+		Assert::count(2, $personLogs);
+		foreach ($personLogs as $l) {
+			Assert::same(1001, (int)$l->person_id);
+		}
+
+		// 3. Osobní audit osoby 2002 musí vrátit pouze 1 záznam
+		Assert::same(1, $this->repository->getLoginLogsCount(null, null, 2002));
+		$person2Logs = $this->repository->getLoginLogsFiltered(null, null, 50, 0, 2002);
+		Assert::count(1, $person2Logs);
+		Assert::same(2002, (int)$person2Logs[0]->person_id);
+	}
 }
 
 (new VotingRepositoryTest($container))->run();

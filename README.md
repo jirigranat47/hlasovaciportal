@@ -53,24 +53,40 @@ Při vyplňování žádosti o nové / produkční **AppID** na [ws.skautis.cz](
 
 ## 🛠 Lokální simulace přihlášení (vývoj a testování)
 
-Pro usnadnění lokálního vývoje bez nutnosti přihlašování přes reálný SkautIS můžete simulovat přihlášení různých rolí pomocí následujících URL adres:
+Pro usnadnění lokálního vývoje bez nutnosti přihlašování přes reálný SkautIS můžete simulovat přihlášení různých rolí pomocí níže uvedených odkazů (nebo přímo kliknutím na uvítací stránce po spuštění portálu):
 
-* 👑 **Superadministrátor aplikace** (přístup do Superadmin portálu s globálními statistikami a přehledem všech jednotek, `Person ID = 1`):
-  [http://localhost:8089/sign/dev-login?unitId=10001&personId=1&personName=Superadmin+Aplikace&roleKey=vedouciStredisko&roleName=Administrátor&unitName=Středisko+Superadmin](http://localhost:8089/sign/dev-login?unitId=10001&personId=1&personName=Superadmin+Aplikace&roleKey=vedouciStredisko&roleName=Administrátor&unitName=Středisko+Superadmin)
-* **Zakladatel / Administrátor jednotky** (zakládá hlasování, není v radě):
-  [http://localhost:8089/sign/dev-login?unitId=123&personId=9999&personName=Admin+Zakladatel&roleKey=vedouciStredisko&roleName=Administrátor](http://localhost:8089/sign/dev-login?unitId=123&personId=9999&personName=Admin+Zakladatel&roleKey=vedouciStredisko&roleName=Administrátor)
-* **Člen rady č. 1 (Jan Novak)**:
-  [http://localhost:8089/sign/dev-login?unitId=123&personId=1001&personName=Jan+Novak&roleKey=clened&roleName=Člen](http://localhost:8089/sign/dev-login?unitId=123&personId=1001&personName=Jan+Novak&roleKey=clened&roleName=Člen)
+### 🔄 Testovací uživatelé s rolemi ve VÍCE JEDNOTKÁCH (přepínání jednotek)
+U těchto uživatelů se v horní liště zobrazí rozbalovací nabídka **„Přepnout jednotku a roli“** (`fa-arrows-rotate`), kde můžete libovolně přepínat aktivní jednotku a sledovat dynamickou změnu oprávnění i načtených usnesení:
+
+* ⭐ **Člen rady s více jednotkami – Jan Novák** (`Person ID = 1001`):
+  * **1. středisko Dvojka (#123):** Člen rady střediska (může hlasovat o usneseních střediska).
+  * **Okres Hradec Králové (#456):** Správce / Administrátor okresu (vidí správu rady, audit i možnost založit usnesení).
+  * **Královéhradecký kraj (#25784):** Činovník kraje (host / nečlen krajské rady, vidí krajská usnesení).
+  * 👉 **[Přihlásit se jako Jan Novák (více jednotek)](http://localhost:8089/sign/dev-login?unitId=123&personId=1001&personName=Jan+Novak&roleKey=cinovnikStredisko&roleName=St%C5%99edisko%3A+aktivn%C3%AD+%C4%8Dinovn%C3%ADk&unitName=1.+st%C5%99edisko+Dvojka)**
+
+* ⭐ **Administrátor s více jednotkami – Admin Zakladatel** (`Person ID = 9999`):
+  * **1. středisko Dvojka (#123):** Vedoucí / administrátor střediska.
+  * **Okres Hradec Králové (#456):** Aktivní činovník okresu.
+  * **Královéhradecký kraj (#25784):** Vedoucí / administrátor kraje.
+  * 👉 **[Přihlásit se jako Admin Zakladatel (více jednotek)](http://localhost:8089/sign/dev-login?unitId=123&personId=9999&personName=Admin+Zakladatel&roleKey=vedouciStredisko&roleName=St%C5%99edisko%3A+vedouc%C3%AD%2Fadmin&unitName=1.+st%C5%99edisko+Dvojka)**
+
+* 👑 **Superadministrátor aplikace** (`Person ID = 1`):
+  * Přístup do Superadmin portálu + role v jednotkách 10001, 123 a 25784.
+  * 👉 **[Přihlásit se jako Superadministrátor](http://localhost:8089/sign/dev-login?unitId=10001&personId=1&personName=Superadmin+Aplikace&roleKey=vedouciStredisko&roleName=St%C5%99edisko%3A+vedouc%C3%AD%2Fadmin&unitName=St%C5%99edisko+Superadmin)**
+
+### 👤 Testovací uživatelé s JEDNOU JEDNOTKOU (bez přepínání)
+Tito uživatelé mají roli pouze v jedné jednotce (v horní liště se rozbalovací nabídka pro přepínání nezobrazuje):
+
 * **Člen rady č. 2 (Petr Svoboda)**:
-  [http://localhost:8089/sign/dev-login?unitId=123&personId=1002&personName=Petr+Svoboda&roleKey=clened&roleName=Člen](http://localhost:8089/sign/dev-login?unitId=123&personId=1002&personName=Petr+Svoboda&roleKey=clened&roleName=Člen)
+  [http://localhost:8089/sign/dev-login?unitId=123&personId=1002&personName=Petr+Svoboda&roleKey=cinovnikStredisko&roleName=St%C5%99edisko%3A+aktivn%C3%AD+%C4%8Dinovn%C3%ADk&unitName=1.+st%C5%99edisko+Dvojka](http://localhost:8089/sign/dev-login?unitId=123&personId=1002&personName=Petr+Svoboda&roleKey=cinovnikStredisko&roleName=St%C5%99edisko%3A+aktivn%C3%AD+%C4%8Dinovn%C3%ADk&unitName=1.+st%C5%99edisko+Dvojka)
 * **Člen rady č. 3 (Marie Dvořáková)**:
-  [http://localhost:8089/sign/dev-login?unitId=123&personId=1003&personName=Marie+Dvořáková&roleKey=clened&roleName=Člen](http://localhost:8089/sign/dev-login?unitId=123&personId=1003&personName=Marie+Dvořáková&roleKey=clened&roleName=Člen)
+  [http://localhost:8089/sign/dev-login?unitId=123&personId=1003&personName=Marie+Dvo%C5%99%C3%A1kov%C3%A1&roleKey=cinovnikStredisko&roleName=St%C5%99edisko%3A+aktivn%C3%AD+%C4%8Dinovn%C3%ADk&unitName=1.+st%C5%99edisko+Dvojka](http://localhost:8089/sign/dev-login?unitId=123&personId=1003&personName=Marie+Dvo%C5%99%C3%A1kov%C3%A1&roleKey=cinovnikStredisko&roleName=St%C5%99edisko%3A+aktivn%C3%AD+%C4%8Dinovn%C3%ADk&unitName=1.+st%C5%99edisko+Dvojka)
 * **Člen rady č. 4 (Tomáš Kučera)**:
-  [http://localhost:8089/sign/dev-login?unitId=123&personId=1004&personName=Tomáš+Kučera&roleKey=clened&roleName=Člen](http://localhost:8089/sign/dev-login?unitId=123&personId=1004&personName=Tomáš+Kučera&roleKey=clened&roleName=Člen)
+  [http://localhost:8089/sign/dev-login?unitId=123&personId=1004&personName=Tom%C3%A1%C5%A1+Ku%C4%8Dera&roleKey=cinovnikStredisko&roleName=St%C5%99edisko%3A+aktivn%C3%AD+%C4%8Dinovn%C3%ADk&unitName=1.+st%C5%99edisko+Dvojka](http://localhost:8089/sign/dev-login?unitId=123&personId=1004&personName=Tom%C3%A1%C5%A1+Ku%C4%8Dera&roleKey=cinovnikStredisko&roleName=St%C5%99edisko%3A+aktivn%C3%AD+%C4%8Dinovn%C3%ADk&unitName=1.+st%C5%99edisko+Dvojka)
 * **Člen rady č. 5 (Lucie Černá)**:
-  [http://localhost:8089/sign/dev-login?unitId=123&personId=1005&personName=Lucie+Černá&roleKey=clened&roleName=Člen](http://localhost:8089/sign/dev-login?unitId=123&personId=1005&personName=Lucie+Černá&roleKey=clened&roleName=Člen)
+  [http://localhost:8089/sign/dev-login?unitId=123&personId=1005&personName=Lucie+%C4%8Cern%C3%A1&roleKey=cinovnikStredisko&roleName=St%C5%99edisko%3A+aktivn%C3%AD+%C4%8Dinovn%C3%ADk&unitName=1.+st%C5%99edisko+Dvojka](http://localhost:8089/sign/dev-login?unitId=123&personId=1005&personName=Lucie+%C4%8Cern%C3%A1&roleKey=cinovnikStredisko&roleName=St%C5%99edisko%3A+aktivn%C3%AD+%C4%8Dinovn%C3%ADk&unitName=1.+st%C5%99edisko+Dvojka)
 * **Host / Běžný člen** (není v radě, nezaložil hlasování):
-  [http://localhost:8089/sign/dev-login?unitId=123&personId=5555&personName=Host+Skaut&roleKey=clened&roleName=Člen](http://localhost:8089/sign/dev-login?unitId=123&personId=5555&personName=Host+Skaut&roleKey=clened&roleName=Člen)
+  [http://localhost:8089/sign/dev-login?unitId=123&personId=5555&personName=Host+Skaut&roleKey=cinovnikStredisko&roleName=St%C5%99edisko%3A+aktivn%C3%AD+%C4%8Dinovn%C3%ADk&unitName=1.+st%C5%99edisko+Dvojka](http://localhost:8089/sign/dev-login?unitId=123&personId=5555&personName=Host+Skaut&roleKey=cinovnikStredisko&roleName=St%C5%99edisko%3A+aktivn%C3%AD+%C4%8Dinovn%C3%ADk&unitName=1.+st%C5%99edisko+Dvojka)
 
 ---
 

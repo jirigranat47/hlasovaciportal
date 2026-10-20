@@ -1,545 +1,616 @@
 {block title}Superadmin Portál{/block}
 
 {block content}
-<div class="container" style="max-width: 1300px; padding: 2rem 1rem;">
 
-	<!-- HLAVIČKA SUPERADMIN PORTÁLU -->
-	<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 1.5rem;">
-		<div>
-			<div style="display: flex; align-items: center; gap: 10px;">
-				<span style="background: #9333ea; color: white; width: 40px; height: 40px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.3rem; box-shadow: 0 4px 6px rgba(147, 51, 234, 0.25);">
-					<i class="fa-solid fa-crown"></i>
-				</span>
-				<h1 style="color: #581c87; margin: 0; font-size: 2rem;">Superadmin Portál</h1>
+<!-- HLAVIČKA STRÁNKY (PAGE HEADER) -->
+<div class="page-header d-print-none mb-4">
+	<div class="row g-2 align-items-center">
+		<div class="col">
+			<div class="page-pretitle text-muted">
+				Globální přehled celého systému, zapojených skautských jednotek a statistiky volební účasti
 			</div>
-			<p style="color: var(--skaut-muted); margin: 6px 0 0 0; font-size: 1rem;">
-				Globální přehled celého systému, zapojených skautských jednotek a statistiky volební účasti a usnesení
+			<h2 class="page-title fw-bold d-flex align-items-center gap-2">
+				<span class="badge bg-purple text-white shadow-sm p-2 rounded-2">
+					<i class="fa-solid fa-crown text-warning"></i>
+				</span>
+				<span>Superadmin Portál</span>
+			</h2>
+		</div>
+
+		<div class="col-auto ms-auto d-print-none">
+			<div class="btn-list">
+				<a n:href="Home:default" class="btn btn-outline-secondary">
+					<i class="fa-solid fa-arrow-left me-1"></i> Zpět na portál
+				</a>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- 1. GLOBÁLNÍ KPI KARTY (TABLER STAT CARDS) -->
+<div class="row row-cards mb-4">
+	
+	<!-- ZAPOJENÉ JEDNOTKY -->
+	<div class="col-sm-6 col-lg-2">
+		<div class="card card-sm shadow-sm h-100">
+			<div class="card-status-top bg-azure"></div>
+			<div class="card-body">
+				<div class="subheader text-muted">Zapojené jednotky</div>
+				<div class="h1 mb-1 fw-bold text-azure">{$globalStats['unitsCount']}</div>
+				<div class="text-muted small">
+					<span class="text-primary fw-semibold">{$globalStats['unitsByType']['stredisko']}</span> středisek &bull; 
+					<span class="text-indigo fw-semibold">{$globalStats['unitsByType']['okres']}</span> okresů &bull; 
+					<span class="text-warning fw-semibold">{$globalStats['unitsByType']['kraj']}</span> krajů
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- CELKEM USNESENÍ -->
+	<div class="col-sm-6 col-lg-2">
+		<div class="card card-sm shadow-sm h-100">
+			<div class="card-status-top bg-primary"></div>
+			<div class="card-body">
+				<div class="subheader text-muted">Celkem usnesení</div>
+				<div class="h1 mb-1 fw-bold text-primary">{$globalStats['totalElections']}</div>
+				<div class="text-muted small">
+					<span class="text-success fw-semibold">{$globalStats['activeElections']} probíhá</span> &bull; 
+					<span class="text-secondary fw-semibold">{$globalStats['closedElections']} uzavřeno</span>
+					{if $globalStats['draftElections'] > 0} &bull; <span class="text-warning fw-semibold">{$globalStats['draftElections']} draft</span>{/if}
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- ČLENOVÉ RAD -->
+	<div class="col-sm-6 col-lg-2">
+		<div class="card card-sm shadow-sm h-100">
+			<div class="card-status-top bg-success"></div>
+			<div class="card-body">
+				<div class="subheader text-muted">Členové rad (Hlasující)</div>
+				<div class="h1 mb-1 fw-bold text-success">{$globalStats['councilMembersCount']}</div>
+				<div class="text-muted small">
+					všech zapsaných osob v radách jednotek
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- ODEVZDANÉ HLASY -->
+	<div class="col-sm-6 col-lg-2">
+		<div class="card card-sm shadow-sm h-100">
+			<div class="card-status-top bg-warning"></div>
+			<div class="card-body">
+				<div class="subheader text-muted">Odevzdané hlasy</div>
+				<div class="h1 mb-1 fw-bold text-warning">{$globalStats['totalVotesCount']}</div>
+				<div class="text-muted small">
+					zaznamenáno {$globalStats['totalLoginsCount']} přihlášení
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- PRŮMĚRNÁ VOLEBNÍ ÚČAST -->
+	<div class="col-sm-6 col-lg-2">
+		<div class="card card-sm shadow-sm h-100">
+			<div class="card-status-top bg-purple"></div>
+			<div class="card-body">
+				<div class="subheader text-muted">Volební účast</div>
+				<div class="h1 mb-1 fw-bold text-purple">{$globalStats['globalTurnoutPct']} %</div>
+				<div class="text-muted small">
+					průměrná účast v uzavřených usneseních
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- ÚSPĚŠNOST SCHVÁLENÍ -->
+	<div class="col-sm-6 col-lg-2">
+		<div class="card card-sm shadow-sm h-100">
+			<div class="card-status-top bg-teal"></div>
+			<div class="card-body">
+				<div class="subheader text-muted">Úspěšnost usnesení</div>
+				<div class="h1 mb-1 fw-bold text-teal">{$globalStats['globalSuccessPct']} %</div>
+				<div class="text-muted small">
+					schváleno (nadpoloviční většina Pro)
+				</div>
+			</div>
+		</div>
+	</div>
+
+</div>
+
+<!-- 2. ANALYTICKÉ SOUHRNY A ROZPADY -->
+<div class="row row-cards mb-4">
+	
+	<!-- KARTA 1: VÝSLEDKY A ROZPAD HLASŮ -->
+	<div class="col-lg-6">
+		<div class="card shadow-sm h-100">
+			<div class="card-header">
+				<h3 class="card-title">
+					<i class="fa-solid fa-square-poll-vertical text-primary me-2"></i> Výsledky usnesení & Rozložení hlasů
+				</h3>
+			</div>
+			<div class="card-body">
+				<div class="row text-center py-2 mb-3 bg-body-tertiary rounded-2 border">
+					<div class="col-4">
+						<div class="h2 text-success fw-bold mb-0">{$analytics['outcomes']['adopted']}</div>
+						<div class="small text-muted fw-semibold">Přijato (Pro &gt; 50%)</div>
+					</div>
+					<div class="col-4 border-start">
+						<div class="h2 text-danger fw-bold mb-0">{$analytics['outcomes']['rejected']}</div>
+						<div class="small text-muted fw-semibold">Nepřijato</div>
+					</div>
+					<div class="col-4 border-start">
+						<div class="h2 text-secondary fw-bold mb-0">{$analytics['outcomes']['cancelled']}</div>
+						<div class="small text-muted fw-semibold">Stornováno</div>
+					</div>
+				</div>
+
+				<div class="subheader mb-2">Celkové rozložení hlasů:</div>
+				{var $totalVotesInOpts = $analytics['votesBreakdown']['pro'] + $analytics['votesBreakdown']['against'] + $analytics['votesBreakdown']['abstain']}
+				{var $proPct = $totalVotesInOpts > 0 ? round(($analytics['votesBreakdown']['pro'] / $totalVotesInOpts) * 100, 1) : 0}
+				{var $againstPct = $totalVotesInOpts > 0 ? round(($analytics['votesBreakdown']['against'] / $totalVotesInOpts) * 100, 1) : 0}
+				{var $abstainPct = $totalVotesInOpts > 0 ? round(($analytics['votesBreakdown']['abstain'] / $totalVotesInOpts) * 100, 1) : 0}
+
+				<div class="progress progress-separated mb-2" style="height: 22px;">
+					<div class="progress-bar bg-success" style="width: {$proPct}%" role="progressbar" title="Pro: {$analytics['votesBreakdown']['pro']} ({$proPct}%)"></div>
+					<div class="progress-bar bg-danger" style="width: {$againstPct}%" role="progressbar" title="Proti: {$analytics['votesBreakdown']['against']} ({$againstPct}%)"></div>
+					<div class="progress-bar bg-secondary" style="width: {$abstainPct}%" role="progressbar" title="Zdržel se: {$analytics['votesBreakdown']['abstain']} ({$abstainPct}%)"></div>
+				</div>
+
+				<div class="d-flex justify-content-between text-muted small flex-wrap gap-1">
+					<span><span class="badge badge-dot bg-success me-1"></span> Pro: <strong>{$analytics['votesBreakdown']['pro']}</strong> ({$proPct}%)</span>
+					<span><span class="badge badge-dot bg-danger me-1"></span> Proti: <strong>{$analytics['votesBreakdown']['against']}</strong> ({$againstPct}%)</span>
+					<span><span class="badge badge-dot bg-secondary me-1"></span> Zdržel se: <strong>{$analytics['votesBreakdown']['abstain']}</strong> ({$abstainPct}%)</span>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- KARTA 2: DISTRIBUCE VOLEBNÍ ÚČASTI & SEZÓNNÍ TRENDY -->
+	<div class="col-lg-6">
+		<div class="card shadow-sm h-100">
+			<div class="card-header">
+				<h3 class="card-title">
+					<i class="fa-solid fa-chart-pie text-purple me-2"></i> Distribuce volební účasti jednotek
+				</h3>
+			</div>
+			<div class="card-body">
+				<div class="row g-2 mb-3">
+					<div class="col-6">
+						<div class="card card-sm bg-success-lt border-0 p-2">
+							<div class="h3 text-success fw-bold mb-0">{$analytics['turnoutDistribution']['high']} jednotek</div>
+							<div class="small text-success">Vynikající účast (&ge; 90 %)</div>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="card card-sm bg-info-lt border-0 p-2">
+							<div class="h3 text-info fw-bold mb-0">{$analytics['turnoutDistribution']['good']} jednotek</div>
+							<div class="small text-info">Dobrá účast (75 &ndash; 89 %)</div>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="card card-sm bg-warning-lt border-0 p-2">
+							<div class="h3 text-warning fw-bold mb-0">{$analytics['turnoutDistribution']['average']} jednotek</div>
+							<div class="small text-warning">Průměrná účast (50 &ndash; 74 %)</div>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="card card-sm bg-danger-lt border-0 p-2">
+							<div class="h3 text-danger fw-bold mb-0">{$analytics['turnoutDistribution']['low']} jednotek</div>
+							<div class="small text-danger">Nízká účast (&lt; 50 %)</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="text-muted small">
+					<div class="mb-1 fw-semibold">Trend zakládání nových usnesení za posledních 6 měsíců:</div>
+					<div class="d-flex gap-2 align-items-flex-end" style="height: 52px;">
+						{var $maxCount = 1}
+						{foreach $analytics['monthlyTrends'] as $m}
+							{if $m['count'] > $maxCount}{var $maxCount = $m['count']}{/if}
+						{/foreach}
+						{foreach $analytics['monthlyTrends'] as $m}
+							{var $barH = max(10, round(($m['count'] / $maxCount) * 44))}
+							<div class="flex-fill text-center d-flex flex-column justify-content-end h-100">
+								<div class="bg-primary rounded-top" style="height: {$barH}px;" title="{$m['label']}: {$m['count']} usnesení"></div>
+								<div class="small text-muted mt-1" style="font-size: 0.72rem;">{$m['label']}</div>
+							</div>
+						{/foreach}
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+</div>
+
+<!-- 3. PROVOZNÍ MONITORING: E-MAILY & PLÁNOVAČ (CRON) -->
+<div class="card shadow-sm mb-4">
+	<div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+		<div>
+			<h3 class="card-title mb-0">
+				<i class="fa-solid fa-server text-azure me-2"></i> Provozní monitoring: E-maily & Plánovač úloh (Cron)
+			</h3>
+			<p class="text-muted small mb-0 mt-1">
+				Sledování denního limitu Google Workspace (centrální účet <code>hlasovani@skaut.cz</code>) a stav automatického plánovače
 			</p>
 		</div>
 
-		<div style="display: flex; gap: 0.5rem; align-items: center;">
-			<a n:href="Home:default" class="btn btn-secondary" style="background: white; color: #334155; border: 1px solid #cbd5e1; font-weight: 600; padding: 8px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.15s;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#94a3b8'; this.style.color='#0f172a';" onmouseout="this.style.background='white'; this.style.borderColor='#cbd5e1'; this.style.color='#334155';" title="Zpět na hlavní nástěnku jednotky">
-				<i class="fa-solid fa-arrow-left" style="color: #64748b;"></i> Zpět na portál
-			</a>
+		<div>
+			<span class="badge bg-azure-lt fs-6">
+				<i class="fa-solid fa-envelope me-1"></i> Centrální odesílatel: <strong>hlasovani@skaut.cz</strong>
+			</span>
 		</div>
 	</div>
 
-	<!-- 1. GLOBÁLNÍ KPI KARTY -->
-	<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-		
-		<!-- ZAPOJENÉ JEDNOTKY -->
-		<div style="background: white; border-radius: 12px; padding: 1.25rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border-top: 4px solid #0284c7;">
-			<div style="font-size: 0.85rem; color: #64748b; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Zapojené jednotky</div>
-			<div style="font-size: 2rem; font-weight: 800; color: #0f172a; margin: 4px 0;">{$globalStats['unitsCount']}</div>
-			<div style="font-size: 0.82rem; color: #64748b;">
-				<span style="color: #0369a1; font-weight: 600;">{$globalStats['unitsByType']['stredisko']}</span> středisek &bull; 
-				<span style="color: #4338ca; font-weight: 600;">{$globalStats['unitsByType']['okres']}</span> okresů &bull; 
-				<span style="color: #b45309; font-weight: 600;">{$globalStats['unitsByType']['kraj']}</span> krajů
-			</div>
-		</div>
-
-		<!-- CELKEM USNESENÍ -->
-		<div style="background: white; border-radius: 12px; padding: 1.25rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border-top: 4px solid var(--skaut-blue);">
-			<div style="font-size: 0.85rem; color: #64748b; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Celkem usnesení</div>
-			<div style="font-size: 2rem; font-weight: 800; color: #0f172a; margin: 4px 0;">{$globalStats['totalElections']}</div>
-			<div style="font-size: 0.82rem; color: #64748b;">
-				<span style="color: #16a34a; font-weight: 600;">{$globalStats['activeElections']} probíhá</span> &bull; 
-				<span style="color: #475569; font-weight: 600;">{$globalStats['closedElections']} uzavřeno</span>
-				{if $globalStats['draftElections'] > 0} &bull; <span style="color: #eab308; font-weight: 600;">{$globalStats['draftElections']} draft</span>{/if}
-			</div>
-		</div>
-
-		<!-- ČLENOVÉ RAD -->
-		<div style="background: white; border-radius: 12px; padding: 1.25rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border-top: 4px solid #10b981;">
-			<div style="font-size: 0.85rem; color: #64748b; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Členové rad (Hlasující)</div>
-			<div style="font-size: 2rem; font-weight: 800; color: #0f172a; margin: 4px 0;">{$globalStats['councilMembersCount']}</div>
-			<div style="font-size: 0.82rem; color: #64748b;">
-				všech zapsaných osob v radách jednotek
-			</div>
-		</div>
-
-		<!-- ODEVZDANÉ HLASY -->
-		<div style="background: white; border-radius: 12px; padding: 1.25rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border-top: 4px solid #f59e0b;">
-			<div style="font-size: 0.85rem; color: #64748b; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Odevzdané hlasy</div>
-			<div style="font-size: 2rem; font-weight: 800; color: #0f172a; margin: 4px 0;">{$globalStats['totalVotesCount']}</div>
-			<div style="font-size: 0.82rem; color: #64748b;">
-				zaznamenáno {$globalStats['totalLoginsCount']} přihlášení
-			</div>
-		</div>
-
-		<!-- PRŮMĚRNÁ VOLEBNÍ ÚČAST -->
-		<div style="background: white; border-radius: 12px; padding: 1.25rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border-top: 4px solid #8b5cf6;">
-			<div style="font-size: 0.85rem; color: #64748b; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Volební účast</div>
-			<div style="font-size: 2rem; font-weight: 800; color: #7c3aed; margin: 4px 0;">{$globalStats['globalTurnoutPct']} %</div>
-			<div style="font-size: 0.82rem; color: #64748b;">
-				průměrná účast v uzavřených usneseních
-			</div>
-		</div>
-
-		<!-- ÚSPĚŠNOST SCHVÁLENÍ -->
-		<div style="background: white; border-radius: 12px; padding: 1.25rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border-top: 4px solid #16a34a;">
-			<div style="font-size: 0.85rem; color: #64748b; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Úspěšnost usnesení</div>
-			<div style="font-size: 2rem; font-weight: 800; color: #15803d; margin: 4px 0;">{$globalStats['globalSuccessPct']} %</div>
-			<div style="font-size: 0.82rem; color: #64748b;">
-				schváleno (nadpoloviční většina Pro)
-			</div>
-		</div>
-
-	</div>
-
-	<!-- 2. ANALYTICKÉ SOUHRNY A ROZPADY -->
-	<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
-		
-		<!-- KARTA 1: VÝSLEDKY A ROZPAD HLASŮ -->
-		<div style="background: white; border-radius: 12px; padding: 1.5rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.03);">
-			<h3 style="margin-top: 0; margin-bottom: 1rem; color: #1e293b; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
-				<i class="fa-solid fa-square-poll-vertical" style="color: var(--skaut-blue);"></i> Výsledky usnesení & Rozložení hlasů
-			</h3>
-
-			<div style="display: flex; gap: 1.5rem; justify-content: space-around; margin-bottom: 1.5rem; text-align: center; background: #f8fafc; padding: 1rem; border-radius: 8px;">
-				<div>
-					<div style="color: #16a34a; font-weight: bold; font-size: 1.4rem;">{$analytics['outcomes']['adopted']}</div>
-					<div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Přijato (Pro &gt; 50%)</div>
-				</div>
-				<div style="border-left: 1px solid #e2e8f0;"></div>
-				<div>
-					<div style="color: #dc2626; font-weight: bold; font-size: 1.4rem;">{$analytics['outcomes']['rejected']}</div>
-					<div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Nepřijato</div>
-				</div>
-				<div style="border-left: 1px solid #e2e8f0;"></div>
-				<div>
-					<div style="color: #64748b; font-weight: bold; font-size: 1.4rem;">{$analytics['outcomes']['cancelled']}</div>
-					<div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Stornováno</div>
-				</div>
-			</div>
-
-			<div style="font-size: 0.88rem; font-weight: bold; color: #475569; margin-bottom: 0.5rem;">Celkové rozložení hlasů:</div>
-			{var $totalVotesInOpts = $analytics['votesBreakdown']['pro'] + $analytics['votesBreakdown']['against'] + $analytics['votesBreakdown']['abstain']}
-			{var $proPct = $totalVotesInOpts > 0 ? round(($analytics['votesBreakdown']['pro'] / $totalVotesInOpts) * 100, 1) : 0}
-			{var $againstPct = $totalVotesInOpts > 0 ? round(($analytics['votesBreakdown']['against'] / $totalVotesInOpts) * 100, 1) : 0}
-			{var $abstainPct = $totalVotesInOpts > 0 ? round(($analytics['votesBreakdown']['abstain'] / $totalVotesInOpts) * 100, 1) : 0}
-
-			<div style="height: 24px; border-radius: 6px; overflow: hidden; display: flex; margin-bottom: 0.75rem; background: #e2e8f0;">
-				<div style="background: #16a34a; width: {$proPct}%;" title="Pro: {$analytics['votesBreakdown']['pro']} ({$proPct}%)"></div>
-				<div style="background: #dc2626; width: {$againstPct}%;" title="Proti: {$analytics['votesBreakdown']['against']} ({$againstPct}%)"></div>
-				<div style="background: #64748b; width: {$abstainPct}%;" title="Zdržel se: {$analytics['votesBreakdown']['abstain']} ({$abstainPct}%)"></div>
-			</div>
-
-			<div style="display: flex; justify-content: space-between; font-size: 0.82rem; color: #475569;">
-				<span><span style="display: inline-block; width: 10px; height: 10px; background: #16a34a; border-radius: 2px; margin-right: 4px;"></span> Pro: <strong>{$analytics['votesBreakdown']['pro']}</strong> ({$proPct}%)</span>
-				<span><span style="display: inline-block; width: 10px; height: 10px; background: #dc2626; border-radius: 2px; margin-right: 4px;"></span> Proti: <strong>{$analytics['votesBreakdown']['against']}</strong> ({$againstPct}%)</span>
-				<span><span style="display: inline-block; width: 10px; height: 10px; background: #64748b; border-radius: 2px; margin-right: 4px;"></span> Zdržel se: <strong>{$analytics['votesBreakdown']['abstain']}</strong> ({$abstainPct}%)</span>
-			</div>
-		</div>
-
-		<!-- KARTA 2: DISTRIBUCE VOLEBNÍ ÚČASTI & SEZÓNNÍ TRENDY -->
-		<div style="background: white; border-radius: 12px; padding: 1.5rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.03);">
-			<h3 style="margin-top: 0; margin-bottom: 1rem; color: #1e293b; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
-				<i class="fa-solid fa-chart-pie" style="color: #7c3aed;"></i> Distribuce volební účasti jednotek
-			</h3>
-
-			<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1.25rem;">
-				<div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 0.75rem;">
-					<div style="font-size: 1.25rem; font-weight: bold; color: #15803d;">{$analytics['turnoutDistribution']['high']} jednotek</div>
-					<div style="font-size: 0.8rem; color: #166534;">Vynikající účast (&ge; 90 %)</div>
-				</div>
-				<div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 0.75rem;">
-					<div style="font-size: 1.25rem; font-weight: bold; color: #1d4ed8;">{$analytics['turnoutDistribution']['good']} jednotek</div>
-					<div style="font-size: 0.8rem; color: #1e40af;">Dobrá účast (75 &ndash; 89 %)</div>
-				</div>
-				<div style="background: #fefce8; border: 1px solid #fef08a; border-radius: 8px; padding: 0.75rem;">
-					<div style="font-size: 1.25rem; font-weight: bold; color: #a16207;">{$analytics['turnoutDistribution']['average']} jednotek</div>
-					<div style="font-size: 0.8rem; color: #854d0e;">Průměrná účast (50 &ndash; 74 %)</div>
-				</div>
-				<div style="background: #fff1f2; border: 1px solid #fecdd3; border-radius: 8px; padding: 0.75rem;">
-					<div style="font-size: 1.25rem; font-weight: bold; color: #be123c;">{$analytics['turnoutDistribution']['low']} jednotek</div>
-					<div style="font-size: 0.8rem; color: #9f1239;">Nízká účast (&lt; 50 %)</div>
-				</div>
-			</div>
-
-			<div style="font-size: 0.85rem; color: #64748b;">
-				Trend zakládání nových usnesení za posledních 6 měsíců:
-				<div style="display: flex; gap: 8px; margin-top: 6px; align-items: flex-end; height: 50px;">
-					{var $maxCount = 1}
-					{foreach $analytics['monthlyTrends'] as $m}
-						{if $m['count'] > $maxCount}{var $maxCount = $m['count']}{/if}
-					{/foreach}
-					{foreach $analytics['monthlyTrends'] as $m}
-						{var $barH = max(10, round(($m['count'] / $maxCount) * 45))}
-						<div style="flex: 1; text-align: center;">
-							<div style="height: {$barH}px; background: var(--skaut-blue); border-radius: 3px 3px 0 0;" title="{$m['label']}: {$m['count']} usnesení"></div>
-							<div style="font-size: 0.7rem; color: #64748b; margin-top: 2px;">{$m['label']}</div>
-						</div>
-					{/foreach}
-				</div>
-			</div>
-		</div>
-
-	</div>
-
-	<!-- 3. PROVOZNÍ MONITORING: E-MAILY & PLÁNOVAČ (CRON) -->
-	<div style="background: white; border-radius: 12px; padding: 1.75rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.03); margin-bottom: 2rem;">
-		<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 1rem;">
-			<div>
-				<h2 style="margin: 0; color: #0f172a; font-size: 1.35rem; display: flex; align-items: center; gap: 10px;">
-					<i class="fa-solid fa-server" style="color: #0284c7;"></i> Provozní monitoring: E-maily & Plánovač úloh (Cron)
-				</h2>
-				<p style="margin: 4px 0 0 0; color: var(--skaut-muted); font-size: 0.9rem;">
-					Sledování denního limitu Google Workspace (centrální účet <code>hlasovani@skaut.cz</code>) a stav automatického plánovače
-				</p>
-			</div>
-
-			<div style="display: flex; gap: 0.5rem; align-items: center;">
-				<span style="font-size: 0.82rem; color: #64748b; background: #f8fafc; padding: 6px 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
-					<i class="fa-solid fa-envelope me-1" style="color: #0284c7;"></i> Centrální odesílatel: <strong>hlasovani@skaut.cz</strong>
-				</span>
-			</div>
-		</div>
-
+	<div class="card-body">
 		<!-- 2 HLAVNÍ KARTY MONITORINGU -->
-		<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+		<div class="row g-3 mb-3">
 			
 			<!-- KARTA A: LIMIT GOOGLE WORKSPACE E-MAILŮ -->
-			<div style="background: #f8fafc; border-radius: 10px; padding: 1.25rem; border: 1px solid #e2e8f0; border-top: 4px solid {if $monitoring['emails']['limitStatus'] === 'danger'}#dc2626{elseif $monitoring['emails']['limitStatus'] === 'warning'}#f59e0b{else}#10b981{/if};">
-				<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
-					<div>
-						<div style="font-size: 0.82rem; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Denní limit Google Workspace</div>
-						<div style="font-size: 1.6rem; font-weight: 800; color: #0f172a; margin-top: 2px;">
-							{$monitoring['emails']['last24h']} <span style="font-size: 1rem; font-weight: normal; color: #64748b;">/ {$monitoring['emails']['dailyLimit']} e-mailů za 24h</span>
+			<div class="col-md-6">
+				<div class="card card-sm bg-body-tertiary border h-100">
+					<div class="card-status-top {if $monitoring['emails']['limitStatus'] === 'danger'}bg-danger{elseif $monitoring['emails']['limitStatus'] === 'warning'}bg-warning{else}bg-success{/if}"></div>
+					<div class="card-body">
+						<div class="d-flex justify-content-between align-items-start mb-2">
+							<div>
+								<div class="subheader text-muted">Denní limit Google Workspace</div>
+								<div class="h2 fw-bold mb-0">
+									{$monitoring['emails']['last24h']} <span class="fs-4 fw-normal text-muted">/ {$monitoring['emails']['dailyLimit']} e-mailů za 24h</span>
+								</div>
+							</div>
+							<span class="badge {if $monitoring['emails']['limitStatus'] === 'danger'}bg-danger-lt{elseif $monitoring['emails']['limitStatus'] === 'warning'}bg-warning-lt{else}bg-success-lt{/if}">
+								{if $monitoring['emails']['limitStatus'] === 'danger'}🔴 Kritické vytížení
+								{elseif $monitoring['emails']['limitStatus'] === 'warning'}🟡 Zvýšený provoz
+								{else}🟢 V limitu ({$monitoring['emails']['limitUsagePct']} %)
+								{/if}
+							</span>
+						</div>
+
+						<!-- PROGRESS BAR -->
+						<div class="progress progress-sm mb-3">
+							<div class="progress-bar {if $monitoring['emails']['limitStatus'] === 'danger'}bg-danger{elseif $monitoring['emails']['limitStatus'] === 'warning'}bg-warning{else}bg-success{/if}" style="width: {min(100, $monitoring['emails']['limitUsagePct'])}%" role="progressbar"></div>
+						</div>
+
+						<div class="d-flex justify-content-between small text-muted border-bottom pb-2 mb-2">
+							<span>Zbývá do 24h limitu: <strong class="text-body">{$monitoring['emails']['limitRemaining']} zpráv</strong></span>
+							<span>Chybné / selhané: <strong class="{if $monitoring['emails']['failedLast24h'] > 0}text-danger{else}text-success{/if}">{$monitoring['emails']['failedLast24h']}</strong></span>
+						</div>
+
+						<div class="d-flex justify-content-between small text-muted">
+							<span>Dnes (od 00:00): <strong class="text-body">{$monitoring['emails']['today']}</strong></span>
+							<span>Posledních 7 dní: <strong class="text-body">{$monitoring['emails']['last7d']}</strong></span>
 						</div>
 					</div>
-					<span style="padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; {if $monitoring['emails']['limitStatus'] === 'danger'}background: #fee2e2; color: #b91c1c;{elseif $monitoring['emails']['limitStatus'] === 'warning'}background: #fef3c7; color: #b45309;{else}background: #dcfce7; color: #15803d;{/if}">
-						{if $monitoring['emails']['limitStatus'] === 'danger'}🔴 Kritické vytížení
-						{elseif $monitoring['emails']['limitStatus'] === 'warning'}🟡 Zvýšený provoz
-						{else}🟢 V limitu ({$monitoring['emails']['limitUsagePct']} %)
-						{/if}
-					</span>
-				</div>
-
-				<!-- PROGRESS BAR -->
-				{var $barColor = $monitoring['emails']['limitStatus'] === 'danger' ? '#dc2626' : ($monitoring['emails']['limitStatus'] === 'warning' ? '#f59e0b' : '#10b981')}
-				<div style="height: 10px; background: #e2e8f0; border-radius: 5px; overflow: hidden; margin-bottom: 0.75rem;">
-					<div style="height: 100%; background: {$barColor}; width: {min(100, $monitoring['emails']['limitUsagePct'])}%; transition: width 0.3s;"></div>
-				</div>
-
-				<div style="display: flex; justify-content: space-between; font-size: 0.82rem; color: #64748b; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 0.75rem;">
-					<span>Zbývá do 24h limitu: <strong style="color: #0f172a;">{$monitoring['emails']['limitRemaining']} zpráv</strong></span>
-					<span>Chybné / selhané: <strong style="color: {if $monitoring['emails']['failedLast24h'] > 0}#dc2626{else}#15803d{/if};">{$monitoring['emails']['failedLast24h']}</strong></span>
-				</div>
-
-				<div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #64748b;">
-					<span>Dnes (od 00:00): <strong>{$monitoring['emails']['today']}</strong></span>
-					<span>Posledních 7 dní: <strong>{$monitoring['emails']['last7d']}</strong></span>
 				</div>
 			</div>
 
 			<!-- KARTA B: STAV PLÁNOVAČE ÚLOH (CRON) -->
-			<div style="background: #f8fafc; border-radius: 10px; padding: 1.25rem; border: 1px solid #e2e8f0; border-top: 4px solid {if $monitoring['cron']['status'] === 'ok'}#10b981{elseif $monitoring['cron']['status'] === 'delayed'}#f59e0b{else}#dc2626{/if};">
-				<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
-					<div>
-						<div style="font-size: 0.82rem; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Plánovač úloh (Cron)</div>
-						<div style="font-size: 1.6rem; font-weight: 800; color: #0f172a; margin-top: 2px;">
-							{if $monitoring['cron']['status'] === 'ok'}
-								<span style="color: #15803d; font-size: 1.3rem;"><i class="fa-solid fa-circle-check me-1"></i> Aktivní a v pořádku</span>
-							{elseif $monitoring['cron']['status'] === 'delayed'}
-								<span style="color: #b45309; font-size: 1.3rem;"><i class="fa-solid fa-triangle-exclamation me-1"></i> Zpoždění běhu</span>
-							{elseif $monitoring['cron']['status'] === 'never_run'}
-								<span style="color: #64748b; font-size: 1.3rem;"><i class="fa-solid fa-circle-question me-1"></i> Dosud nespuštěn</span>
+			<div class="col-md-6">
+				<div class="card card-sm bg-body-tertiary border h-100">
+					<div class="card-status-top {if $monitoring['cron']['status'] === 'ok'}bg-success{elseif $monitoring['cron']['status'] === 'delayed'}bg-warning{else}bg-danger{/if}"></div>
+					<div class="card-body">
+						<div class="d-flex justify-content-between align-items-start mb-2">
+							<div>
+								<div class="subheader text-muted">Plánovač úloh (Cron)</div>
+								<div class="h3 fw-bold mb-0">
+									{if $monitoring['cron']['status'] === 'ok'}
+										<span class="text-success"><i class="fa-solid fa-circle-check me-1"></i> Aktivní a v pořádku</span>
+									{elseif $monitoring['cron']['status'] === 'delayed'}
+										<span class="text-warning"><i class="fa-solid fa-triangle-exclamation me-1"></i> Zpoždění běhu</span>
+									{elseif $monitoring['cron']['status'] === 'never_run'}
+										<span class="text-muted"><i class="fa-solid fa-circle-question me-1"></i> Dosud nespuštěn</span>
+									{else}
+										<span class="text-danger"><i class="fa-solid fa-circle-xmark me-1"></i> Pozor: Cron neběží!</span>
+									{/if}
+								</div>
+							</div>
+							<span class="badge {if $monitoring['cron']['status'] === 'ok'}bg-success-lt{elseif $monitoring['cron']['status'] === 'delayed'}bg-warning-lt{else}bg-danger-lt{/if}">
+								{if $monitoring['cron']['minutesSinceLastRun'] !== null}
+									před {$monitoring['cron']['minutesSinceLastRun']} min
+								{else}
+									bez záznamu
+								{/if}
+							</span>
+						</div>
+
+						<div class="small text-muted mb-3 border-bottom pb-2">
+							{if $monitoring['cron']['lastRun']}
+								Poslední spuštění: <strong class="text-body">{$monitoring['cron']['lastRun']->format('d. m. Y H:i:s')}</strong>
+								{if $monitoring['cron']['lastDuration'] !== null}
+									<span class="text-muted">({$monitoring['cron']['lastDuration']} s)</span>
+								{/if}
 							{else}
-								<span style="color: #b91c1c; font-size: 1.3rem;"><i class="fa-solid fa-circle-xmark me-1"></i> Pozor: Cron neběží!</span>
+								Zatím nebyl zaznamenán žádný běh cronu. Plánovač se nastavuje např. na <code>cron-job.org</code>.
 							{/if}
 						</div>
+
+						<div class="d-flex justify-content-between align-items-center small text-muted">
+							<span>Doporučená frekvence: <strong class="text-body">každých 15 minut</strong></span>
+							<span class="text-azure fw-semibold">
+								<i class="fa-solid fa-circle-info me-1"></i> Dokumentace v CRON.md
+							</span>
+						</div>
 					</div>
-					<span style="padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; {if $monitoring['cron']['status'] === 'ok'}background: #dcfce7; color: #15803d;{elseif $monitoring['cron']['status'] === 'delayed'}background: #fef3c7; color: #b45309;{else}background: #fee2e2; color: #b91c1c;{/if}">
-						{if $monitoring['cron']['minutesSinceLastRun'] !== null}
-							před {$monitoring['cron']['minutesSinceLastRun']} min
-						{else}
-							bez záznamu
-						{/if}
-					</span>
-				</div>
-
-				<div style="font-size: 0.85rem; color: #475569; margin-bottom: 0.75rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem;">
-					{if $monitoring['cron']['lastRun']}
-						Poslední spuštění: <strong>{$monitoring['cron']['lastRun']->format('d. m. Y H:i:s')}</strong>
-						{if $monitoring['cron']['lastDuration'] !== null}
-							<span style="color: #64748b; font-size: 0.8rem;">(délka: {$monitoring['cron']['lastDuration']} s)</span>
-						{/if}
-					{else}
-						Zatím nebyl zaznamenán žádný běh cronu. Plánovač se nastavuje např. na <code>cron-job.org</code>.
-					{/if}
-				</div>
-
-				<div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: #64748b;">
-					<span>Doporučená frekvence: <strong>každých 15 minut</strong></span>
-					<span style="color: #0284c7; font-weight: 600;">
-						<i class="fa-solid fa-circle-info me-1"></i> Dokumentace v CRON.md
-					</span>
 				</div>
 			</div>
 
 		</div>
 
 		<!-- ROZKLIKÁVACÍ HISTORIE E-MAILŮ A CRONU (DETAILS / SUMMARY) -->
-		<details style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem 1rem; background: #fafafa;">
-			<summary style="cursor: pointer; font-weight: 600; color: #334155; font-size: 0.9rem; user-select: none;">
-				<i class="fa-solid fa-clock-rotate-left me-1" style="color: #64748b;"></i> Zobrazit historii odeslaných e-mailů a běhů plánovače ({count($monitoring['emails']['recent'])} e-mailů, {count($monitoring['cron']['recent'])} běhů cronu)
+		<details class="card card-sm bg-body-tertiary border">
+			<summary class="card-header py-2 cursor-pointer text-body fw-semibold user-select-none">
+				<i class="fa-solid fa-clock-rotate-left me-1 text-muted"></i> Zobrazit historii odeslaných e-mailů a běhů plánovače ({count($monitoring['emails']['recent'])} e-mailů, {count($monitoring['cron']['recent'])} běhů cronu)
 			</summary>
 			
-			<div style="margin-top: 1rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.25rem;">
-				
-				<!-- TABULKA POSLEDNÍCH E-MAILŮ -->
-				<div>
-					<div style="font-weight: bold; color: #0f172a; font-size: 0.88rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 6px;">
-						<i class="fa-solid fa-paper-plane" style="color: #0284c7;"></i> Poslední odeslané e-maily:
-					</div>
-					{if empty($monitoring['emails']['recent'])}
-						<p style="color: #94a3b8; font-size: 0.82rem; margin: 0; padding: 10px; background: white; border-radius: 6px; border: 1px solid #e2e8f0;">Zatím nebyly zaznamenány žádné odeslané e-maily.</p>
-					{else}
-						<div style="max-height: 280px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px; background: white;">
-							<table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
-								<tbody>
-									{foreach $monitoring['emails']['recent'] as $em}
-										<tr style="border-bottom: 1px solid #f1f5f9;">
-											<td style="padding: 6px 8px; color: #64748b; white-space: nowrap;">{$em->sent_at->format('d.m. H:i')}</td>
-											<td style="padding: 6px 8px;">
-												<div style="font-weight: 600; color: #1e293b;">{$em->recipient_email}</div>
-												<div style="font-size: 0.75rem; color: #64748b;">{$em->subject}</div>
-											</td>
-											<td style="padding: 6px 8px; text-align: right;">
-												{if $em->status === 'sent'}
-													<span style="color: #15803d; font-weight: bold;">OK</span>
-												{else}
-													<span style="color: #b91c1c; font-weight: bold;" title="{$em->error_message}">CHYBA</span>
-												{/if}
-											</td>
-										</tr>
-									{/foreach}
-								</tbody>
-							</table>
+			<div class="card-body">
+				<div class="row g-3">
+					
+					<!-- TABULKA POSLEDNÍCH E-MAILŮ -->
+					<div class="col-md-6">
+						<div class="fw-bold text-body small mb-2 d-flex align-items-center gap-2">
+							<i class="fa-solid fa-paper-plane text-azure"></i> Poslední odeslané e-maily:
 						</div>
-					{/if}
-				</div>
-
-				<!-- TABULKA POSLEDNÍCH BĚHŮ CRONU -->
-				<div>
-					<div style="font-weight: bold; color: #0f172a; font-size: 0.88rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 6px;">
-						<i class="fa-solid fa-clock" style="color: #9333ea;"></i> Poslední běhy plánovače (Cron):
+						{if empty($monitoring['emails']['recent'])}
+							<p class="text-muted small p-2 bg-body rounded border mb-0">Zatím nebyly zaznamenány žádné odeslané e-maily.</p>
+						{else}
+							<div class="table-responsive border rounded bg-body" style="max-height: 280px; overflow-y: auto;">
+								<table class="table table-sm table-vcenter table-striped card-table">
+									<tbody>
+										{foreach $monitoring['emails']['recent'] as $em}
+											<tr>
+												<td class="text-muted text-nowrap small">{$em->sent_at->format('d.m. H:i')}</td>
+												<td>
+													<div class="fw-semibold text-truncate small" style="max-width: 200px;">{$em->recipient_email}</div>
+													<div class="small text-muted text-truncate" style="max-width: 200px;">{$em->subject}</div>
+												</td>
+												<td class="text-end">
+													{if $em->status === 'sent'}
+														<span class="badge bg-success-lt">OK</span>
+													{else}
+														<span class="badge bg-danger-lt" title="{$em->error_message}">CHYBA</span>
+													{/if}
+												</td>
+											</tr>
+										{/foreach}
+									</tbody>
+								</table>
+							</div>
+						{/if}
 					</div>
-					{if empty($monitoring['cron']['recent'])}
-						<p style="color: #94a3b8; font-size: 0.82rem; margin: 0; padding: 10px; background: white; border-radius: 6px; border: 1px solid #e2e8f0;">Zatím nebyl zaznamenán žádný běh plánovače.</p>
-					{else}
-						<div style="max-height: 280px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px; background: white;">
-							<table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
-								<tbody>
-									{foreach $monitoring['cron']['recent'] as $cr}
-										<tr style="border-bottom: 1px solid #f1f5f9;">
-											<td style="padding: 6px 8px; color: #64748b; white-space: nowrap;">{$cr->started_at->format('d.m. H:i:s')}</td>
-											<td style="padding: 6px 8px;">
-												<div style="color: #1e293b;">{$cr->message ?: 'Běh plánovače'}</div>
-												{if $cr->duration_seconds !== null}
-													<div style="font-size: 0.72rem; color: #94a3b8;">trvání {$cr->duration_seconds} s</div>
-												{/if}
-											</td>
-											<td style="padding: 6px 8px; text-align: right; white-space: nowrap;">
-												{if $cr->status === 'success'}
-													<span style="color: #15803d; font-weight: bold;">Úspěch</span>
-												{elseif $cr->status === 'running'}
-													<span style="color: #0284c7; font-weight: bold;">Běží...</span>
-												{else}
-													<span style="color: #b91c1c; font-weight: bold;">Chyba</span>
-												{/if}
-											</td>
-										</tr>
-									{/foreach}
-								</tbody>
-							</table>
-						</div>
-					{/if}
-				</div>
 
+					<!-- TABULKA POSLEDNÍCH BĚHŮ CRONU -->
+					<div class="col-md-6">
+						<div class="fw-bold text-body small mb-2 d-flex align-items-center gap-2">
+							<i class="fa-solid fa-clock text-purple"></i> Poslední běhy plánovače (Cron):
+						</div>
+						{if empty($monitoring['cron']['recent'])}
+							<p class="text-muted small p-2 bg-body rounded border mb-0">Zatím nebyl zaznamenán žádný běh plánovače.</p>
+						{else}
+							<div class="table-responsive border rounded bg-body" style="max-height: 280px; overflow-y: auto;">
+								<table class="table table-sm table-vcenter table-striped card-table">
+									<tbody>
+										{foreach $monitoring['cron']['recent'] as $cr}
+											<tr>
+												<td class="text-muted text-nowrap small">{$cr->started_at->format('d.m. H:i:s')}</td>
+												<td>
+													<div class="small text-body text-truncate" style="max-width: 220px;">{$cr->message ?: 'Běh plánovače'}</div>
+													{if $cr->duration_seconds !== null}
+														<div class="text-muted" style="font-size: 0.72rem;">trvání {$cr->duration_seconds} s</div>
+													{/if}
+												</td>
+												<td class="text-end">
+													{if $cr->status === 'success'}
+														<span class="badge bg-success-lt">Úspěch</span>
+													{elseif $cr->status === 'running'}
+														<span class="badge bg-info-lt">Běží...</span>
+													{else}
+														<span class="badge bg-danger-lt">Chyba</span>
+													{/if}
+												</td>
+											</tr>
+										{/foreach}
+									</tbody>
+								</table>
+							</div>
+						{/if}
+					</div>
+
+				</div>
 			</div>
 		</details>
 	</div>
+</div>
 
-	<!-- 4. PŘEHLED A KATALOG ZAPOJENÝCH JEDNOTEK -->
-	<div style="background: white; border-radius: 12px; padding: 1.75rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.03);">
-		
-		<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
-			<div>
-				<h2 style="margin: 0; color: #0f172a; font-size: 1.4rem; display: flex; align-items: center; gap: 8px;">
-					<i class="fa-solid fa-list-check" style="color: #9333ea;"></i> Přehled skautských jednotek ({count($units)})
-				</h2>
-				<p style="margin: 4px 0 0 0; color: var(--skaut-muted); font-size: 0.9rem;">
-					Aktivita, velikost rady, statistiky volební účasti a úspěšnosti jednotlivých jednotek
-				</p>
-			</div>
-
-			<!-- VYHLEDÁVÁNÍ -->
-			<form method="get" action="{link this}" style="display: flex; gap: 0.5rem; align-items: center;">
-				<input type="hidden" name="type" value="{$selectedType}">
-				<input type="hidden" name="sort" value="{$selectedSort}">
-				<div style="position: relative;">
-					<input type="text" name="q" value="{$searchQuery}" placeholder="Hledat jednotku nebo ID..." style="padding: 6px 12px 6px 32px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; width: 220px;">
-					<i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 10px; color: #94a3b8; font-size: 0.85rem;"></i>
-				</div>
-				<button type="submit" class="btn btn-sm btn-primary" style="padding: 6px 12px;">Hledat</button>
-				{if !empty($searchQuery)}
-					<a n:href="this, type => $selectedType, q => null, sort => $selectedSort" class="btn btn-sm btn-secondary" title="Zrušit hledání">✕</a>
-				{/if}
-			</form>
+<!-- 4. PŘEHLED A KATALOG ZAPOJENÝCH JEDNOTEK -->
+<div class="card shadow-sm mb-4">
+	
+	<div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+		<div>
+			<h3 class="card-title mb-0">
+				<i class="fa-solid fa-list-check text-purple me-2"></i> Přehled skautských jednotek
+				<span class="badge bg-purple-lt ms-2">{count($units)}</span>
+			</h3>
+			<p class="text-muted small mb-0 mt-1">
+				Aktivita, velikost rady, statistiky volební účasti a úspěšnosti jednotlivých jednotek
+			</p>
 		</div>
 
-		<!-- FILTRY TYPU JEDNOTKY -->
-		<div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
-			<a n:href="this, type => 'all', q => $searchQuery, sort => $selectedSort" class="btn btn-sm" style="border-radius: 20px; padding: 5px 14px; font-size: 0.85rem; font-weight: {if $selectedType === 'all'}bold{else}500{/if}; background: {if $selectedType === 'all'}#0284c7{else}#f8fafc{/if}; color: {if $selectedType === 'all'}white{else}#475569{/if}; border: 1px solid {if $selectedType === 'all'}#0284c7{else}#cbd5e1{/if}; text-decoration: none;">
+		<!-- VYHLEDÁVÁNÍ -->
+		<form method="get" action="{link this}" class="d-flex align-items-center gap-2">
+			<input type="hidden" name="type" value="{$selectedType}">
+			<input type="hidden" name="sort" value="{$selectedSort}">
+			<div class="input-icon">
+				<input type="text" name="q" value="{$searchQuery}" placeholder="Hledat jednotku nebo ID..." class="form-control form-control-sm">
+				<span class="input-icon-addon">
+					<i class="fa-solid fa-magnifying-glass"></i>
+				</span>
+			</div>
+			<button type="submit" class="btn btn-sm btn-primary">Hledat</button>
+			{if !empty($searchQuery)}
+				<a n:href="this, type => $selectedType, q => null, sort => $selectedSort" class="btn btn-sm btn-outline-secondary" title="Zrušit hledání">✕</a>
+			{/if}
+		</form>
+	</div>
+
+	<!-- FILTRY TYPU JEDNOTKY -->
+	<div class="card-body border-bottom py-2">
+		<div class="btn-group btn-group-sm flex-wrap gap-1" role="group">
+			<a n:href="this, type => 'all', q => $searchQuery, sort => $selectedSort" class="btn {if $selectedType === 'all'}btn-primary{else}btn-outline-secondary{/if}">
 				Všechny jednotky ({$globalStats['unitsCount']})
 			</a>
-			<a n:href="this, type => 'stredisko', q => $searchQuery, sort => $selectedSort" class="btn btn-sm" style="border-radius: 20px; padding: 5px 14px; font-size: 0.85rem; font-weight: {if $selectedType === 'stredisko'}bold{else}500{/if}; background: {if $selectedType === 'stredisko'}#0284c7{else}#f8fafc{/if}; color: {if $selectedType === 'stredisko'}white{else}#475569{/if}; border: 1px solid {if $selectedType === 'stredisko'}#0284c7{else}#cbd5e1{/if}; text-decoration: none;">
+			<a n:href="this, type => 'stredisko', q => $searchQuery, sort => $selectedSort" class="btn {if $selectedType === 'stredisko'}btn-primary{else}btn-outline-secondary{/if}">
 				<i class="fa-solid fa-campground me-1"></i> Střediska ({$globalStats['unitsByType']['stredisko']})
 			</a>
-			<a n:href="this, type => 'okres', q => $searchQuery, sort => $selectedSort" class="btn btn-sm" style="border-radius: 20px; padding: 5px 14px; font-size: 0.85rem; font-weight: {if $selectedType === 'okres'}bold{else}500{/if}; background: {if $selectedType === 'okres'}#0284c7{else}#f8fafc{/if}; color: {if $selectedType === 'okres'}white{else}#475569{/if}; border: 1px solid {if $selectedType === 'okres'}#0284c7{else}#cbd5e1{/if}; text-decoration: none;">
+			<a n:href="this, type => 'okres', q => $searchQuery, sort => $selectedSort" class="btn {if $selectedType === 'okres'}btn-primary{else}btn-outline-secondary{/if}">
 				<i class="fa-solid fa-tree me-1"></i> Okresy ({$globalStats['unitsByType']['okres']})
 			</a>
-			<a n:href="this, type => 'kraj', q => $searchQuery, sort => $selectedSort" class="btn btn-sm" style="border-radius: 20px; padding: 5px 14px; font-size: 0.85rem; font-weight: {if $selectedType === 'kraj'}bold{else}500{/if}; background: {if $selectedType === 'kraj'}#0284c7{else}#f8fafc{/if}; color: {if $selectedType === 'kraj'}white{else}#475569{/if}; border: 1px solid {if $selectedType === 'kraj'}#0284c7{else}#cbd5e1{/if}; text-decoration: none;">
+			<a n:href="this, type => 'kraj', q => $searchQuery, sort => $selectedSort" class="btn {if $selectedType === 'kraj'}btn-primary{else}btn-outline-secondary{/if}">
 				<i class="fa-solid fa-mountain-sun me-1"></i> Kraje ({$globalStats['unitsByType']['kraj']})
 			</a>
 		</div>
-
-		<!-- TABULKA JEDNOTEK -->
-		{if empty($units)}
-			<div style="text-align: center; padding: 3rem 1rem; color: #64748b; background: #f8fafc; border-radius: 8px;">
-				<i class="fa-solid fa-folder-open" style="font-size: 2.5rem; margin-bottom: 0.75rem; color: #cbd5e1;"></i>
-				<div style="font-size: 1.1rem; font-weight: bold;">Nebyly nalezeny žádné jednotky</div>
-				<p style="margin: 4px 0 0 0; font-size: 0.9rem;">Zkuste upravit filtry nebo vyhledávací dotaz.</p>
-			</div>
-		{else}
-			<div style="overflow-x: auto;">
-				<table style="width: 100%; border-collapse: collapse; font-size: 0.92rem;">
-					<thead>
-						<tr style="border-bottom: 2px solid #e2e8f0; text-align: left; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;">
-							<th style="padding: 10px 12px;">
-								<a n:href="this, type => $selectedType, q => $searchQuery, sort => 'name'" style="color: inherit; text-decoration: none;" title="Seřadit podle názvu">
-									Jednotka {if $selectedSort === 'name'}↑{/if}
-								</a>
-							</th>
-							<th style="padding: 10px 12px; text-align: center;">Typ</th>
-							<th style="padding: 10px 12px; text-align: center;">
-								<a n:href="this, type => $selectedType, q => $searchQuery, sort => 'members'" style="color: inherit; text-decoration: none;" title="Seřadit podle počtu členů rady">
-									Členů rady {if $selectedSort === 'members'}↓{/if}
-								</a>
-							</th>
-							<th style="padding: 10px 12px; text-align: center;">
-								<a n:href="this, type => $selectedType, q => $searchQuery, sort => 'elections'" style="color: inherit; text-decoration: none;" title="Seřadit podle počtu usnesení">
-									Usnesení {if $selectedSort === 'elections'}↓{/if}
-								</a>
-							</th>
-							<th style="padding: 10px 12px; text-align: center;">Hlasů</th>
-							<th style="padding: 10px 12px; text-align: center;">
-								<a n:href="this, type => $selectedType, q => $searchQuery, sort => 'turnout'" style="color: inherit; text-decoration: none;" title="Seřadit podle volební účasti">
-									Volební účast {if $selectedSort === 'turnout'}↓{/if}
-								</a>
-							</th>
-							<th style="padding: 10px 12px; text-align: center;">Úspěšnost</th>
-							<th style="padding: 10px 12px; text-align: right;">
-								<a n:href="this, type => $selectedType, q => $searchQuery, sort => 'activity'" style="color: {if $selectedSort === 'activity'}#0284c7{else}inherit{/if}; text-decoration: none; font-weight: {if $selectedSort === 'activity'}bold{else}normal{/if};" title="Seřadit podle data posledního přihlášení">
-									Poslední přihlášení {if $selectedSort === 'activity'}↓{/if}
-								</a>
-							</th>
-							<th style="padding: 10px 12px; text-align: center;">Akce</th>
-						</tr>
-					</thead>
-					<tbody>
-						{foreach $units as $u}
-							{var $typeMeta = App\Model\SuperadminRepository::getUnitTypeLabel($u['unit_type'])}
-							<tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc';" onmouseout="this.style.background='transparent';">
-								<!-- JEDNOTKA -->
-								<td style="padding: 12px;">
-									<div style="font-weight: bold; color: #0f172a;">
-										<a n:href="unit, id => $u['unit_id']" style="color: inherit; text-decoration: none;" title="Zobrazit detail jednotky">
-											{$u['unit_name']}
-										</a>
-									</div>
-									<div style="font-size: 0.8rem; color: #64748b;">
-										ID: <code>#{$u['unit_id']}</code>
-										{if $u['has_custom_settings']}<span title="Vlastní nastavení jednotky" style="margin-left: 4px; color: #0284c7;">⚙</span>{/if}
-										{if $u['has_custom_smtp']}<span title="Vlastní SMTP server" style="margin-left: 4px; color: #16a34a;">✉</span>{/if}
-									</div>
-								</td>
-
-								<!-- TYP -->
-								<td style="padding: 12px; text-align: center;">
-									<span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: bold; background: {$typeMeta['badgeBg']}; color: {$typeMeta['badgeColor']};">
-										<i class="fa-solid {$typeMeta['icon']}" style="font-size: 0.7rem;"></i> {$typeMeta['label']}
-									</span>
-								</td>
-
-								<!-- ČLENŮ RADY -->
-								<td style="padding: 12px; text-align: center;">
-									<span style="font-weight: bold; font-size: 1rem; color: #334155;">{$u['council_members_count']}</span>
-								</td>
-
-								<!-- USNESENÍ -->
-								<td style="padding: 12px; text-align: center;">
-									<div style="font-weight: bold; color: #0f172a;">{$u['total_elections']}</div>
-									<div style="font-size: 0.78rem; color: #64748b;">
-										{if $u['active_elections'] > 0}<span style="color: #16a34a; font-weight: bold;">{$u['active_elections']} akt.</span>{else}0 akt.{/if} &bull; {$u['closed_elections']} uz.
-									</div>
-								</td>
-
-								<!-- HLASŮ -->
-								<td style="padding: 12px; text-align: center;">
-									<span style="color: #475569; font-weight: 600;">{$u['total_votes']}</span>
-								</td>
-
-								<!-- VOLEBNÍ ÚČAST -->
-								<td style="padding: 12px; text-align: center;">
-									{if $u['turnout_pct'] !== null}
-										{var $turnColor = $u['turnout_pct'] >= 85 ? '#15803d' : ($u['turnout_pct'] >= 65 ? '#0369a1' : '#b91c1c')}
-										<div style="font-weight: bold; color: {$turnColor}; font-size: 0.95rem;">
-											{$u['turnout_pct']} %
-										</div>
-									{else}
-										<span style="color: #94a3b8; font-size: 0.85rem;">&ndash;</span>
-									{/if}
-								</td>
-
-								<!-- ÚSPĚŠNOST -->
-								<td style="padding: 12px; text-align: center;">
-									{if $u['success_pct'] !== null}
-										{var $succColor = $u['success_pct'] >= 80 ? '#15803d' : '#a16207'}
-										<div style="font-weight: bold; color: {$succColor}; font-size: 0.95rem;">
-											{$u['success_pct']} %
-										</div>
-									{else}
-										<span style="color: #94a3b8; font-size: 0.85rem;">&ndash;</span>
-									{/if}
-								</td>
-
-								<!-- POSLEDNÍ AKTIVITA -->
-								<td style="padding: 12px; text-align: right; color: #64748b; font-size: 0.85rem;">
-									{if $u['last_activity']}
-										{$u['last_activity']->format('d. m. Y')}
-										<div style="font-size: 0.75rem; color: #94a3b8;">{$u['last_activity']->format('H:i')}</div>
-									{else}
-										<span style="color: #cbd5e1;">nikdy</span>
-									{/if}
-								</td>
-
-								<!-- AKCE -->
-								<td style="padding: 12px; text-align: center;">
-									<a n:href="unit, id => $u['unit_id']" class="btn btn-sm" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-weight: 600; padding: 5px 12px; font-size: 0.82rem; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); transition: all 0.15s;" onmouseover="this.style.background='#dbeafe'; this.style.borderColor='#93c5fd'; this.style.color='#1e40af';" onmouseout="this.style.background='#eff6ff'; this.style.borderColor='#bfdbfe'; this.style.color='#1d4ed8';" title="Detail jednotky #{$u['unit_id']}">
-										<i class="fa-solid fa-arrow-up-right-from-square" style="color: #2563eb; font-size: 0.8rem;"></i> Detail
-									</a>
-								</td>
-							</tr>
-						{/foreach}
-					</tbody>
-				</table>
-			</div>
-		{/if}
-
 	</div>
 
+	<!-- TABULKA JEDNOTEK -->
+	{if empty($units)}
+		<div class="card-body text-center py-5 text-muted">
+			<i class="fa-solid fa-folder-open fs-1 text-muted opacity-50 mb-3 d-block"></i>
+			<div class="h3 fw-bold">Nebyly nalezeny žádné jednotky</div>
+			<p class="mb-0">Zkuste upravit filtry nebo vyhledávací dotaz.</p>
+		</div>
+	{else}
+		<div class="table-responsive">
+			<table class="table table-vcenter table-hover table-striped card-table">
+				<thead>
+					<tr>
+						<th>
+							<a n:href="this, type => $selectedType, q => $searchQuery, sort => 'name'" class="text-reset text-decoration-none" title="Seřadit podle názvu">
+								Jednotka {if $selectedSort === 'name'}↑{/if}
+							</a>
+						</th>
+						<th class="text-center">Typ</th>
+						<th class="text-center">
+							<a n:href="this, type => $selectedType, q => $searchQuery, sort => 'members'" class="text-reset text-decoration-none" title="Seřadit podle počtu členů rady">
+								Členů rady {if $selectedSort === 'members'}↓{/if}
+							</a>
+						</th>
+						<th class="text-center">
+							<a n:href="this, type => $selectedType, q => $searchQuery, sort => 'elections'" class="text-reset text-decoration-none" title="Seřadit podle počtu usnesení">
+								Usnesení {if $selectedSort === 'elections'}↓{/if}
+							</a>
+						</th>
+						<th class="text-center">Hlasů</th>
+						<th class="text-center">
+							<a n:href="this, type => $selectedType, q => $searchQuery, sort => 'turnout'" class="text-reset text-decoration-none" title="Seřadit podle volební účasti">
+								Volební účast {if $selectedSort === 'turnout'}↓{/if}
+							</a>
+						</th>
+						<th class="text-center">Úspěšnost</th>
+						<th class="text-end">
+							<a n:href="this, type => $selectedType, q => $searchQuery, sort => 'activity'" class="text-decoration-none {if $selectedSort === 'activity'}text-primary fw-bold{else}text-reset{/if}" title="Seřadit podle data posledního přihlášení">
+								Poslední přihlášení {if $selectedSort === 'activity'}↓{/if}
+							</a>
+						</th>
+						<th class="text-center">Akce</th>
+					</tr>
+				</thead>
+				<tbody>
+					{foreach $units as $u}
+						{var $typeMeta = App\Model\SuperadminRepository::getUnitTypeLabel($u['unit_type'])}
+						<tr>
+							<!-- JEDNOTKA -->
+							<td>
+								<div class="fw-bold">
+									<a n:href="unit, id => $u['unit_id']" class="text-reset text-decoration-none" title="Zobrazit detail jednotky">
+										{$u['unit_name']}
+									</a>
+								</div>
+								<div class="small text-muted">
+									ID: <code>#{$u['unit_id']}</code>
+									{if $u['has_custom_settings']}<span title="Vlastní nastavení jednotky" class="ms-1 text-azure"><i class="fa-solid fa-gear"></i></span>{/if}
+									{if $u['has_custom_smtp']}<span title="Vlastní SMTP server" class="ms-1 text-success"><i class="fa-solid fa-envelope"></i></span>{/if}
+								</div>
+							</td>
+
+							<!-- TYP -->
+							<td class="text-center">
+								{var $badgeClass = match($u['unit_type']) {
+									'kraj' => 'bg-amber-lt text-amber',
+									'okres' => 'bg-indigo-lt text-indigo',
+									default => 'bg-success-lt text-success',
+								}}
+								<span class="badge {$badgeClass}">
+									<i class="fa-solid {$typeMeta['icon']} me-1"></i> {$typeMeta['label']}
+								</span>
+							</td>
+
+							<!-- ČLENŮ RADY -->
+							<td class="text-center">
+								<span class="fw-bold fs-5">{$u['council_members_count']}</span>
+							</td>
+
+							<!-- USNESENÍ -->
+							<td class="text-center">
+								<div class="fw-bold">{$u['total_elections']}</div>
+								<div class="small text-muted">
+									{if $u['active_elections'] > 0}<span class="text-success fw-bold">{$u['active_elections']} akt.</span>{else}0 akt.{/if} &bull; {$u['closed_elections']} uz.
+								</div>
+							</td>
+
+							<!-- HLASŮ -->
+							<td class="text-center">
+								<span class="fw-semibold text-muted">{$u['total_votes']}</span>
+							</td>
+
+							<!-- VOLEBNÍ ÚČAST -->
+							<td class="text-center">
+								{if $u['turnout_pct'] !== null}
+									{var $turnBadge = $u['turnout_pct'] >= 85 ? 'bg-success-lt' : ($u['turnout_pct'] >= 65 ? 'bg-info-lt' : 'bg-danger-lt')}
+									<span class="badge {$turnBadge} fs-6">
+										{$u['turnout_pct']} %
+									</span>
+								{else}
+									<span class="text-muted">&ndash;</span>
+								{/if}
+							</td>
+
+							<!-- ÚSPĚŠNOST -->
+							<td class="text-center">
+								{if $u['success_pct'] !== null}
+									{var $succBadge = $u['success_pct'] >= 80 ? 'bg-success-lt' : 'bg-warning-lt'}
+									<span class="badge {$succBadge} fs-6">
+										{$u['success_pct']} %
+									</span>
+								{else}
+									<span class="text-muted">&ndash;</span>
+								{/if}
+							</td>
+
+							<!-- POSLEDNÍ AKTIVITA -->
+							<td class="text-end text-muted small">
+								{if $u['last_activity']}
+									<div class="fw-semibold text-body">{$u['last_activity']->format('d. m. Y')}</div>
+									<div class="small text-muted">{$u['last_activity']->format('H:i')}</div>
+								{else}
+									<span class="text-muted opacity-50">nikdy</span>
+								{/if}
+							</td>
+
+							<!-- AKCE -->
+							<td class="text-center">
+								<a n:href="unit, id => $u['unit_id']" class="btn btn-sm btn-outline-primary" title="Detail jednotky #{$u['unit_id']}">
+									<i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Detail
+								</a>
+							</td>
+						</tr>
+					{/foreach}
+				</tbody>
+			</table>
+		</div>
+	{/if}
+
 </div>
+
 {/block}

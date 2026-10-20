@@ -224,6 +224,52 @@ class SkautisAuthManagerTest extends BaseTestCase
 		$refProp->setValue($this->authManager, []);
 		Assert::false($this->authManager->isSuperAdmin());
 	}
+
+	public function testSwitchRoleMultipleUnits(): void
+	{
+		// Přihlášení testovacího uživatele Jan Novák (personId = 1001) v jednotce 123
+		$this->authManager->simulateLogin(unitId: 123, personId: 1001, personName: 'Jan Novak');
+		Assert::true($this->authManager->isLoggedIn());
+
+		// Uživatel má 3 povolené role napříč jednotkami
+		$roles = $this->authManager->getAllUserRoles();
+		Assert::count(3, $roles);
+
+		// Výchozí aktivní jednotka je 123
+		$userData = $this->authManager->getUserData();
+		Assert::same(123, $userData['unitId']);
+		Assert::same('1. středisko Dvojka', $userData['unitName']);
+		Assert::same('cinovnikStredisko', $userData['roleKey']);
+		Assert::false($this->authManager->isAdmin());
+
+		// Přepnutí do okresní role (jednotka 456, vedouciOkres = admin)
+		$switched = $this->authManager->switchRole(10012);
+		Assert::true($switched);
+
+		$userData = $this->authManager->getUserData();
+		Assert::same(456, $userData['unitId']);
+		Assert::same('Okres Hradec Králové', $userData['unitName']);
+		Assert::same('vedouciOkres', $userData['roleKey']);
+		Assert::true($this->authManager->isAdmin());
+
+		// Přepnutí do krajské role (jednotka 25784, cinovnikKraj)
+		$switched = $this->authManager->switchRole(10013);
+		Assert::true($switched);
+
+		$userData = $this->authManager->getUserData();
+		Assert::same(25784, $userData['unitId']);
+		Assert::same('Královéhradecký kraj', $userData['unitName']);
+		Assert::same('cinovnikKraj', $userData['roleKey']);
+		Assert::false($this->authManager->isAdmin());
+
+		// Přepnutí zpět do střediska (jednotka 123)
+		$switched = $this->authManager->switchRole(10011);
+		Assert::true($switched);
+
+		$userData = $this->authManager->getUserData();
+		Assert::same(123, $userData['unitId']);
+		Assert::same('1. středisko Dvojka', $userData['unitName']);
+	}
 }
 
 (new SkautisAuthManagerTest($container))->run();
