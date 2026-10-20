@@ -192,3 +192,91 @@ docker compose exec web composer test
 > **DŮLEŽITÉ:** Veškeré budoucí změny a nové funkce v aplikaci (zejména práce s databází, změny v `VotingRepository`, logika oprávnění, validace a pravidel hlasování) **musí být pokryty a ověřeny automatizovanými testy**.
 > Před commitem nebo nasazením do produkce musí vždy projít celá sada testů (`OK`).
 
+---
+
+## 🗄️ Smazání jednotky a navazujících záznamů (SQL)
+
+Pokud je potřeba z databáze kompletně odstranit testovací, duplicitní nebo zrušenou jednotku včetně všech jejích souvisejících dat, je nutné promazat záznamy v následujících tabulkách:
+
+1. **`elections` (Hlasování / Usnesení):**
+   * Při smazání usnesení dané jednotky se díky cizím klíčům s `ON DELETE CASCADE` automaticky promažou i podřízené záznamy:
+     * `options` (možnosti hlasování),
+     * `votes` (odevzdané hlasy),
+     * `vote_history` (historie průběhu hlasování),
+     * `election_audit_logs` (auditní záznamy akcí nad hlasováním).
+   * *Pro maximální bezpečnost a nezávislost na nastavení cizích klíčů skript obsahuje i explicitní smazání těchto podřízených tabulek.*
+2. **`council_members`:** Seznam členů rady dané jednotky.
+3. **`unit_settings`:** Individuální nastavení jednotky (vlastní jméno odesílatele, min. délka hlasování apod.).
+4. **`smtp_settings`:** Původní / vlastní SMTP konfigurace jednotky.
+5. **`email_logs`:** Historie odeslaných e-mailových notifikací a chybových hlášení vázaných na jednotku.
+6. **`user_login_logs`:** Historie auditních záznamů o přihlášení uživatelů pod danou jednotkou.
+
+> **Upozornění k tabulce `users`:**
+> Tabulka `users` se **nemaže**, protože obsahuje globální uživatelské účty fyzických osob (vázané na SkautIS `person_id`), které mohou mít oprávnění nebo působit i v jiných jednotkách.
+
+---
+
+### 📝 Obecný SQL skript (šablona)
+
+```sql
+START TRANSACTION;
+
+-- Zadejte ID jednotky (nebo seznam ID oddělených čárkami v klauzuli IN)
+-- Příklad pro jednu jednotku: unit_id IN (12345)
+-- Příklad pro více jednotek: unit_id IN (12345, 67890)
+
+-- 1. Smazání podřízených záznamů hlasování
+DELETE FROM election_audit_logs WHERE election_id IN (SELECT id FROM elections WHERE unit_id IN (<ID_JEDNOTEK>));
+DELETE FROM vote_history WHERE election_id IN (SELECT id FROM elections WHERE unit_id IN (<ID_JEDNOTEK>));
+DELETE FROM votes WHERE election_id IN (SELECT id FROM elections WHERE unit_id IN (<ID_JEDNOTEK>));
+DELETE FROM options WHERE election_id IN (SELECT id FROM elections WHERE unit_id IN (<ID_JEDNOTEK>));
+
+-- 2. Smazání samotných hlasování / usnesení
+DELETE FROM elections WHERE unit_id IN (<ID_JEDNOTEK>);
+
+-- 3. Smazání členů rady jednotky
+DELETE FROM council_members WHERE unit_id IN (<ID_JEDNOTEK>);
+
+-- 4. Smazání konfigurace a nastavení jednotky
+DELETE FROM unit_settings WHERE unit_id IN (<ID_JEDNOTEK>);
+DELETE FROM smtp_settings WHERE unit_id IN (<ID_JEDNOTEK>);
+
+-- 5. Smazání auditních logů vázaných na jednotku
+DELETE FROM email_logs WHERE unit_id IN (<ID_JEDNOTEK>);
+DELETE FROM user_login_logs WHERE unit_id IN (<ID_JEDNOTEK>);
+
+COMMIT;
+```
+
+---
+
+### 🚀 Připravený SQL skript pro zadané jednotky:
+**Jednotky:** `26405, 26474, 27294, 28914, 26458, 23200, 26424, 26462, 26456, 31662`
+
+```sql
+START TRANSACTION;
+
+-- 1. Smazání podřízených záznamů hlasování (auditní logy, historie, hlasy, možnosti)
+DELETE FROM election_audit_logs WHERE election_id IN (SELECT id FROM elections WHERE unit_id IN (26405, 26474, 27294, 28914, 26458, 23200, 26424, 26462, 26456, 31662));
+DELETE FROM vote_history WHERE election_id IN (SELECT id FROM elections WHERE unit_id IN (26405, 26474, 27294, 28914, 26458, 23200, 26424, 26462, 26456, 31662));
+DELETE FROM votes WHERE election_id IN (SELECT id FROM elections WHERE unit_id IN (26405, 26474, 27294, 28914, 26458, 23200, 26424, 26462, 26456, 31662));
+DELETE FROM options WHERE election_id IN (SELECT id FROM elections WHERE unit_id IN (26405, 26474, 27294, 28914, 26458, 23200, 26424, 26462, 26456, 31662));
+
+-- 2. Smazání samotných hlasování
+DELETE FROM elections WHERE unit_id IN (26405, 26474, 27294, 28914, 26458, 23200, 26424, 26462, 26456, 31662);
+
+-- 3. Smazání členů rady
+DELETE FROM council_members WHERE unit_id IN (26405, 26474, 27294, 28914, 26458, 23200, 26424, 26462, 26456, 31662);
+
+-- 4. Smazání nastavení jednotky a SMTP konfigurace
+DELETE FROM unit_settings WHERE unit_id IN (26405, 26474, 27294, 28914, 26458, 23200, 26424, 26462, 26456, 31662);
+DELETE FROM smtp_settings WHERE unit_id IN (26405, 26474, 27294, 28914, 26458, 23200, 26424, 26462, 26456, 31662);
+
+-- 5. Smazání logů vázaných na jednotku (e-maily a přihlášení)
+DELETE FROM email_logs WHERE unit_id IN (26405, 26474, 27294, 28914, 26458, 23200, 26424, 26462, 26456, 31662);
+DELETE FROM user_login_logs WHERE unit_id IN (26405, 26474, 27294, 28914, 26458, 23200, 26424, 26462, 26456, 31662);
+
+COMMIT;
+```
+
+

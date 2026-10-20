@@ -170,10 +170,14 @@ header, .main-header {
 
 .btn-logout {
   background: rgba(255,255,255,0.15);
+  color: #ffffff;
+  border: 1px solid rgba(255,255,255,0.3);
 }
 
 .btn-logout:hover {
   background: rgba(239, 68, 68, 0.4);
+  color: #ffffff;
+  border-color: rgba(239, 68, 68, 0.6);
 }
 
 .btn-primary {
