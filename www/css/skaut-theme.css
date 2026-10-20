@@ -185,28 +185,72 @@
   vertical-align: middle;
 }
 
-/* Karty voleb / hlasování v modálu */
+/* Karty voleb / hlasování (fixní výška a vysoký kontrast) */
 .vote-option-card {
   cursor: pointer;
   transition: all 0.2s ease;
   border: 2px solid var(--tblr-border-color);
   border-radius: var(--tblr-border-radius);
+  min-height: 150px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem 1rem !important;
 }
 .vote-option-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.10);
 }
 .vote-option-card.selected-pro {
   border-color: #10b981 !important;
-  background-color: rgba(16, 185, 129, 0.08);
+  background-color: rgba(16, 185, 129, 0.10);
 }
 .vote-option-card.selected-proti {
   border-color: #ef4444 !important;
-  background-color: rgba(239, 68, 68, 0.08);
+  background-color: rgba(239, 68, 68, 0.10);
 }
 .vote-option-card.selected-zdrzel {
   border-color: #f59e0b !important;
-  background-color: rgba(245, 158, 11, 0.08);
+  background-color: rgba(245, 158, 11, 0.10);
+}
+
+.vote-badge-slot {
+  min-height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vote-badge-pro {
+  background-color: #0ca678 !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  font-size: 0.8rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.vote-badge-proti {
+  background-color: #d63939 !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  font-size: 0.8rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.vote-badge-zdrzel {
+  background-color: #f59f00 !important;
+  color: #1e293b !important;
+  font-weight: 600;
+  font-size: 0.8rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
 /* Našeptávač členů Rady (SkautIS autocomplete) */

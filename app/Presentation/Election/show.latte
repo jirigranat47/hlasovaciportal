@@ -204,19 +204,19 @@
 									<a n:href="vote! electionId: $election->id, optionId: $opt->id"
 									   class="card card-body text-center p-3 text-decoration-none shadow-sm vote-option-card {if $opt->title === 'Pro'}border-success {if $isCurrent}selected-pro{/if}{elseif $opt->title === 'Proti'}border-danger {if $isCurrent}selected-proti{/if}{else}border-warning {if $isCurrent}selected-zdrzel{/if}{/if}"
 									   onclick="return confirm({if $isCurrent}'Váš hlas pro tuto možnost je již zaznamenán. Chcete jej potvrdit?'{else}'Opravdu chcete odevzdat/změnit váš hlas na &quot;{$opt->title}&quot;?'{/if})">
-										<div class="fs-1 mb-2 {if $opt->title === 'Pro'}text-success{elseif $opt->title === 'Proti'}text-danger{else}text-warning{/if}">
+										<div class="fs-1 mb-1 {if $opt->title === 'Pro'}text-success{elseif $opt->title === 'Proti'}text-danger{else}text-warning{/if}">
 											<i class="fa-solid {if $opt->title === 'Pro'}fa-circle-check{elseif $opt->title === 'Proti'}fa-circle-xmark{else}fa-circle-minus{/if}"></i>
 										</div>
 										<div class="fw-bold fs-2 {if $opt->title === 'Pro'}text-success{elseif $opt->title === 'Proti'}text-danger{else}text-warning{/if}">
 											{$opt->title}
 										</div>
-										{if $isCurrent}
-											<div class="mt-2">
-												<span class="badge {if $opt->title === 'Pro'}bg-success{elseif $opt->title === 'Proti'}bg-danger{else}bg-warning text-dark{/if}">
-													✓ Váš aktuální hlas
+										<div class="vote-badge-slot mt-2">
+											{if $isCurrent}
+												<span class="badge {if $opt->title === 'Pro'}vote-badge-pro{elseif $opt->title === 'Proti'}vote-badge-proti{else}vote-badge-zdrzel{/if}">
+													<i class="fa-solid fa-check me-1"></i> Váš aktuální hlas
 												</span>
-											</div>
-										{/if}
+											{/if}
+										</div>
 									</a>
 								</div>
 							{/foreach}
