@@ -81,9 +81,10 @@
 
 .navbar-skaut .nav-link {
   color: rgba(255, 255, 255, 0.85);
+  font-size: 0.875rem;
   font-weight: 500;
   border-radius: 6px;
-  padding: 0.5rem 0.85rem;
+  padding: 0.4rem 0.75rem;
   transition: all 0.15s ease;
 }
 
@@ -95,6 +96,56 @@
 
 .navbar-skaut .navbar-brand {
   color: #ffffff;
+}
+
+/* Velikosti písma v horní liště (striktně max 2 velikosti: Titulek 1.15rem, ostatní prvky 0.875rem) */
+.navbar-skaut .navbar-brand-title {
+  font-size: 1.15rem; /* Velikost 1 (Titulek aplikace) */
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.navbar-skaut .user-name {
+  font-size: 0.875rem; /* Velikost 2 (Standardní velikost menu) */
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+/* Ovládací tlačítka a přepínače v horní liště bez ostrého bílého rámečku */
+.navbar-skaut .navbar-btn {
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #ffffff !important;
+  font-size: 0.875rem; /* Velikost 2 */
+  font-weight: 500;
+  line-height: 1.4;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-decoration: none !important;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.navbar-skaut .navbar-btn:hover,
+.navbar-skaut .navbar-btn:focus,
+.navbar-skaut .navbar-btn[aria-expanded="true"] {
+  background: rgba(255, 255, 255, 0.20);
+  border-color: rgba(255, 255, 255, 0.28);
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.navbar-skaut .navbar-btn-icon {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Skautská tlačítka */
@@ -124,9 +175,14 @@
 }
 
 .badge-skaut-unit {
+  font-size: 0.875rem !important;
+  font-weight: 500;
+  padding: 0.3rem 0.65rem;
   background: rgba(244, 180, 0, 0.2);
   color: #ffd866;
   border: 1px solid rgba(244, 180, 0, 0.4);
+  border-radius: 6px;
+  vertical-align: middle;
 }
 
 /* Karty voleb / hlasování v modálu */

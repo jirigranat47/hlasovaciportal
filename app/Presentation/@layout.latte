@@ -29,10 +29,10 @@
 			<div class="container-xl">
 				<!-- BRAND / LOGO -->
 				<a n:href="Home:default" class="navbar-brand navbar-brand-autodark pe-0 pe-md-3 d-flex align-items-center text-decoration-none">
-					<img src="{$basePath}/favicon.svg" alt="⚜" width="34" height="34" class="navbar-brand-image me-2 rounded shadow-sm">
-					<span class="fw-bold fs-3 text-white">Hlasovací Portál</span>
+					<img src="{$basePath}/favicon.svg" alt="⚜" width="30" height="30" class="navbar-brand-image me-2 rounded shadow-sm">
+					<span class="navbar-brand-title fw-bold text-white">Hlasovací Portál</span>
 					{if $isLoggedIn && !empty($userData['unitName'])}
-						<span class="badge badge-skaut-unit ms-2 fs-6 d-none d-sm-inline-block" title="Přihlášená jednotka">
+						<span class="badge badge-skaut-unit ms-2 d-none d-sm-inline-block" title="Přihlášená jednotka">
 							{$userData['unitName']}
 						</span>
 					{/if}
@@ -41,13 +41,13 @@
 				<!-- PRAVÁ ČÁST: PŘEPÍNAČ TÉMATU, ROLÍ A UŽIVATEL -->
 				<div class="navbar-nav flex-row order-md-last align-items-center gap-2">
 					<!-- PŘEPÍNAČ DARK / LIGHT REŽIMU -->
-					<button type="button" class="btn btn-sm btn-outline-light px-2" id="themeToggleBtn" title="Přepnout Světlý / Tmavý režim">
+					<button type="button" class="navbar-btn navbar-btn-icon" id="themeToggleBtn" title="Přepnout Světlý / Tmavý režim">
 						<i class="fa-solid fa-moon" id="themeIcon"></i>
 					</button>
 
 					<!-- SUPERADMIN TLAČÍTKO -->
 					{if $isLoggedIn && !empty($isSuperAdmin)}
-						<a n:href="Superadmin:default" class="btn btn-sm text-white d-flex align-items-center gap-1 shadow-sm" style="background: #9333ea; border-color: #9333ea;" title="Superadmin Portál (Centrální správa a statistiky)">
+						<a n:href="Superadmin:default" class="navbar-btn d-flex align-items-center gap-1 shadow-sm" style="background: rgba(147, 51, 234, 0.85); border-color: rgba(147, 51, 234, 0.9);" title="Superadmin Portál (Centrální správa a statistiky)">
 							<i class="fa-solid fa-crown text-warning"></i>
 							<span class="d-none d-md-inline fw-bold">Superadmin</span>
 						</a>
@@ -56,13 +56,12 @@
 					<!-- PŘEPÍNAČ ROLÍ A JEDNOTEK ZE SKAUTISU -->
 					{if $isLoggedIn && !empty($userRoles) && count($userRoles) > 1}
 						<div class="dropdown">
-							<button class="btn btn-sm btn-outline-light dropdown-toggle d-flex align-items-center gap-1 shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Aktivní role a jednotka (kliknutím přepnete)">
+							<button class="navbar-btn dropdown-toggle d-flex align-items-center gap-1" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Aktivní role a jednotka (kliknutím přepnete)">
 								<i class="fa-solid fa-arrows-rotate text-warning me-1"></i>
-								<span class="d-none d-xl-inline">{$userData['roleName']}</span>
-								<span class="d-none d-sm-inline d-xl-none">Přepnout jednotku</span>
+								<span class="d-none d-md-inline">{$userData['roleName']}</span>
 							</button>
 							<ul class="dropdown-menu dropdown-menu-end shadow">
-								<li class="dropdown-header text-uppercase fw-bold text-muted fs-6">
+								<li class="dropdown-header text-uppercase fw-bold text-muted" style="font-size: 0.8rem;">
 									<i class="fa-solid fa-arrows-rotate me-1"></i> Přepnout jednotku a roli
 								</li>
 								{foreach $userRoles as $r}
@@ -82,18 +81,17 @@
 					<!-- UŽIVATELSKÝ PROFIL NEBO TLAČÍTKO PŘIHLÁŠENÍ -->
 					{if $isLoggedIn}
 						<div class="nav-item dropdown">
-							<a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Uživatelské menu">
+							<a href="#" class="nav-link d-flex align-items-center lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Uživatelské menu">
 								<span class="avatar avatar-sm bg-warning text-dark fw-bold rounded-circle shadow-sm">
 									{mb_substr($userData['personName'], 0, 1, 'UTF-8')}
 								</span>
-								<div class="d-none d-xl-block ps-2 text-start text-white">
-									<div class="fw-bold">{$userData['personName']}</div>
-									<div class="mt-1 small text-white-50">{$userData['roleName']}</div>
+								<div class="d-none d-xl-block ps-2 text-start">
+									<span class="user-name">{$userData['personName']}</span>
 								</div>
 							</a>
 							<div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow shadow">
-								<div class="dropdown-header d-xl-none">
-									<strong>{$userData['personName']}</strong>
+								<div class="dropdown-header">
+									<div class="fw-bold">{$userData['personName']}</div>
 									<div class="small text-muted">{$userData['roleName']}</div>
 								</div>
 								<a n:href="Profile:settings" class="dropdown-item">
@@ -112,12 +110,12 @@
 							</div>
 						</div>
 					{else}
-						<a n:href="Help:default" class="btn btn-sm btn-outline-light d-flex align-items-center gap-1" title="Nápověda a pravidla hlasování">
+						<a n:href="Help:default" class="navbar-btn d-flex align-items-center gap-1" title="Nápověda a pravidla hlasování">
 							<i class="fa-solid fa-circle-question"></i>
 							<span class="d-none d-sm-inline">Nápověda</span>
 						</a>
 
-						<a n:href="Sign:in, backlink => ($presenter->isLinkCurrent('Home:default') ? null : $presenter->storeRequest())" class="btn btn-sm btn-skaut-yellow d-flex align-items-center gap-1 shadow-sm" title="Přihlásit se přes SkautIS">
+						<a n:href="Sign:in, backlink => ($presenter->isLinkCurrent('Home:default') ? null : $presenter->storeRequest())" class="btn btn-sm btn-skaut-yellow d-flex align-items-center gap-1 shadow-sm" style="font-size: 0.875rem;" title="Přihlásit se přes SkautIS">
 							<i class="fa-solid fa-key"></i>
 							<span class="fw-bold">Přihlásit se</span>
 						</a>
