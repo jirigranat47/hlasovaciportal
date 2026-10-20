@@ -11,6 +11,7 @@ class Bootstrap
 	public static function boot(): Configurator
 	{
 		date_default_timezone_set('Europe/Prague');
+		error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 
 		$configurator = new Configurator();
 
@@ -34,10 +35,6 @@ class Bootstrap
 		\Tracy\Debugger::$scream = false;
 
 		$configurator->setTempDirectory($rootDir . '/temp');
-
-		$configurator->createRobotLoader()
-			->addDirectory(__DIR__)
-			->register();
 
 		$configurator->addConfig($rootDir . '/config/common.neon');
 		if (file_exists($rootDir . '/config/local.neon')) {

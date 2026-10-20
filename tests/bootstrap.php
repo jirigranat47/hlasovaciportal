@@ -17,11 +17,9 @@ $logDir = __DIR__ . '/../log';
 $configurator = new Nette\Bootstrap\Configurator;
 $configurator->setDebugMode(false);
 $configurator->setTempDirectory($tempDir);
+$configurator->addStaticParameters(['appDir' => __DIR__ . '/../app']);
 
-$configurator->createRobotLoader()
-	->addDirectory(__DIR__ . '/../app')
-	->addDirectory(__DIR__)
-	->register();
+require_once __DIR__ . '/BaseTestCase.php';
 
 $configurator->addConfig(__DIR__ . '/../config/common.neon');
 
